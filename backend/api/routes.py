@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from models.policy import PolicyDocument, WorkflowDefinition, GuardrailResult, Verdict, Violation
+from models.policy import PolicyDocument, WorkflowDefinition, ComplianceReport
 from services.ingest import PolicyIngestor
 from services.gemini import GeminiService
 from services.storage import policy_db
@@ -46,7 +46,7 @@ async def upload_policy(file: UploadFile = File(...)):
 async def get_policies():
     return policy_db.get_all_policies()
 
-@router.post("/evaluate", response_model=GuardrailResult)
+@router.post("/evaluate", response_model=ComplianceReport)
 async def evaluate_workflow(workflow: WorkflowDefinition):
     try:
         print(f"Evaluating workflow: {workflow.name}")
@@ -55,63 +55,41 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
         print(f"Active policies count: {len(policies)}")
         
         if not policies:
-            print("No policies found returning WARN")
-            # If no policies, warn the user
-            return GuardrailResult(
-                verdict=Verdict.WARN,
-                reasoning="No active policies found. The workflow passes by default, but this is unsafe.",
-                violations=[]
-            )
+            print("No policies found returning Error")
+            # If no policies, cannot generate report
+            raise HTTPException(status_code=400, detail="No active policies found. Please upload a policy first.")
 
         # context construction (Concatenate all policies)
         policy_context = "\n\n".join([f"Policy '{p.name}':\n{p.content}" for p in policies])
         
         # Real Gemini Analysis
         print("Calling Gemini...")
+        print(f"Workflow Desc: {workflow.description[:100]}...")
         try:
             analysis_json_str = await gemini.analyze_policy_conflict(policy_context, workflow.description)
         except Exception as e:
             print(f"Gemini API Error: {e}")
             raise HTTPException(status_code=503, detail=f"AI Service Unavailable: {str(e)}")
             
-        print(f"Gemini Response: {analysis_json_str[:100]}...")
+        print(f"Gemini Response Length: {len(analysis_json_str)}")
         
-        # Clean JSON string (remove markdown fences if present)
+        # Clean JSON string (remove markdown fences if present - though handled by SDK mostly)
         clean_json = analysis_json_str.replace("```json", "").replace("```", "").strip()
         
         try:
             result_data = json.loads(clean_json)
-            
-            # Map response to model
-            verdict_str = result_data.get("status", "CONDITIONAL").upper()
-            verdict = Verdict.PASS
-            if verdict_str == "BLOCK" or verdict_str == "FAIL":
-                verdict = Verdict.FAIL
-            elif verdict_str == "CONDITIONAL":
-                verdict = Verdict.WARN
-                
-            violations = []
-            for v in result_data.get("violations", []):
-                violations.append(Violation(
-                    policy_name="General", 
-                    details=v, 
-                    severity="High"
-                ))
-
-            return GuardrailResult(
-                verdict=verdict,
-                reasoning=result_data.get("reasoning", "Analysis complete."),
-                violations=violations
-            )
+            # Direct Pydantic validation
+            report = ComplianceReport(**result_data)
+            return report
             
         except json.JSONDecodeError as e:
             print(f"JSON Decode Error: {e}")
-            # Fallback if LLM returns bad JSON
-            return GuardrailResult(
-                verdict=Verdict.WARN,
-                reasoning=f"Raw Analysis: {analysis_json_str}",
-                violations=[]
-            )
+            print(f"Bad JSON: {analysis_json_str}")
+            raise HTTPException(status_code=500, detail="AI returned invalid JSON format")
+        except Exception as e:
+            print(f"Validation Error: {e}")
+            raise HTTPException(status_code=500, detail=f"Report Validation Failed: {str(e)}")
+
     except Exception as e:
         print(f"Server Error during evaluation: {e}")
         import traceback

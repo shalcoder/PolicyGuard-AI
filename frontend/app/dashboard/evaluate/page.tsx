@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { GuardrailTimeline, StepStatus } from '@/components/GuardrailTimeline';
-import { ReadinessScorecard } from '@/components/ReadinessScorecard';
+import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScorecard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Play } from 'lucide-react';
@@ -25,15 +25,11 @@ export default function EvaluatePage() {
         deployment: { region: '', scale: '' }
     });
 
-    const [realResult, setRealResult] = useState<{
-        verdict: 'PASS' | 'BLOCK' | 'WARN' | 'FAIL' | 'pass' | 'block' | 'warn' | 'fail',
-        reasoning: string,
-        violations: { policy_name: string, details: string, severity: string }[]
-    } | null>(null);
+    const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null);
 
     const handleRunEvaluation = async () => {
         setEvaluationStatus('running');
-        setRealResult(null);
+        setComplianceReport(null);
 
         // Reset Steps
         setTimelineSteps(prev => prev.map(s => ({ ...s, status: 'pending' as StepStatus })));
@@ -78,23 +74,12 @@ export default function EvaluatePage() {
                 throw new Error(errorData.detail || "Evaluation Failed");
             }
 
-            const result = await evalRes.json();
+            const result: ComplianceReport = await evalRes.json();
 
             updateStepStatus(3, 'completed');
             updateStepStatus(4, 'completed');
             setEvaluationStatus('done');
-
-            // Map Valid Verdicts
-            let finalVerdict: any = result.verdict;
-            if (finalVerdict === 'FAIL') finalVerdict = 'block'; // Map backend FAIL to frontend block
-            if (finalVerdict === 'WARN') finalVerdict = 'warn';
-            if (finalVerdict === 'PASS') finalVerdict = 'pass';
-
-            setRealResult({
-                verdict: finalVerdict,
-                reasoning: result.reasoning,
-                violations: result.violations
-            });
+            setComplianceReport(result);
 
         } catch (error: any) {
             console.error(error);
@@ -248,23 +233,9 @@ export default function EvaluatePage() {
                         </div>
                     </div>
 
-                    {evaluationStatus === 'done' && realResult && (
+                    {evaluationStatus === 'done' && complianceReport && (
                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <ReadinessScorecard
-                                overallStatus={realResult.verdict as any}
-                                components={[
-                                    {
-                                        name: "Policy Compliance",
-                                        status: realResult.verdict === 'pass' ? 'pass' : (realResult.verdict === 'warn' ? 'warn' : 'fail'),
-                                        details: realResult.reasoning
-                                    },
-                                    ...realResult.violations.map(v => ({
-                                        name: "Violation Detected",
-                                        status: "fail" as const,
-                                        details: v.details
-                                    }))
-                                ]}
-                            />
+                            <ReadinessScorecard report={complianceReport} />
                         </div>
                     )}
                 </div>
