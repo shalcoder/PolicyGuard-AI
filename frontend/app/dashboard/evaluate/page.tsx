@@ -25,7 +25,7 @@ export default function EvaluatePage() {
 }`);
 
     const [realResult, setRealResult] = useState<{
-        verdict: 'PASS' | 'BLOCK' | 'WARN' | 'FAIL',
+        verdict: 'PASS' | 'BLOCK' | 'WARN' | 'FAIL' | 'pass' | 'block' | 'warn' | 'fail',
         reasoning: string,
         violations: { policy_name: string, details: string, severity: string }[]
     } | null>(null);
@@ -45,6 +45,14 @@ export default function EvaluatePage() {
             const policiesRes = await fetch('http://localhost:8000/api/v1/policies');
             const policies = await policiesRes.json();
             updateStepStatus(0, 'completed');
+
+            // Dynamic Policy Count Update
+            setTimelineSteps(prev => {
+                const newSteps = [...prev];
+                newSteps[0].description = `Loading ${policies.length} active policies`;
+                return newSteps;
+            });
+
             updateStepStatus(1, 'processing');
 
             // 2. Parse Intent (Mock delay for visual)
@@ -64,7 +72,10 @@ export default function EvaluatePage() {
                 body: JSON.stringify({ name: "Workflow", description: workflowInput })
             });
 
-            if (!evalRes.ok) throw new Error("Evaluation Failed");
+            if (!evalRes.ok) {
+                const errorData = await evalRes.json();
+                throw new Error(errorData.detail || "Evaluation Failed");
+            }
 
             const result = await evalRes.json();
 
@@ -84,10 +95,10 @@ export default function EvaluatePage() {
                 violations: result.violations
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             setEvaluationStatus('idle'); // Reset on error
-            alert("Evaluation Failed: Possible Backend Connection Error");
+            alert(error.message || "Evaluation Failed: Possible Backend Connection Error");
         }
     };
 

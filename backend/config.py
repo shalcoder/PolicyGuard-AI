@@ -8,7 +8,7 @@ class Settings(BaseModel):
     
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    GEMINI_MODEL: str = "gemini-1.5-flash" # Valid model from list
+    GEMINI_MODEL: str = "gemini-2.5-flash" # Valid updated model
     
     # DB Config
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/policyguard")

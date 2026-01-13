@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 pydantic>=2.7.0
 langgraph
-google-generativeai
+google-genai
 python-multipart
 python-dotenv
 httpx
