@@ -58,12 +58,28 @@ async def delete_policy(policy_id: str):
         raise HTTPException(status_code=404, detail="Policy not found")
     return {"status": "deleted", "id": policy_id}
 
+@router.patch("/policies/{policy_id}/toggle")
+async def toggle_policy(policy_id: str):
+    # Find current status
+    policies = policy_db.get_all_policies()
+    target = next((p for p in policies if p.id == policy_id), None)
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    
+    new_status = not target.is_active
+    updated_policy = policy_db.update_policy(policy_id, {"is_active": new_status})
+    
+    return updated_policy
+
 @router.post("/evaluate", response_model=ComplianceReport)
 async def evaluate_workflow(workflow: WorkflowDefinition):
     try:
         print(f"Evaluating workflow: {workflow.name}")
         # Retrieve active policies
-        policies = policy_db.get_all_policies()
+        # Retrieve active policies
+        all_policies = policy_db.get_all_policies()
+        policies = [p for p in all_policies if p.is_active]
         print(f"Active policies count: {len(policies)}")
         
         if not policies:

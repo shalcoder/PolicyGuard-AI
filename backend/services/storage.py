@@ -49,6 +49,19 @@ class PolicyStorage:
             return True
         return False
 
+    def update_policy(self, policy_id: str, updates: dict) -> PolicyDocument | None:
+        for p in self._policies:
+            if p.id == policy_id:
+                updated_data = p.model_dump()
+                updated_data.update(updates)
+                new_policy = PolicyDocument(**updated_data)
+                # Replace in list
+                index = self._policies.index(p)
+                self._policies[index] = new_policy
+                self._save_to_disk()
+                return new_policy
+        return None
+
     # --- Settings Management ---
     def get_settings(self) -> PolicySettings:
         if os.path.exists(SETTINGS_FILE):

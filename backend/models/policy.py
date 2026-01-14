@@ -7,6 +7,7 @@ class PolicyDocument(BaseModel):
     name: str
     content: str
     summary: Optional[str] = None
+    is_active: bool = True
 
 class WorkflowDefinition(BaseModel):
     name: str
