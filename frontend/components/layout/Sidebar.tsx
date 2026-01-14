@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Shield, Activity, Settings, FileText, ChevronRight, BarChart3 } from 'lucide-react';
-import { cn } from '@/components/ui/button'; // Reuse cn utility
+import { cn } from '@/lib/utils';
+import { useUser } from '@/context/UserContext';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: Home },
@@ -15,6 +16,7 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { profile } = useUser();
 
     return (
         <div className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -58,8 +60,10 @@ export function Sidebar() {
                 <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"></div>
                     <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Executive User</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">Compliance Officer</p>
+                        <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{profile.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500">{profile.jobTitle}</p>
+                        </div>
                     </div>
                 </div>
             </div>
