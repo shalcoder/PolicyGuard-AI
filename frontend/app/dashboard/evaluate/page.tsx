@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GuardrailTimeline, StepStatus } from '@/components/GuardrailTimeline';
 import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScorecard';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,20 @@ export default function EvaluatePage() {
             }
         };
         checkPolicies();
+        checkPolicies();
     }, []);
+
+    const resultsRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to results when done
+    useEffect(() => {
+        if (evaluationStatus === 'done' && resultsRef.current) {
+            // Small timeout to ensure DOM render
+            setTimeout(() => {
+                resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [evaluationStatus]);
 
     const [workflowData, setWorkflowData] = useState({
         intent: { purpose: '', users: '' },
@@ -325,7 +338,7 @@ export default function EvaluatePage() {
                     </div>
 
                     {evaluationStatus === 'done' && complianceReport && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div ref={resultsRef} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <ReadinessScorecard report={complianceReport} />
                         </div>
                     )}
