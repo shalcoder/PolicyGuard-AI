@@ -57,7 +57,7 @@ export function Sidebar() {
             </div>
 
             <div className="border-t border-gray-100 p-4 dark:border-zinc-800">
-                <div className="flex items-center">
+                <Link href="/dashboard/profile" className="flex items-center hover:bg-gray-50 dark:hover:bg-zinc-900 rounded-md p-2 transition-colors">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"></div>
                     <div className="ml-3">
                         <div className="ml-3">
@@ -65,7 +65,7 @@ export function Sidebar() {
                             <p className="text-xs text-gray-500 dark:text-gray-500">{profile.jobTitle}</p>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
         </div>
     );
