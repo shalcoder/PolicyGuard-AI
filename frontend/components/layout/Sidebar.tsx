@@ -60,10 +60,8 @@ export function Sidebar() {
                 <Link href="/dashboard/profile" className="flex items-center hover:bg-gray-50 dark:hover:bg-zinc-900 rounded-md p-2 transition-colors">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"></div>
                     <div className="ml-3">
-                        <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{profile.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500">{profile.jobTitle}</p>
-                        </div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{profile.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">{profile.jobTitle}</p>
                     </div>
                 </Link>
             </div>

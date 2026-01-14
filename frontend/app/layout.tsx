@@ -7,8 +7,8 @@ import { UserProvider } from '@/context/UserContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'PolicyGuard AI',
-    description: 'Enterprise AI Policy Governance & Guardrails',
+    title: 'PolicyGuard: Financial AI Governance',
+    description: 'Enterprise Governance for Autonomous Financial Decision Agents.',
 }
 
 export default function RootLayout({

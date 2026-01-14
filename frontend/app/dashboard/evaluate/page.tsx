@@ -5,16 +5,17 @@ import { GuardrailTimeline, StepStatus } from '@/components/GuardrailTimeline';
 import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScorecard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Play, FileText as FileIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Play, FileText as FileIcon, Shield, Activity, AlertTriangle } from 'lucide-react';
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
     const [timelineSteps, setTimelineSteps] = useState([
-        { id: 'ingest', label: 'Policy Context Load', status: 'pending' as StepStatus, description: 'Checking active policies...' },
-        { id: 'intent', label: 'Workflow Analysis', status: 'pending' as StepStatus, description: 'Parsing workflow capabilities' },
-        { id: 'simulate', label: 'Trace Simulation', status: 'pending' as StepStatus, description: 'Generating synthetic post-deployment traffic' },
-        { id: 'conflict', label: 'Guardrail Checks', status: 'pending' as StepStatus, description: 'Gemini 3 Pro reasoning on traces' },
-        { id: 'verdict', label: 'Compliance Verdict', status: 'pending' as StepStatus, description: 'Generating report' },
+        { id: 'ingest', label: 'Policy Verification', status: 'pending' as StepStatus, description: 'Checking authorized governance rules...' },
+        { id: 'intent', label: 'Workflow Discovery', status: 'pending' as StepStatus, description: 'Extracting semantic behavior maps' },
+        { id: 'simulate', label: 'Counterfactual Modeling', status: 'pending' as StepStatus, description: 'Simulating plausible failure modes' },
+        { id: 'conflict', label: 'Semantic Risk Analysis', status: 'pending' as StepStatus, description: 'Gemini reasoning on policy edge cases' },
+        { id: 'verdict', label: 'Forensic Snapshot', status: 'pending' as StepStatus, description: 'Hashing immutable audit report' },
     ]);
 
     // Initial Policy Check
@@ -46,6 +47,28 @@ export default function EvaluatePage() {
     });
 
     const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null);
+
+    const loadDemoScenario = () => {
+        setWorkflowData({
+            intent: {
+                purpose: 'Automate 24/7 mortgage inquiry desk. Agent acts as a "Financial Ally" to applicants.',
+                users: 'First-time homebuyers surged by 40%.'
+            },
+            data: {
+                types: 'Full credit reports, employment history, and internal demographic spending profiles.'
+            },
+            decision: {
+                output: 'Smart Rate Flexing: Agent dynamically adjusts displayed interest rates based on spending patterns and zip code clusters. Authorized to commit 0.25% discounts immediately.'
+            },
+            safeguards: {
+                controls: 'No Human Review: Agent commits discount to core banking system immediately for real-time feel.'
+            },
+            deployment: {
+                region: 'US/Global',
+                scale: 'Full autonomy for discount lifecycle.'
+            }
+        });
+    };
 
     const handleRunEvaluation = async () => {
         setEvaluationStatus('running');
@@ -150,16 +173,46 @@ export default function EvaluatePage() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Workflow Evaluation</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Test AI agents against guardrails before deployment.</p>
+        <div className="max-w-6xl mx-auto space-y-8 pb-20">
+            {/* Demo Trigger Section */}
+            <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-blue-400">
+                <div className="space-y-2">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Shield className="w-6 h-6 text-blue-200" />
+                        Fiduciary Shield: Financial Decision Agents
+                    </h2>
+                    <p className="text-sm text-blue-100 max-w-xl">
+                        PolicyGuard doesn't decide what to build—<strong>it proves what you knew before you built it.</strong> A pre-deployment forensic record for high-stakes financial agents.
+                    </p>
+                    <div className="flex gap-2 pt-1">
+                        <Badge className="bg-blue-500/50 border-blue-300 text-[10px] uppercase">Indispensable Gemini Reasoning</Badge>
+                        <Badge className="bg-blue-500/50 border-blue-300 text-[10px] uppercase">Cross-Policy Contradiction Detection</Badge>
+                    </div>
                 </div>
-                <Button onClick={handleRunEvaluation} disabled={evaluationStatus === 'running'} size="lg">
-                    <Play className="w-4 h-4 mr-2" />
-                    {evaluationStatus === 'running' ? 'Analyzing...' : 'Start Analysis'}
+                <Button
+                    onClick={loadDemoScenario}
+                    variant="secondary"
+                    className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-8 h-12 rounded-xl"
+                >
+                    Load Dangerous Workflow
                 </Button>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-8">
+                <div className="flex-1">
+                    <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 whitespace-nowrap">Workflow Evaluation</h1>
+                    <p className="text-lg text-gray-500 dark:text-gray-400 mt-1">Test AI agents against guardrails before deployment.</p>
+                </div>
+                <div className="flex-shrink-0 w-full md:w-auto">
+                    <Button
+                        onClick={handleRunEvaluation}
+                        disabled={evaluationStatus === 'running'}
+                        className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-2xl h-16 px-14 text-xl font-black rounded-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 border-b-4 border-blue-800"
+                    >
+                        <Play className="w-6 h-6 fill-current" />
+                        {evaluationStatus === 'running' ? 'Analyzing...' : 'Start Analysis'}
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

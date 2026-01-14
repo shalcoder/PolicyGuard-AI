@@ -7,6 +7,9 @@ class PolicyDocument(BaseModel):
     name: str
     content: str
     summary: Optional[str] = None
+    status: str = "Active" # "Active" | "Draft" | "Pending Review"
+    version: str = "1.0.0"
+    last_updated: str = "" # ISO date string
 
 class WorkflowDefinition(BaseModel):
     name: str
@@ -41,6 +44,7 @@ class PolicyAlignment(BaseModel):
     reason: str
 
 class RiskLevel(str, Enum):
+    CRITICAL = "Critical"
     HIGH = "High"
     MEDIUM = "Medium"
     LOW = "Low"
@@ -74,12 +78,33 @@ class DeploymentVerdict(BaseModel):
     approved: bool
     status_label: str # "Not Approved for Public Release"
     approval_conditions: List[str]
+    catastrophic_consequence: Optional[str] = None # Explicit real-world fallout (fines, lawsuits, etc.)
+
+class RiskSimulation(BaseModel):
+    scenario_title: str
+    failure_mode: str # e.g., "Prompt Injection", "Data Exfiltration"
+    description: str
+    plausibility_grounding: str # Explains why this is plausible based on known attack vectors
+    severity: RiskLevel
+    violated_clause: str # Specific policy clause linked to this risk
+    confidence_level: str # "High" | "Medium" | "Low"
+
+class ForensicDigest(BaseModel):
+    policy_hash: str
+    workflow_hash: str
+    model_version: str
+    prompt_hash: str
+    combined_digest: str # SHA-256 over all segments for tamper-evidence
 
 class ComplianceReport(BaseModel):
+    report_id: str 
+    timestamp: str # ISO date string
+    forensic_digest: ForensicDigest # Tamper-evident state snapshot
     system_spec: AISystemSpec
     data_map: DataInteractionMap
     policy_matrix: List[PolicyAlignment]
     risk_assessment: RiskScore
     evidence: List[EvidenceTrace]
+    risk_simulations: List[RiskSimulation] # Plausible counterfactual failure modes
     recommendations: List[Recommendation]
     verdict: DeploymentVerdict

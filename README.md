@@ -1,6 +1,10 @@
 # PolicyGuard AI
 
-**PolicyGuard AI** is a pre-deployment policy governance control plane designed to ensure AI workflows comply with organizational policies before they go live. It serves as actionable middleware that intercepts, evaluates, and safeguards AI interactions.
+**PolicyGuard AI** is a pre-deployment policy governance control plane designed to ensure AI workflows comply with organizational policies before they go live. 
+
+> “PolicyGuard doesn’t decide what to build. It proves what you knew before you built it.”
+
+It serves as a **Fiduciary Shield** for financial institutions, providing a forensic record of pre-deployment policy knowledge and risk discovery.
 
 ## 🚀 Key Features
 

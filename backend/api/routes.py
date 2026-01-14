@@ -9,6 +9,7 @@ import json
 router = APIRouter()
 ingestor = PolicyIngestor()
 gemini = GeminiService()
+import datetime
 
 @router.post("/policies/upload", response_model=PolicyDocument)
 async def upload_policy(file: UploadFile = File(...)):
@@ -39,7 +40,9 @@ async def upload_policy(file: UploadFile = File(...)):
         id=policy_id,
         name=file.filename,
         content=cleaned_text,
-        summary=summary
+        summary=summary,
+        status="Pending Review", # Require human confirmation
+        last_updated=datetime.datetime.utcnow().isoformat()
     )
     
     # Save to In-Memory DB
@@ -57,6 +60,13 @@ async def delete_policy(policy_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Policy not found")
     return {"status": "deleted", "id": policy_id}
+
+@router.put("/policies/{policy_id}/status")
+async def update_policy_status(policy_id: str, status: str):
+    success = policy_db.update_policy_status(policy_id, status)
+    if not success:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return {"status": "updated", "id": policy_id, "new_status": status}
 
 @router.post("/evaluate", response_model=ComplianceReport)
 async def evaluate_workflow(workflow: WorkflowDefinition):
@@ -99,6 +109,26 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
         
         try:
             result_data = json.loads(clean_json)
+            
+            # --- Forensic Segment Generation ---
+            import hashlib
+            p_hash = hashlib.sha256(policy_context.encode()).hexdigest()[:12]
+            w_hash = hashlib.sha256(workflow.description.encode()).hexdigest()[:12]
+            t_hash = hashlib.sha256(gemini.get_prompt_template().encode()).hexdigest()[:12]
+            m_ver = gemini.model_name
+            
+            # Combined for tamper-evidence
+            combined_raw = f"{p_hash}|{w_hash}|{t_hash}|{m_ver}"
+            c_digest = hashlib.sha256(combined_raw.encode()).hexdigest()
+            
+            result_data["forensic_digest"] = {
+                "policy_hash": p_hash,
+                "workflow_hash": w_hash,
+                "model_version": m_ver,
+                "prompt_hash": t_hash,
+                "combined_digest": c_digest
+            }
+            
             # Direct Pydantic validation
             report = ComplianceReport(**result_data)
             return report

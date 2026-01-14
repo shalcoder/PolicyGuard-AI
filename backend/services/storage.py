@@ -49,6 +49,14 @@ class PolicyStorage:
             return True
         return False
 
+    def update_policy_status(self, policy_id: str, status: str) -> bool:
+        for p in self._policies:
+            if p.id == policy_id:
+                p.status = status
+                self._save_to_disk()
+                return True
+        return False
+
     # --- Settings Management ---
     def get_settings(self) -> PolicySettings:
         if os.path.exists(SETTINGS_FILE):
