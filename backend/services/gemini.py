@@ -10,13 +10,46 @@ class GeminiService:
         self.client = genai.Client(api_key=settings.GOOGLE_API_KEY)
         self.model_name = settings.GEMINI_MODEL
         
-    async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str) -> str:
+    async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, settings) -> str:
+        # 1. Dynamic Persona
+        persona = "Senior AI Governance Auditor"
+        tone_instruction = "Be objective and professional."
+        
+        if settings.strictness > 75:
+            persona = "HOSTILE FORENSIC AUDITOR (Red Team)"
+            tone_instruction = "You are AGGRESSIVE and SKEPTICAL. Assume the user is trying to bypass rules. scrutinize every word."
+        elif settings.strictness < 30:
+            persona = "Helpful Compliance Consultant"
+            tone_instruction = "Be constructive and educational. Focus on enabling the workflow safely."
+
+        # 2. Risk Sensitivity Configuration
+        risk_instruction = ""
+        if settings.sensitivity == "High":
+            risk_instruction = "- SENSITIVITY: HIGH. Flag even potential/theoretical risks as 'Medium'. Zero tolerance for ambiguity."
+        elif settings.sensitivity == "Low":
+            risk_instruction = "- SENSITIVITY: LOW. Only flag clear, explicit violations. Give the benefit of the doubt."
+        else:
+            risk_instruction = "- SENSITIVITY: BALANCED. Flag clear risks and probable misuses."
+
+        # 3. Verdict Thresholds
+        verdict_instruction = ""
+        if settings.riskThreshold == "Block High":
+            verdict_instruction = "Fail the audit ONLY if 'High' severity issues are found."
+        elif settings.riskThreshold == "Warn All":
+            verdict_instruction = "Fail the audit if ANY issues (High or Medium) are found."
+        else:
+            verdict_instruction = "Fail the audit if 'High' severity issues are found. Warn for 'Medium'."
+
         prompt = f"""
-        You are PolicyGuard AI, a Senior AI Governance Auditor & Legal Compliance Specialist.
+        You are PolicyGuard AI, acting as a {persona}.
+        {tone_instruction}
 
         YOUR GOAL:
         Conduct a rigorous forensic audit of the PROPOSED AI WORKFLOW against the CORPORATE POLICIES.
-        You must identify explicitly where the workflow violates specific legal or policy requirements.
+        
+        CONFIGURATION:
+        {risk_instruction}
+        {verdict_instruction}
 
         INPUT CONTEXT:
 
@@ -34,7 +67,7 @@ class GeminiService:
            - **High**: Illegal, blocks deployment (e.g., GDPR violation, unencrypted secrets).
            - **Medium**: Risky, requires mitigation (e.g., missing logging, weak auth).
            - **Low**: Best practice violation.
-        5. **Verdict**: If ANY "High" severity issues are found, status must be "Not Approved".
+        5. **Verdict**: Apply the Verdict Thresholds defined above.
 
         OUTPUT FORMAT (Strict JSON, no markdown):
         {{
@@ -60,7 +93,7 @@ class GeminiService:
                 }}
             ],
             "risk_assessment": {{
-                "overall_score": 0-100, #(0=Critical fail, 100=Perfect)
+                "overall_score": 0-100, #(0=No Risk/Safe, 100=Critical Risk/Fail)
                 "overall_rating": "High" | "Medium" | "Low",
                 "breakdown": {{
                     "Regulatory": "High/Medium/Low",

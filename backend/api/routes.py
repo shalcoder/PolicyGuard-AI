@@ -93,8 +93,12 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
         # Real Gemini Analysis
         print("Calling Gemini...")
         print(f"Workflow Desc: {workflow.description[:100]}...")
+        
+        # Fetch current settings to perform dynamic analysis
+        settings = policy_db.get_settings()
+        
         try:
-            analysis_json_str = await gemini.analyze_policy_conflict(policy_context, workflow.description)
+            analysis_json_str = await gemini.analyze_policy_conflict(policy_context, workflow.description, settings)
         except Exception as e:
             print(f"Gemini API Error: {e}")
             raise HTTPException(status_code=503, detail=f"AI Service Unavailable: {str(e)}")
