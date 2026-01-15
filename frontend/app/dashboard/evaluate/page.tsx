@@ -5,7 +5,8 @@ import { GuardrailTimeline, StepStatus } from '@/components/GuardrailTimeline';
 import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScorecard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Play, FileText as FileIcon } from 'lucide-react';
+import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
@@ -349,6 +350,59 @@ export default function EvaluatePage() {
                     <GuardrailTimeline steps={timelineSteps} />
                 </div>
             </div>
+
+            {/* Focus Mode Overlay */}
+            <AnimatePresence>
+                {evaluationStatus === 'running' && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] bg-white/30 dark:bg-zinc-950/40 backdrop-blur-sm flex flex-col items-center justify-center p-4"
+                    >
+                        {(() => {
+                            const activeStep = timelineSteps.find(s => s.status === 'processing') || timelineSteps.find(s => s.status === 'pending') || timelineSteps[timelineSteps.length - 1];
+
+                            const getIcon = (id: string) => {
+                                switch (id) {
+                                    case 'ingest': return <FileIcon className="w-20 h-20 text-blue-500" />;
+                                    case 'intent': return <Activity className="w-20 h-20 text-indigo-500" />;
+                                    case 'simulate': return <Play className="w-20 h-20 text-purple-500" />;
+                                    case 'conflict': return <ShieldCheck className="w-20 h-20 text-amber-500" />;
+                                    case 'verdict': return <CheckCircle className="w-20 h-20 text-green-500" />;
+                                    default: return <Activity className="w-20 h-20 text-gray-400" />;
+                                }
+                            };
+
+                            return (
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={activeStep?.id}
+                                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                                        className="flex flex-col items-center text-center space-y-6"
+                                    >
+                                        <div className="p-8 bg-white dark:bg-zinc-900 rounded-full shadow-2xl border border-gray-100 dark:border-zinc-800 relative">
+                                            <div className="absolute inset-0 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
+                                            {getIcon(activeStep?.id || '')}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                                                {activeStep?.label}
+                                            </h2>
+                                            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-md">
+                                                {activeStep?.description}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                            );
+                        })()}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
