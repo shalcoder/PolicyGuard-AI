@@ -14,12 +14,17 @@ const navItems = [
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    className?: string;
+    onNavigate?: () => void;
+}
+
+export function Sidebar({ className, onNavigate }: SidebarProps) {
     const pathname = usePathname();
     const { profile } = useUser();
 
     return (
-        <div className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className={cn("flex h-full w-64 flex-col border-r border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950", className)}>
             <div className="flex h-16 items-center px-6 border-b border-gray-100 dark:border-zinc-800">
                 <Shield className="h-6 w-6 text-blue-600 mr-2" />
                 <span className="text-lg font-bold tracking-tight">PolicyGuard AI</span>
@@ -35,6 +40,7 @@ export function Sidebar() {
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                onClick={onNavigate}
                                 className={cn(
                                     "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
                                     isActive
@@ -57,7 +63,7 @@ export function Sidebar() {
             </div>
 
             <div className="border-t border-gray-100 p-4 dark:border-zinc-800">
-                <Link href="/dashboard/profile" className="flex items-center hover:bg-gray-50 dark:hover:bg-zinc-900 rounded-md p-2 transition-colors">
+                <Link href="/dashboard/profile" onClick={onNavigate} className="flex items-center hover:bg-gray-50 dark:hover:bg-zinc-900 rounded-md p-2 transition-colors">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"></div>
                     <div className="ml-3">
                         <div className="ml-3">

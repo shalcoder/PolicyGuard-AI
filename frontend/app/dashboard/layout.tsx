@@ -1,6 +1,7 @@
 "use client"
 
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -22,10 +23,15 @@ export default function DashboardLayout({
     if (isLoading) return null;
 
     return (
-        <div className="flex bg-gray-50 dark:bg-zinc-950 h-screen overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto">
-                <div className="mx-auto max-w-7xl p-8">
+        <div className="flex flex-col lg:flex-row bg-gray-50 dark:bg-zinc-950 h-screen overflow-hidden">
+            {/* Mobile Navigation */}
+            <MobileNav />
+
+            {/* Desktop Sidebar */}
+            <Sidebar className="hidden lg:flex h-screen sticky top-0" />
+
+            <main className="flex-1 overflow-y-auto w-full">
+                <div className="mx-auto max-w-7xl p-4 md:p-8">
                     {children}
                 </div>
             </main>
