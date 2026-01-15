@@ -138,6 +138,20 @@ export default function LandingPage() {
                                 <p className="text-xs text-gray-500">Just now • Customer Support Agent</p>
                             </div>
                         </motion.div>
+
+                        <motion.div
+                            animate={{ y: [0, 15, 0] }}
+                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                            className="hidden 2xl:flex desktop-only-card absolute -left-8 top-32 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 items-center gap-4 max-w-xs z-20"
+                        >
+                            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                                <Zap className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">SLA Risk Forecast</p>
+                                <p className="text-xs text-gray-500">Early Warning: Latency Spike</p>
+                            </div>
+                        </motion.div>
                         <motion.div
                             animate={{ y: [0, 10, 0] }}
                             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
@@ -191,11 +205,12 @@ export default function LandingPage() {
                     <p className="text-gray-500 text-lg">Simulate post-deployment traces to catch policy drifts before they happen.</p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {[
                         { icon: Brain, title: "Simulated Traces", desc: "We generate synthetic user traffic to stress-test your agents against new policies." },
                         { icon: Lock, title: "Pre-Deployment Gates", desc: "Block unsafe workflows with executive-grade guardrails." },
-                        { icon: Globe, title: "Continuous Monitoring", desc: "Real-time auditing of every decision trace, ensuring 24/7 compliance." }
+                        { icon: Globe, title: "Continuous Monitoring", desc: "Real-time auditing of every decision trace, ensuring 24/7 compliance." },
+                        { icon: Zap, title: "Predictive SLA Guard", desc: "Forecast operational risks with our telemetry engine. Prevent breaches before they happen." }
                     ].map((feature, i) => (
                         <div key={i} className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-900 border border-transparent hover:border-gray-200 dark:hover:border-zinc-800 transition-all duration-300 shadow-sm hover:shadow-xl">
                             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
