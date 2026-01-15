@@ -145,6 +145,32 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
 async def get_dashboard_stats():
     return policy_db.get_dashboard_stats()
 
+from services.sla_predictor import sla_predictor
+from pydantic import BaseModel
+
+class TelemetryData(BaseModel):
+    service_id: str
+    error_rate: float
+    latency_ms: float
+    request_count: int
+
+@router.post("/telemetry/ingest")
+async def ingest_telemetry(data: TelemetryData):
+    sla_predictor.ingest_metrics(data.service_id, data.model_dump())
+    return {"status": "ingested"}
+
+@router.get("/telemetry/risk/{service_id}")
+async def get_risk_prediction(service_id: str):
+    return sla_predictor.predict_risk(service_id)
+
+@router.get("/telemetry/history/{service_id}")
+async def get_risk_history(service_id: str):
+    return sla_predictor.get_risk_history(service_id)
+
+@router.get("/dashboard/monitor")
+async def get_monitor_data():
+    return policy_db.get_monitor_data()
+
 @router.get("/settings", response_model=PolicySettings)
 async def get_settings():
     return policy_db.get_settings()

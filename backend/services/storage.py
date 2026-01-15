@@ -95,10 +95,6 @@ class PolicyStorage:
         active_policies = len([p for p in self._policies if p.is_active])
         total_evaluations = len(self._evaluations)
         
-        # Calculate violations (Assuming risk_assessment.overall_score > 50 means High Risk/Violation in our new inverted logic? 
-        # Wait, previous logic was: 100=Risk, 0=Safe. So score > 50 is risky.
-        # Actually let's count actual issues in 'evidence' or 'policy_matrix' if possible, or just high risk reports.
-        # Simple metric: High Risk Reports
         violations = 0
         for entry in self._evaluations:
             report = entry.get('report', {})
@@ -114,16 +110,61 @@ class PolicyStorage:
             risk = report.get('risk_assessment', {})
             recent.append({
                 "workflow_name": spec.get('primary_purpose', 'Unknown Workflow'),
-                "verdict": "PASS" if risk.get('overall_rating') != 'High' else "FAIL", # Simplistic pass/fail
+                "verdict": "PASS" if risk.get('overall_rating') != 'High' else "FAIL", 
                 "timestamp": entry.get('timestamp')
             })
 
         return {
-            "traces_analyzed": total_evaluations * 125, # Mock multiplier for "traces" simulation
+            "traces_analyzed": total_evaluations, 
             "violations": violations,
             "active_policies": active_policies,
-            "system_health": 100 if violations == 0 else 98.5, # Mock health
+            "system_health": 100 if violations == 0 else 98.5, 
             "recent_evaluations": recent
+        }
+
+    def get_monitor_data(self):
+        import datetime
+        now = datetime.datetime.now()
+        active_policies = len([p for p in self._policies if p.is_active])
+        
+        # calculate traces per min (last 5 mins)
+        five_mins_ago = now - datetime.timedelta(minutes=5)
+        recent_count = sum(1 for e in self._evaluations if datetime.datetime.fromisoformat(e['timestamp']) > five_mins_ago)
+        traces_per_min = round(recent_count / 5, 1) if recent_count > 0 else 0
+
+        # Calculate Blocking Rate
+        total = len(self._evaluations)
+        blocked = sum(1 for e in self._evaluations if e['report']['risk_assessment']['overall_rating'] == 'High')
+        blocking_rate = round((blocked / total * 100), 1) if total > 0 else 0
+
+        # Map Traces
+        traces = []
+        # Show last 20 reversed
+        for idx, entry in enumerate(reversed(self._evaluations[-20:])):
+            report = entry.get('report', {})
+            risk = report.get('risk_assessment', {})
+            spec = report.get('system_spec', {})
+            verdict = report.get('verdict', {})
+            
+            rating = risk.get('overall_rating', 'Low')
+            status = 'pass'
+            if rating == 'High': status = 'block'
+            elif rating == 'Medium': status = 'warn'
+             
+            traces.append({
+                "id": f"TR-{1000 + idx}",
+                "timestamp": datetime.datetime.fromisoformat(entry['timestamp']).strftime("%H:%M:%S"),
+                "agent": spec.get('primary_purpose', 'AI Agent')[:20],
+                "action": "Policy Scan",
+                "status": status,
+                "details": verdict.get('status_label', 'Evaluated')
+            })
+            
+        return {
+            "traces_per_min": traces_per_min,
+            "blocking_rate": blocking_rate,
+            "active_policies": active_policies,
+            "traces": traces
         }
 
     # --- Settings Management ---
