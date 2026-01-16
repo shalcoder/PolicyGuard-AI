@@ -163,6 +163,10 @@ export default function EvaluatePage() {
         }, 1500);
     };
 
+    const handleExportPDF = () => {
+        window.open('http://localhost:8000/api/v1/evaluate/export/latest', '_blank');
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -340,6 +344,15 @@ export default function EvaluatePage() {
 
                     {evaluationStatus === 'done' && complianceReport && (
                         <div ref={resultsRef} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
+                                    <CheckCircle className="h-5 w-5" />
+                                    <span className="font-semibold">Analysis Complete</span>
+                                </div>
+                                <Button variant="outline" onClick={handleExportPDF} className="border-green-200 hover:bg-green-100 dark:border-green-800 dark:hover:bg-green-900/30">
+                                    <FileIcon className="mr-2 h-4 w-4" /> Download Certificate
+                                </Button>
+                            </div>
                             <ReadinessScorecard report={complianceReport} />
                         </div>
                     )}
@@ -406,3 +419,4 @@ export default function EvaluatePage() {
         </div>
     );
 }
+

@@ -188,6 +188,37 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
 async def get_dashboard_stats():
     return policy_db.get_dashboard_stats()
 
+@router.get("/evaluate/export/{report_id}")
+async def export_report_pdf(report_id: str):
+    # 1. Fetch Report (For MVP, we use the in-memory list or mock based on ID)
+    # The current persistence is simple. We'll search evaluations.
+    all_evals = policy_db._evaluations # Access directly for speed in Hackathon
+    
+    # Simple match (In real app, use UUID)
+    target_report = None
+    if all_evals:
+        target_report = all_evals[-1] # Default to latest for demo
+    
+    if not target_report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    # 2. Generate PDF
+    from services.report_generator import PDFGenerator
+    from fastapi.responses import Response
+    
+    generator = PDFGenerator()
+    try:
+        pdf_bytes = generator.create_compliance_certificate(target_report)
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=compliance_certificate_{report_id}.pdf"}
+        )
+    except Exception as e:
+        print(f"PDF Gen Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate PDF")
+
 from services.sla_predictor import sla_predictor
 from pydantic import BaseModel
 
