@@ -2,8 +2,10 @@ import json
 import os
 from typing import List
 from models.policy import PolicyDocument
-
 from models.settings import PolicySettings
+from config import settings
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 STORAGE_FILE = "policy_store.json"
 SETTINGS_FILE = "settings_store.json"
@@ -13,8 +15,48 @@ class PolicyStorage:
     def __init__(self):
         self._policies: List[PolicyDocument] = []
         self._evaluations: List[dict] = []
-        self._load_from_disk()
-        self._load_evaluations()
+        self.use_firebase = False
+        self.db = None
+        
+        # Init Firebase if creds exist
+        if os.path.exists(settings.FIREBASE_CREDENTIALS):
+            try:
+                if not firebase_admin._apps:
+                    cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS)
+                    firebase_admin.initialize_app(cred)
+                self.db = firestore.client()
+                self.use_firebase = True
+                print("✅ Connected to Firebase Firestore")
+                # Initial Load
+                self._load_from_firebase()
+            except Exception as e:
+                print(f"❌ Firebase Init Failed: {e}")
+                self._load_from_disk()
+        else:
+            print("⚠️ Firebase Key not found. Using local JSON storage.")
+            self._load_from_disk()
+            self._load_evaluations()
+
+    # --- Loading Logic ---
+    def _load_from_firebase(self):
+        try:
+            # Load Policies
+            policy_ref = self.db.collection('policies')
+            self._policies = []
+            for doc in policy_ref.stream():
+                data = doc.to_dict()
+                if "id" not in data: data["id"] = doc.id
+                self._policies.append(PolicyDocument(**data))
+            
+            # Load Evaluations (Limit 100 for startup performance)
+            eval_ref = self.db.collection('evaluations').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(100)
+            self._evaluations = []
+            for doc in eval_ref.stream():
+                self._evaluations.append(doc.to_dict())
+            self._evaluations.reverse() # Keep internal order chronological if needed, or handle in getters
+                
+        except Exception as e:
+            print(f"Error loading from Firebase: {e}")
 
     def _load_from_disk(self):
         if os.path.exists(STORAGE_FILE):
@@ -25,46 +67,62 @@ class PolicyStorage:
             except Exception as e:
                 print(f"Failed to load policies: {e}")
                 self._policies = []
-
-    def _load_evaluations(self):
+        
         if os.path.exists(EVALUATIONS_FILE):
-            try:
+             try:
                 with open(EVALUATIONS_FILE, 'r') as f:
                     self._evaluations = json.load(f)
-            except Exception as e:
-                print(f"Failed to load evaluations: {e}")
-                self._evaluations = []
+             except: self._evaluations = []
 
     def _save_to_disk(self):
-        try:
-            with open(STORAGE_FILE, 'w') as f:
-                json.dump([p.model_dump() for p in self._policies], f)
-        except Exception as e:
-            print(f"Failed to save policies: {e}")
+        if not self.use_firebase:
+            try:
+                with open(STORAGE_FILE, 'w') as f:
+                    json.dump([p.model_dump() for p in self._policies], f)
+            except Exception as e:
+                print(f"Failed to save policies: {e}")
 
-    def _save_evaluations(self):
-        try:
-            with open(EVALUATIONS_FILE, 'w') as f:
-                json.dump(self._evaluations, f)
-        except Exception as e:
-            print(f"Failed to save evaluations: {e}")
+    def _save_evaluations_disk(self):
+        if not self.use_firebase:
+            try:
+                with open(EVALUATIONS_FILE, 'w') as f:
+                    json.dump(self._evaluations, f)
+            except Exception as e:
+                print(f"Failed to save evaluations: {e}")
 
+    # --- CRUD Operations ---
     def add_policy(self, policy: PolicyDocument):
         self._policies.append(policy)
-        self._save_to_disk()
+        if self.use_firebase:
+            try:
+                self.db.collection('policies').document(policy.id).set(policy.model_dump())
+            except Exception as e: print(f"Firebase Error: {e}")
+        else:
+            self._save_to_disk()
 
     def get_all_policies(self) -> List[PolicyDocument]:
+        # For MVP we keep in-memory sync, but in prod we'd fetch.
+        # Since we load on startup and add via this class, self._policies should be consistent.
+        # Ideally, we should fetch fresh from DB? For Hackathon, in-memory cache is faster.
         return self._policies
 
     def clear(self):
         self._policies = []
-        self._save_to_disk()
+        if self.use_firebase:
+            # Not implemented for safety
+            pass
+        else:
+            self._save_to_disk()
 
     def delete_policy(self, policy_id: str) -> bool:
         initial_count = len(self._policies)
         self._policies = [p for p in self._policies if p.id != policy_id]
+        
         if len(self._policies) < initial_count:
-            self._save_to_disk()
+            if self.use_firebase:
+                self.db.collection('policies').document(policy_id).delete()
+            else:
+                self._save_to_disk()
             return True
         return False
 
@@ -74,10 +132,14 @@ class PolicyStorage:
                 updated_data = p.model_dump()
                 updated_data.update(updates)
                 new_policy = PolicyDocument(**updated_data)
-                # Replace in list
+                
                 index = self._policies.index(p)
                 self._policies[index] = new_policy
-                self._save_to_disk()
+                
+                if self.use_firebase:
+                    self.db.collection('policies').document(policy_id).update(updates)
+                else:
+                    self._save_to_disk()
                 return new_policy
         return None
 
@@ -89,7 +151,13 @@ class PolicyStorage:
             "report": report
         }
         self._evaluations.append(record)
-        self._save_evaluations()
+        
+        if self.use_firebase:
+            try:
+                self.db.collection('evaluations').add(record)
+            except Exception as e: print(f"Firebase Add Error: {e}")
+        else:
+            self._save_evaluations_disk()
 
     def get_dashboard_stats(self):
         active_policies = len([p for p in self._policies if p.is_active])
@@ -102,9 +170,12 @@ class PolicyStorage:
             if risk.get('overall_rating') == 'High':
                 violations += 1
 
-        # Recent Activity (Last 5)
         recent = []
-        for entry in reversed(self._evaluations[-5:]):
+        # Sort by timestamp (assuming self._evaluations is mixed if we did lazy loading? 
+        # But we load latest 100 on start. For hackathon, assume memory list is truth source for stats)
+        sorted_evals = sorted(self._evaluations, key=lambda x: x['timestamp'])
+        
+        for entry in reversed(sorted_evals[-5:]):
             report = entry.get('report', {})
             spec = report.get('system_spec', {})
             risk = report.get('risk_assessment', {})
@@ -127,20 +198,18 @@ class PolicyStorage:
         now = datetime.datetime.now()
         active_policies = len([p for p in self._policies if p.is_active])
         
-        # calculate traces per min (last 5 mins)
+        sorted_evals = sorted(self._evaluations, key=lambda x: x['timestamp'])
+        
         five_mins_ago = now - datetime.timedelta(minutes=5)
         recent_count = sum(1 for e in self._evaluations if datetime.datetime.fromisoformat(e['timestamp']) > five_mins_ago)
         traces_per_min = round(recent_count / 5, 1) if recent_count > 0 else 0
 
-        # Calculate Blocking Rate
         total = len(self._evaluations)
         blocked = sum(1 for e in self._evaluations if e['report']['risk_assessment']['overall_rating'] == 'High')
         blocking_rate = round((blocked / total * 100), 1) if total > 0 else 0
 
-        # Map Traces
         traces = []
-        # Show last 20 reversed
-        for idx, entry in enumerate(reversed(self._evaluations[-20:])):
+        for idx, entry in enumerate(reversed(sorted_evals[-20:])):
             report = entry.get('report', {})
             risk = report.get('risk_assessment', {})
             spec = report.get('system_spec', {})
@@ -169,21 +238,31 @@ class PolicyStorage:
 
     # --- Settings Management ---
     def get_settings(self) -> PolicySettings:
-        if os.path.exists(SETTINGS_FILE):
+        if self.use_firebase:
             try:
-                with open(SETTINGS_FILE, 'r') as f:
-                    data = json.load(f)
-                    return PolicySettings(**data)
-            except Exception as e:
-                print(f"Failed to load settings: {e}")
-        return PolicySettings() # Default
+                doc = self.db.collection('settings').document('global').get()
+                if doc.exists:
+                    return PolicySettings(**doc.to_dict())
+            except: pass
+            return PolicySettings()
+        else:
+            if os.path.exists(SETTINGS_FILE):
+                try:
+                    with open(SETTINGS_FILE, 'r') as f:
+                        data = json.load(f)
+                        return PolicySettings(**data)
+                except: pass
+            return PolicySettings()
 
     def save_settings(self, settings: PolicySettings):
-        try:
-            with open(SETTINGS_FILE, 'w') as f:
-                json.dump(settings.model_dump(), f, indent=2)
-        except Exception as e:
-            print(f"Failed to save settings: {e}")
+        if self.use_firebase:
+            self.db.collection('settings').document('global').set(settings.model_dump())
+        else:
+            try:
+                with open(SETTINGS_FILE, 'w') as f:
+                    json.dump(settings.model_dump(), f, indent=2)
+            except Exception as e:
+                print(f"Failed to save settings: {e}")
 
 # Global instance
 policy_db = PolicyStorage()

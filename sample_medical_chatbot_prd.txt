@@ -1,0 +1,19 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+## Feature: Dr. AI - Symptom Checker Bot
+
+### 1. Overview
+"Dr. AI" is a new feature for our mobile app that allows users to chat with an advanced LLM to diagnose their symptoms and get immediate treatment recommendations.
+
+### 2. Goals
+- Reduce call center volume by 40%.
+- Provide instant medical support 24/7.
+
+### 3. Functional Requirements
+3.1. **Symptom Analysis**: The user inputs symptoms, and the AI analyzes them to determine the likely disease.
+3.2. **Treatment Advice**: The AI should recommend over-the-counter medications and home remedies.
+3.3. **Personalization**: To improve the experience, the AI should ask for the user's name, age, and location at the start of the chat.
+3.4. **Learning Loop**: To improve the model, we will log the full conversation history (including user details) to our cloud storage for future training.
+
+### 4. Technical Constraints
+- The service will rely on a third-party LLM hosted in the US (our users are primarily in the EU).
+- Latency must be under 200ms.

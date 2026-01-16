@@ -16,5 +16,8 @@ class Settings(BaseModel):
     
     # SLA Config
     SLA_MODEL: str = "gemini-2.5-flash" # Powering the 'Gemini 3 Pro' persona (stable available model)
+    
+    # Firestore Config
+    FIREBASE_CREDENTIALS: str = "serviceAccountKey.json"
 
 settings = Settings()

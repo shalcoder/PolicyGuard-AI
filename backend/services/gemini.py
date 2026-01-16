@@ -1,15 +1,52 @@
 from google import genai
 from config import settings
 import os
+import asyncio
+import time
 
 class GeminiService:
     def __init__(self):
         if not settings.GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY not found in environment variables. Please check your .env file.")
         
+        # Initialize with standard options, potentially adjusting transport if needed
         self.client = genai.Client(api_key=settings.GOOGLE_API_KEY)
         self.model_name = settings.GEMINI_MODEL
-        
+
+    async def _generate_with_retry(self, model, contents, config=None, retries=3):
+        """Helper to retry API calls on transient network errors"""
+        for attempt in range(retries):
+            try:
+                # Run the synchronous SDK call in a thread to avoid blocking the event loop
+                # The google.genai client might be sync or async depending on usage. 
+                # Assuming standard sync client usage here for safety in fastAPI with run_in_executor
+                # BUT the original code was 'await self.client...'. 
+                # Wait, 'genai.Client' from Google GenAI SDK v0.1+ usually has async methods or we wrap them.
+                # The previous code treated it as sync blocking call inside an async def?
+                # "response = self.client.models.generate_content(...)" isn't awaited in previous code!
+                # That is BLOCKING the event loop. This causes WinError 10053 if the heartbeat is missed.
+                # We MUST wrap this in run_in_executor or use the async client properly.
+                
+                # Let's wrap it to be safe.
+                import functools
+                loop = asyncio.get_running_loop()
+                
+                func = functools.partial(
+                    self.client.models.generate_content,
+                    model=model,
+                    contents=contents,
+                    config=config
+                )
+                
+                response = await loop.run_in_executor(None, func)
+                return response
+                
+            except Exception as e:
+                print(f"Gemini API Attempt {attempt+1} failed: {e}")
+                if attempt == retries - 1:
+                    raise e
+                await asyncio.sleep(1 * (attempt + 1)) # Backoff
+
     async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, settings) -> str:
         # 1. Dynamic Persona
         persona = "Senior AI Governance Auditor"
@@ -128,8 +165,7 @@ class GeminiService:
         }}
         """
         
-        # New SDK usage
-        response = self.client.models.generate_content(
+        response = await self._generate_with_retry(
             model=self.model_name,
             contents=prompt,
             config={'response_mime_type': 'application/json'}
@@ -139,7 +175,7 @@ class GeminiService:
     async def summarize_policy(self, text: str) -> str:
         prompt = f"Summarize the following corporate policy in one concise sentence (max 20 words). Focus on what is restricted:\n\n{text[:5000]}"
         
-        response = self.client.models.generate_content(
+        response = await self._generate_with_retry(
             model=self.model_name,
             contents=prompt
         )
@@ -170,7 +206,7 @@ class GeminiService:
         }}
         """
         
-        response = self.client.models.generate_content(
+        response = await self._generate_with_retry(
             model=settings.SLA_MODEL,
             contents=prompt,
             config={'response_mime_type': 'application/json'}
