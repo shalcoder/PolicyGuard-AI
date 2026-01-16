@@ -139,6 +139,12 @@ class GeminiService:
                 }},
                 "confidence_score": "High"
             }},
+            "business_impact": {{
+                "financial_exposure": "High/Medium/Low",
+                "regulatory_penalty": "Specific potential fine (e.g. 'Up to €20M under GDPR')",
+                "brand_reputation": "Impact description (e.g. 'Loss of customer trust')",
+                "estimated_cost": "Estimated remediation cost (e.g. '$50k - $150k')"
+            }},
             "evidence": [
                 {{
                     "source_doc": "Policy vs Workflow",

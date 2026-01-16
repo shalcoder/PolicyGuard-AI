@@ -353,8 +353,26 @@ class PolicyStorage:
                 {"name": "Low", "value": risk_counts["Low"]}
             ],
             "compliance_trend": trends,
-            "recent_evaluations": recent
+            "recent_evaluations": recent,
+            "top_business_risks": self._get_business_risks()
         }
+
+    def _get_business_risks(self):
+        # Extract latest business impact signals
+        if not self._evaluations:
+             return None
+             
+        latest_high_risk = next((e for e in reversed(self._evaluations) if e.get('report', {}).get('business_impact')), None)
+        
+        if latest_high_risk:
+            impact = latest_high_risk['report']['business_impact']
+            return {
+                "financial": impact.get('financial_exposure', 'Low'),
+                "financial_cost": impact.get('estimated_cost', '$0'),
+                "regulatory": impact.get('regulatory_penalty', 'None'),
+                "brand": impact.get('brand_reputation', 'Stable')
+            }
+        return None
 
     def get_monitor_data(self):
         import datetime

@@ -77,11 +77,18 @@ class DeploymentVerdict(BaseModel):
     status_label: str # "Not Approved for Public Release"
     approval_conditions: List[str]
 
+class BusinessImpact(BaseModel):
+    financial_exposure: str # "High", "Medium", "Low"
+    regulatory_penalty: str # "GDPR Fine up to 20M"
+    brand_reputation: str # "Severe Trust Loss"
+    estimated_cost: str # "$50k - $200k"
+
 class ComplianceReport(BaseModel):
     system_spec: AISystemSpec
     data_map: DataInteractionMap
     policy_matrix: List[PolicyAlignment]
     risk_assessment: RiskScore
+    business_impact: Optional[BusinessImpact] = None
     evidence: List[EvidenceTrace]
     recommendations: List[Recommendation]
     verdict: DeploymentVerdict

@@ -20,6 +20,12 @@ interface DashboardStats {
     }>;
     risk_distribution?: Array<{ name: string; value: number; }>;
     compliance_trend?: Array<{ date: string; score: number; }>;
+    top_business_risks?: {
+        financial: string;
+        financial_cost: string;
+        regulatory: string;
+        brand: string;
+    };
 }
 
 const COLORS = ['#ef4444', '#f59e0b', '#22c55e']; // Red (High), Amber (Medium), Green (Low)
@@ -118,6 +124,50 @@ export default function OverviewPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Business Impact Signals (BizOps) */}
+            {stats.top_business_risks && (
+                <div className="grid gap-4 md:grid-cols-3">
+                    <Card className="bg-gradient-to-br from-white to-red-50 dark:from-zinc-900 dark:to-red-950/20 shadow-sm border-l-4 border-l-orange-500">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center text-orange-700 dark:text-orange-400">
+                                <span className="mr-2">💰</span> Financial Exposure
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.top_business_risks.financial}</div>
+                            <p className="text-sm font-semibold text-red-600 mt-1">{stats.top_business_risks.financial_cost}</p>
+                            <p className="text-xs text-gray-500 mt-1">Est. Remediation Cost</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-white to-blue-50 dark:from-zinc-900 dark:to-blue-950/20 shadow-sm border-l-4 border-l-blue-500">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center text-blue-700 dark:text-blue-400">
+                                <span className="mr-2">⚖️</span> Regulatory Penalty
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-2 md:line-clamp-3">
+                                {stats.top_business_risks.regulatory}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">Legal Liability</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-white to-purple-50 dark:from-zinc-900 dark:to-purple-950/20 shadow-sm border-l-4 border-l-purple-500">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center text-purple-700 dark:text-purple-400">
+                                <span className="mr-2">📢</span> Brand Reputation
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-2">
+                                {stats.top_business_risks.brand}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">Public Trust Impact</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
             {/* Chart Section */}
             <div className="grid gap-4 md:grid-cols-7">
