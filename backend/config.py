@@ -13,5 +13,8 @@ class Settings(BaseModel):
     # DB Config
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/policyguard")
     WEAVIATE_URL: str = os.getenv("WEAVIATE_URL", "http://localhost:8080")
+    
+    # SLA Config
+    SLA_MODEL: str = "gemini-2.5-flash" # Powering the 'Gemini 3 Pro' persona (stable available model)
 
 settings = Settings()

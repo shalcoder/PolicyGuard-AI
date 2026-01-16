@@ -195,3 +195,31 @@ async def run_simulation():
             "Region Mismatch: Accessing EU user data from US server region."
         ]
     }
+
+class SLAMetricsInput(BaseModel):
+    latency_ms: float
+    error_rate_percent: float
+    uptime_percent: float
+    support_response_time_hours: float
+    service_name: str = "My AI Service"
+
+@router.post("/sla/analyze")
+async def analyze_sla_metrics(metrics: SLAMetricsInput):
+    try:
+        # Call Gemini
+        analysis = await gemini.analyze_sla(metrics.model_dump())
+        
+        # Clean JSON
+        import re
+        match = re.search(r'(\{.*\}|\[.*\])', analysis, re.DOTALL)
+        if match:
+            clean_json = match.group(1)
+        else:
+            clean_json = analysis.strip()
+            
+        result = json.loads(clean_json)
+        return result
+    except Exception as e:
+        print(f"SLA Analysis Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

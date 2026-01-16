@@ -144,3 +144,36 @@ class GeminiService:
             contents=prompt
         )
         return response.text
+
+    async def analyze_sla(self, metrics: dict) -> str:
+        prompt = f"""
+        You are 'Gemini 3 Pro', an advanced Service Level Agreement (SLA) Analytics Engine.
+        
+        INPUT METRICS:
+        {metrics}
+        
+        TASK:
+        Analyze these metrics to determine the SLA Compliance Score and provide a predictive timeline of risks.
+        
+        OUTPUT FORMAT (Strict JSON):
+        {{
+            "sla_score": 0-100,
+            "status": "Healthy" | "Degraded" | "Breached",
+            "analysis_summary": "One sentence summary.",
+            "impact_analysis": "Detailed paragraph explaining the impact of current metrics.",
+            "recommendations": ["Actionable recommendation 1", "Actionable recommendation 2"],
+            "projected_timeline": [
+                {{"time": "Now", "event": "Current State Analysis", "severity": "Info"}},
+                {{"time": "T+1h", "event": "Predicted impact if unchanged", "severity": "Medium"}},
+                {{"time": "T+24h", "event": "Long term forecast", "severity": "High"}}
+            ]
+        }}
+        """
+        
+        response = self.client.models.generate_content(
+            model=settings.SLA_MODEL,
+            contents=prompt,
+            config={'response_mime_type': 'application/json'}
+        )
+        return response.text
+
