@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { InfiniteMovingCards } from '@/components/ui/infinite-cards';
-import { Shield, CheckCircle2, Zap, Lock, ArrowRight, Play, Activity, Globe } from 'lucide-react';
+import { Shield, CheckCircle2, Zap, Lock, ArrowRight, Play, Activity, Globe, Terminal, MessageSquare, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function LandingPage() {
@@ -23,7 +23,7 @@ export default function LandingPage() {
                             <Button variant="ghost" className="font-medium">Sign In</Button>
                         </Link>
                         <Link href="/signup">
-                            <Button className="font-medium bg-blue-600 hover:bg-blue-700 text-white">Get Started</Button>
+                            <Button className="font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">Get Started</Button>
                         </Link>
                     </div>
                 </div>
@@ -31,6 +31,7 @@ export default function LandingPage() {
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-white to-white dark:from-blue-900/20 dark:via-zinc-950 dark:to-zinc-950"></div>
                 <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -38,140 +39,171 @@ export default function LandingPage() {
                         transition={{ duration: 0.6 }}
                         className="space-y-8 relative z-10"
                     >
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-widest border border-blue-100 dark:border-blue-800">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                             </span>
-                            Now with Gemini 3 Pro Reasoning
+                            Powering the Action Era
                         </div>
 
                         <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]">
-                            Deploy AI with <br />
+                            The Trust Layer for <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                                Zero Risk.
+                                Autonomous Agents.
                             </span>
                         </h1>
 
                         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-lg leading-relaxed">
-                            The executive control plane for AI governance. We validate your AI agents using
-                            <span className="font-semibold text-gray-900 dark:text-gray-200"> simulated post-deployment traces </span>
-                            to ensure continuous compliance.
+                            Don't just deploy chatbots. Deploy <b>governed agents</b>.
+                            We use <span className="text-blue-600 dark:text-blue-400 font-semibold">Adversarial Simulation (Red Teaming)</span> and
+                            <span className="text-blue-600 dark:text-blue-400 font-semibold"> Post-Deployment Verification</span> to ensure your AI acts safely in the real world.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4">
                             <Link href="/signup">
-                                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
-                                    Start Free Audit <ArrowRight className="ml-2 w-5 h-5" />
+                                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all hover:scale-105">
+                                    Start Red Team Audit <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full border-2">
-                                <Play className="mr-2 w-5 h-5" /> Watch Demo
+                            <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full border-2 hover:bg-gray-50 dark:hover:bg-zinc-900">
+                                <Play className="mr-2 w-5 h-5" /> Live Demo
                             </Button>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 pt-4 text-sm text-gray-500 font-medium">
-                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> SOC2 Compliant</span>
-                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> No Latency Impact</span>
+                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Gemini 3 Pro Reasoning</span>
+                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> OWASP LLM Top 10</span>
                         </div>
                     </motion.div>
 
-                    {/* Hero Interactive Visual - Placeholder for "Lively" Video/Image */}
+                    {/* Hero Visual - Dashboard Preview */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className="relative h-[500px] md:h-[600px] w-full mt-24 lg:mt-0"
+                        className="relative"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl blur-3xl"></div>
-
-                        {/* Main Dashboard Preview Card */}
-                        <div className="relative h-full w-full bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden group">
-                            {/* Use Next.js Image for optimization, assuming the generated image will be placed at /public/dashboard-mockup.png */}
-                            {/* Replacing this with the actual generated artifact path later, for now using a placeholder div structure that looks like UI */}
-                            <div className="absolute inset-0 bg-zinc-950">
-                                <div className="absolute top-4 left-4 right-4 h-8 bg-zinc-900 rounded-lg flex items-center px-4 gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                </div>
-                                {/* Mock UI Elements animating */}
-                                <div className="absolute top-16 left-4 right-4 bottom-4 grid grid-cols-3 gap-4">
-                                    <div className="col-span-2 bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
-                                        <div className="h-8 w-1/3 bg-zinc-800 rounded mb-4 animate-pulse"></div>
-                                        <div className="space-y-3">
-                                            <div className="h-20 w-full bg-blue-500/10 border border-blue-500/20 rounded-lg"></div>
-                                            <div className="h-20 w-full bg-zinc-800/50 rounded-lg"></div>
-                                            <div className="h-20 w-full bg-zinc-800/50 rounded-lg"></div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6 flex flex-col items-center justify-center">
-                                        <div className="w-32 h-32 rounded-full border-8 border-green-500/20 border-t-green-500 flex items-center justify-center">
-                                            <span className="text-3xl font-bold text-white">98%</span>
-                                        </div>
-                                        <p className="mt-4 text-gray-400">Readiness Score</p>
-                                    </div>
+                        <div className="relative rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl bg-white dark:bg-zinc-900 overflow-hidden transform rotate-1 hover:rotate-0 transition-all duration-500">
+                            {/* Mock Terminal Interface */}
+                            <div className="bg-zinc-950 p-4 border-b border-zinc-800 flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500" />
+                                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                <div className="w-3 h-3 rounded-full bg-green-500" />
+                                <div className="ml-4 text-xs font-mono text-zinc-500">policyguard_cli — red_team_sim</div>
+                            </div>
+                            <div className="p-6 font-mono text-sm space-y-2 bg-zinc-950 text-green-400 h-[400px]">
+                                <p>{">"} initializing_governance_protocol...</p>
+                                <p>{">"} loading_context: <span className="text-white">medical_claims_agent_v3</span></p>
+                                <p>{">"} active_policies: [HIPAA_Strict, GDPR_Article_22]</p>
+                                <p className="text-yellow-500">{">"} simulating_attack_vector: PROMPT_INJECTION_JAILBREAK...</p>
+                                <p className="text-red-500">{">"} ALERT: Potential PII Leak detected in trace #4029</p>
+                                <p>{">"} auto_correcting_guardrails...</p>
+                                <p className="text-blue-400">{">"} VERIFICATION_COMPLETE: Resilience Score 98/100</p>
+                                <div className="mt-4 p-4 border border-green-900/50 bg-green-900/10 rounded flex items-center justify-between">
+                                    <span>Deployment Status:</span>
+                                    <span className="font-bold text-green-400">APPROVED</span>
                                 </div>
                             </div>
-
-                            {/* Overlay for "Lively" effect */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-60"></div>
-                            <Image
-                                src="/dashboard_hero_mockup.png"
-                                alt="PolicyGuard Dashboard"
-                                fill
-                                className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
-                            />
                         </div>
 
-                        {/* Floating Cards */}
+                        {/* Floating Badge */}
                         <motion.div
                             animate={{ y: [0, -10, 0] }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="hidden 2xl:flex desktop-only-card absolute -left-12 bottom-20 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 items-center gap-4 max-w-xs z-20"
+                            className="absolute -left-6 bottom-10 bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-700 flex items-center gap-3"
                         >
-                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                                <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
+                            <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg text-blue-600 dark:text-blue-400 font-bold text-xl">
+                                🔒
                             </div>
                             <div>
-                                <p className="font-bold text-sm">PII Leak Prevented</p>
-                                <p className="text-xs text-gray-500">Just now • Customer Support Agent</p>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            animate={{ y: [0, 15, 0] }}
-                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                            className="hidden 2xl:flex desktop-only-card absolute -left-8 top-32 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 items-center gap-4 max-w-xs z-20"
-                        >
-                            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                                <Zap className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm">SLA Risk Forecast</p>
-                                <p className="text-xs text-gray-500">Early Warning: Latency Spike</p>
-                            </div>
-                        </motion.div>
-                        <motion.div
-                            animate={{ y: [0, 10, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="hidden 2xl:flex desktop-only-card absolute -right-8 top-40 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 items-center gap-4 max-w-xs z-20"
-                        >
-                            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                                <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm">Policy Validated</p>
-                                <p className="text-xs text-gray-500">HIPAA Compliance Check Passed</p>
+                                <div className="font-bold text-gray-900 dark:text-white">Vibe Engineering</div>
+                                <div className="text-xs text-gray-500">Autonomous Verification</div>
                             </div>
                         </motion.div>
                     </motion.div>
                 </div>
             </section>
 
+            {/* Why Choose Us / What We Offer */}
+            <section className="py-24 bg-gray-50 dark:bg-zinc-900/30">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className="text-3xl font-bold tracking-tight mb-4">Why PolicyGuard?</h2>
+                        <p className="text-gray-500 text-lg">
+                            We bridge the gap between "Cool Demo" and "Enterprise Production".
+                            In the Action Era, you need more than just a prompt—you need a **Governance Layer**.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Feature 1: Red Team */}
+                        <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center mb-6 text-red-600">
+                                <Terminal className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Red Team Mode</h3>
+                            <p className="text-gray-500 mb-4 text-sm">
+                                "We hack your agent so hackers can't." Automated adversarial logic.
+                            </p>
+                            <ul className="space-y-2 text-xs text-gray-500">
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Automated Attacks</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> OWASP LLM Testing</li>
+                            </ul>
+                        </div>
+
+                        {/* Feature 2: Compliance Engine */}
+                        <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 bg-blue-600 text-white text-[10px] font-bold rounded-bl-xl">POPULAR</div>
+                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-6 text-blue-600">
+                                <Shield className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Compliance Engine</h3>
+                            <p className="text-gray-500 mb-4 text-sm">
+                                Turn PDF Policies into executable guardrails using multimodal reasoning.
+                            </p>
+                            <ul className="space-y-2 text-xs text-gray-500">
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> PDF/Docx Ingestion</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Intent Analysis</li>
+                            </ul>
+                        </div>
+
+                        {/* Feature 3: SLA Engine (NEW) */}
+                        <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-xl flex items-center justify-center mb-6 text-amber-600">
+                                <Cpu className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">SLA Risk Engine</h3>
+                            <p className="text-gray-500 mb-4 text-sm">
+                                Latency IS a compliance issue. We predict performance bottlenecks.
+                            </p>
+                            <ul className="space-y-2 text-xs text-gray-500">
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Latency Forecasting</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Token Usage Opt.</li>
+                            </ul>
+                        </div>
+
+                        {/* Feature 4: Advisory */}
+                        <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mb-6 text-purple-600">
+                                <MessageSquare className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Chat Assistance</h3>
+                            <p className="text-gray-500 mb-4 text-sm">
+                                Your personal CISO. Ask questions about your architecture's safety.
+                            </p>
+                            <ul className="space-y-2 text-xs text-gray-500">
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Architecture Review</li>
+                                <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-green-500" /> Real-time Q&A</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Infinite Scroll - User Flow */}
-            <section className="py-2 overflow-hidden bg-white dark:bg-zinc-950">
-                <div className="mb-8 text-center">
+            <section className="py-20 overflow-hidden bg-white dark:bg-zinc-950">
+                <div className="mb-8 text-center px-6">
                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">End-to-End Governance Flow</h3>
                 </div>
                 <InfiniteMovingCards
@@ -186,48 +218,39 @@ export default function LandingPage() {
                 />
             </section>
 
-            {/* Trust Section */}
-            <section className="py-12 border-y border-gray-100 dark:border-zinc-900 bg-gray-50 dark:bg-zinc-900/50">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-8">Trusted by Compliance Leaders at</p>
-                    <div className="flex flex-wrap justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['Acme Corp', 'GlobalBank', 'HealthPlus', 'TechFlow', 'SecureNet'].map((brand) => (
-                            <span key={brand} className="text-xl font-bold font-serif text-gray-400 dark:text-gray-500">{brand}</span>
-                        ))}
+            {/* Footer */}
+            <footer className="py-12 border-t border-gray-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
+                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8 mb-8">
+                    <div className="col-span-2">
+                        <div className="flex items-center gap-2 font-bold text-xl tracking-tight mb-4">
+                            <Shield className="w-6 h-6 text-blue-600" />
+                            <span>PolicyGuard AI</span>
+                        </div>
+                        <p className="text-gray-500 max-w-sm">
+                            Building the immune system for the Agentic Web.
+                            Ensuring every autonomous action is safe, compliant, and verified.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-4">Platform</h4>
+                        <ul className="space-y-2 text-sm text-gray-500">
+                            <li>Red Team Mode</li>
+                            <li>Compliance Audit</li>
+                            <li>SLA Monitoring</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-4">Hackathon</h4>
+                        <ul className="space-y-2 text-sm text-gray-500">
+                            <li>Vibe Engineering</li>
+                            <li>Action Era</li>
+                            <li>Gemini 3 Pro</li>
+                        </ul>
                     </div>
                 </div>
-            </section>
-
-            {/* Features Grid */}
-            <section className="py-24 max-w-7xl mx-auto px-6">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-3xl font-bold tracking-tight mb-4">Continuous Compliance Layer</h2>
-                    <p className="text-gray-500 text-lg">Simulate post-deployment traces to catch policy drifts before they happen.</p>
+                <div className="border-t border-gray-100 dark:border-zinc-800 pt-8 text-center text-gray-500 text-sm">
+                    <p>&copy; 2024 PolicyGuard AI. Built with ❤️ for the Gemini 3 Hackathon.</p>
                 </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {[
-                        { icon: Brain, title: "Simulated Traces", desc: "We generate synthetic user traffic to stress-test your agents against new policies." },
-                        { icon: Lock, title: "Pre-Deployment Gates", desc: "Block unsafe workflows with executive-grade guardrails." },
-                        { icon: Globe, title: "Continuous Monitoring", desc: "Real-time auditing of every decision trace, ensuring 24/7 compliance." },
-                        { icon: Zap, title: "Predictive SLA Guard", desc: "Forecast operational risks with our telemetry engine. Prevent breaches before they happen." }
-                    ].map((feature, i) => (
-                        <div key={i} className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-900 border border-transparent hover:border-gray-200 dark:hover:border-zinc-800 transition-all duration-300 shadow-sm hover:shadow-xl">
-                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
-                                <feature.icon className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                            <p className="text-gray-500 leading-relaxed">
-                                {feature.desc}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* Footer */}
-            <footer className="py-12 border-t border-gray-100 dark:border-zinc-900 text-center text-gray-500 text-sm">
-                <p>&copy; 2024 PolicyGuard AI. All rights reserved.</p>
             </footer>
         </div>
     );
