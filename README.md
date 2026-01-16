@@ -1,95 +1,108 @@
 # PolicyGuard AI 🛡️
 
-**"The Firewall for your AI Deployments"**
+**The Trust Layer for the Action Era.**
 
-PolicyGuard AI is a forensic compliance engine designed to catch risky AI workflows *before* they go live. Built for the **Gemini 3 Global Hackathon**, it leverages the reasoning power of **Gemini 3 Pro** to act as a "Hostile Auditor"—hunting for policy violations with legal precision.
+![Next.js](https://img.shields.io/badge/Next.js-14-black) ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688) ![Gemini 3](https://img.shields.io/badge/AI-Gemini%203%20Pro-4285F4) ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
+
+---
+
+### 🚨 The Problem: "Who Watches the Watchmen?"
+In the **Action Era**, AI agents aren't just chatting—they are executing transactions, accessing PII, and making decisions. 
+**PolicyGuard AI** is the **Governance Layer** that validates these agents against corporate policies *before* they are deployed. We don't just "check code"; we use **Gemini 3 Pro** to simulate adversarial attacks and audit intent.
 
 ![PolicyGuard Dashboard](https://github.com/TharunvenkateshN/PolicyGuard-AI/assets/screenshot-placeholder.png)
 
+---
+
+## 🧪 Try it Now (Judge Friendly)
+We built a specialized **Test Mode** for the hackathon judges. No signup, no API keys needed.
+1.  Go to the [Live Demo](#).
+2.  Click the **🧪 Test Mode** button in the Navbar.
+3.  Enjoy the **Self-Driving Tour** that guides you through the Red Team attack simulation.
+
+---
+
 ## 🚀 Key Features
 
-*   **🕵️‍♂️ Hostile Auditor Mode**: Uses **Gemini 3 Pro** to rigorously cross-examine your AI workflow against corporate policy documents.
-*   **⚖️ Forensic Evidence**: Doesn't just say "Rejected"—it provides a detailed evidence table citing specific policy sections and the exact violating text.
-*   **📜 Policy Manager**: Upload, manage, and version-control your organization's PDF/TXT guardrails.
-*   **📊 Risk Scorecard**: A visual dashboard showing Compliance Scores, Risk Classifications (Regulatory, Reputational, User Harm), and remediation steps.
-*   **🔒 Safe Deletion**: Robust management of policy documents with unique ID tracking.
-*   **📈 SLA Guard AI**: A predictive risk engine that forecasts operational breaches (Latency, Burn Rate) using real-time telemetry simulation and **Gemini** insights.
+### 1. ⚔️ Red Team Mode (Adversarial Simulation)
+> *"We hack your agent so hackers can't."*
+*   **What it does**: Automatically generates an "Attacker Persona" using Gemini 3.
+*   **How it works**: The attacker actively tries to jailbreak your agent or extract PII, while the "Defender" scores the resilience.
+*   **Tech**: Uses recursive reasoning loops to simulate real-world threat vectors (OWASP LLM Top 10).
 
-## 🛠 Tech Stack
+### 2. 📜 Compliance Engine (Multimodal Reasoning)
+*   **What it does**: Turns static PDF/TXT policy documents into executable guardrails.
+*   **How it works**: Ingests your corporate "AI Usage Policy" and creates a semantic knowledge graph to audit every agent workflow.
+*   **Tech**: High-fidelity RAG + Long-context reasoning.
 
-*   **AI Engine**: Google **Gemini 3 Pro Preview** (`gemini-3-pro-preview`)
-*   **Frontend**: Next.js 14, Tailwind CSS, Shadcn UI, Framer Motion
-*   **Backend**: FastAPI, Python 3.10+, Pydantic
-*   **Orchestration**: Custom Logic (Forensic Prompt Engineering)
+### 3. ⚡ SLA Risk Engine (New!)
+*   **What it does**: Predicts if your agent will be *too slow* or *too expensive* for production.
+*   **How it works**: Simulates token loads to forecast latency spikes and burn rates.
+*   **Value**: "Latency IS a compliance issue."
+
+### 4. 💬 AI CISO Chat
+*   **What it does**: A "Chief Information Security Officer" in your pocket.
+*   **How it works**: Chat with your architecture. "Is this medical bot HIPAA compliant?"
+
+---
+
+## 🧠 Powered by Gemini 3 Pro
+We don't use Gemini as a simple wrapper. We use it for **Cognitive Architecture**:
+*   **Reasoning**: We force the model to *think* like a lawyer (Auditor) and a hacker (Red Team) simultaneously.
+*   **Agentic Workflow**: The system autonomously navigates through "Audit -> Attack -> Report" cycles without human intervention.
+*   **Structured Output**: All analysis returns strict JSON for programmatic enforcement, not just conversational text.
+
+---
 
 ## ⚡ Quick Start
 
-### 1. Clone & Setup
+### Option A: Docker (Recommended)
+The easiest way to spin up the full stack (Frontend + Backend + DB).
+
 ```bash
+# 1. Clone the repo
 git clone https://github.com/TharunvenkateshN/PolicyGuard-AI.git
 cd PolicyGuard-AI
+
+# 2. Setup Environment
+cp backend/.env.example backend/.env
+# (Add your GOOGLE_API_KEY to backend/.env)
+
+# 3. Launch
+docker compose up --build
 ```
-```
+Access the app at `http://localhost:3000`.
 
-### 🐳 Run with Docker (Recommended)
-The easiest way to get started is using Docker Compose.
+### Option B: Manual Setup
 
-1.  **Configure Environment**:
-    ```bash
-    cd backend
-    # Create .env from example (Windows Powershell)
-    copy .env.example .env
-    # OR Mac/Linux
-    cp .env.example .env
-    ```
-    *Edit `.env` and add your `GOOGLE_API_KEY`.*
-
-2.  **Launch**:
-    ```bash
-    cd ..
-    docker compose up --build
-    ```
-    Access the app at `http://localhost:3000`.
-
-### 🔧 Manual Setup (Alternative)
-
-#### Backend (The Brain)
+**Backend**
 ```bash
 cd backend
 python -m venv venv
-# Windows: .\venv\Scripts\activate | Mac/Linux: source venv/bin/activate
+source venv/bin/activate  # or .\venv\Scripts\activate on Windows
 pip install -r requirements.txt
-```
-
-Create `backend/.env` with your Gemini 3 key:
-```env
-# Get key from aistudio.google.com
-GOOGLE_API_KEY=your_key_here
-GEMINI_MODEL=gemini-3-pro-preview
-```
-
-Run it:
-```bash
 uvicorn main:app --reload
 ```
-```
 
-#### Frontend (The Dashboard)
+**Frontend**
 ```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` to start auditing! 🔎
+---
 
-## 🧪 How to Test
+## 🛠 Tech Stack
+*   **Frontend**: Next.js 14, Tailwind CSS, Shadcn UI, Framer Motion (Vibe Engineering)
+*   **Backend**: FastAPI, Python 3.10+, Pydantic (Strict Typing)
+*   **AI**: Google Gemini 3 Pro Preview via `google-genai` SDK
+*   **Auth**: Firebase (with anonymous Guest Login)
 
-1.  **Upload Policy**: Use the provided `sample_policy_privacy.txt` (The Law).
-2.  **Evaluate**: Navigate to "Evaluation".
-3.  **Input Workflow**: Copy content from `sample_mortgage_agent_prd.txt` (The Violation) into the workflow description.
-4.  **Run Analysis**: Watch Gemini 3 detect the "Human-in-the-Loop" violation!
+---
 
-## 🤝 Contributing
+## 🏆 Hackathon Tracks
+*   **Vibe Engineering**: A polished, premium "Red Team Console" experience.
+*   **Action Era**: Enabling the safe deployment of autonomous agents.
 
-Built with ❤️ for the Google Gemini 3 Hackathon.
+Built with ❤️ for the **Google Gemini 3 Hackathon**.
