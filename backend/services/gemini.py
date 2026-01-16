@@ -257,28 +257,37 @@ class GeminiService:
 
     async def chat_compliance(self, query: str, context: str, history: list = []) -> str:
         """
-        Answers a user question based on RAG context.
+        Answers a user question based on RAG context, falling back to general knowledge if needed.
         """
         
-        # Format history for context (optional, but good for flow)
+        # Format history for context
         conversation_context = ""
         if history:
             conversation_context = "PREVIOUS CONVERSATION:\n" + "\n".join([f"{msg.role}: {msg.content}" for msg in history[-3:]]) + "\n\n"
+
+        # Determine if we have context
+        context_section = ""
+        if context:
+            context_section = f"--- RELEVANT POLICY EXCERPTS (Primary Source) ---\n{context}"
+        else:
+            context_section = "--- NO RELEVANT POLICY SECTIONS FOUND ---"
 
         prompt = f"""
         You are "PolicyGuard AI Assistant", an expert Compliance Officer.
         
         YOUR GOAL:
-        Answer the user's question based strictly on the provided CORPORATE POLICY CONTEXT.
+        Answer the user's question using the provided CORPORATE POLICY CONTEXT.
         
         RULES:
-        1. If the answer is found in the context, provide it clearly.
-        2. Cite the specific policy section or paragraph if possible.
-        3. If the answer is NOT in the context, politely state: "I cannot find specific information about that in the uploaded policies."
+        1. **PRIORITY**: Always base your answer on the `RELEVANT POLICY EXCERPTS` if they exist.
+        2. **CITATION**: Cite specific policy sections if used.
+        3. **FALLBACK (Hybrid Search)**: If the answer is NOT in the context (or context is empty):
+           - You MAY use your general knowledge of global compliance standards (GDPR, HIPAA, NIST, ISO).
+           - **CRITICAL**: You MUST start your response with: "⚠️ **Note:** This answer is based on general compliance best practices, not your specific uploaded policies."
+           - Do not make up internal policy numbers.
         4. Be helpful, professional, and concise.
         
-        --- RELEVANT POLICY EXCERPTS ---
-        {context}
+        {context_section}
         
         {conversation_context}
         
