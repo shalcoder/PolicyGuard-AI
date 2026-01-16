@@ -295,9 +295,17 @@ class GeminiService:
         {query}
         """
         
-        response = await self._generate_with_retry(
-            model=self.model_name,
-            contents=prompt
-        )
-        return response.text
+        try:
+            response = await self._generate_with_retry(
+                model=self.model_name,
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            print(f"Gemini Chat CRITICAL FAILURE: {e}")
+            if hasattr(e, 'status_code'):
+                print(f"Status Code: {e.status_code}")
+            if hasattr(e, 'message'):
+                print(f"Error Message: {e.message}")
+            return f"⚠️ **System Notification**: The AI service returned an error: {str(e)}. (Model: {self.model_name})"
 

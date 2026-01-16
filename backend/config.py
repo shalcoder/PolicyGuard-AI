@@ -8,14 +8,14 @@ class Settings(BaseModel):
     
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    GEMINI_MODEL: str = "gemini-2.5-flash" # Valid updated model
+    GEMINI_MODEL: str = "gemini-1.5-flash" # Higher rate limits for free tier
     
     # DB Config
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/policyguard")
     WEAVIATE_URL: str = os.getenv("WEAVIATE_URL", "http://localhost:8080")
     
     # SLA Config
-    SLA_MODEL: str = "gemini-2.5-flash" # Powering the 'Gemini 3 Pro' persona (stable available model)
+    SLA_MODEL: str = "gemini-1.5-flash" # Stable fallback
     
     # Firestore Config
     FIREBASE_CREDENTIALS: str = "serviceAccountKey.json"

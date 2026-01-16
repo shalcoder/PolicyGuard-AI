@@ -314,11 +314,45 @@ class PolicyStorage:
                 "timestamp": entry.get('timestamp')
             })
 
+        # Calculate Risk Breakdown
+        risk_counts = {"High": 0, "Medium": 0, "Low": 0}
+        for entry in self._evaluations:
+            report = entry.get('report', {})
+            risk = report.get('risk_assessment', {})
+            rating = risk.get('overall_rating', 'Low')
+            if rating in risk_counts:
+                risk_counts[rating] += 1
+            else:
+                risk_counts["Low"] += 1 # Default fallback
+
+        # Mock Trend Data (Hackathon Visuals) - Generate last 7 days
+        import datetime
+        import random
+        today = datetime.date.today()
+        trends = []
+        base_score = 100 if len(self._evaluations) == 0 else 85
+        
+        for i in range(6, -1, -1):
+            date_label = (today - datetime.timedelta(days=i)).strftime("%b %d")
+            # Create a realistic "wobble"
+            daily_score = base_score + random.randint(-5, 5)
+            # If today, make it match actual health roughly
+            if i == 0:
+                 daily_score = 100 if violations == 0 else 65
+            
+            trends.append({"date": date_label, "score": min(100, max(0, daily_score))})
+
         return {
             "traces_analyzed": total_evaluations, 
             "violations": violations,
             "active_policies": active_policies,
-            "system_health": 100 if violations == 0 else 98.5, 
+            "system_health": 100 if violations == 0 else 65, 
+            "risk_distribution": [
+                {"name": "High", "value": risk_counts["High"]},
+                {"name": "Medium", "value": risk_counts["Medium"]},
+                {"name": "Low", "value": risk_counts["Low"]}
+            ],
+            "compliance_trend": trends,
             "recent_evaluations": recent
         }
 

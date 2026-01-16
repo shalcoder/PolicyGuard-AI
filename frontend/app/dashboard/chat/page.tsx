@@ -36,7 +36,7 @@ export default function ChatPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8000/api/v1/chat', {
+            const response = await fetch('http://127.0.0.1:8000/api/v1/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -45,7 +45,10 @@ export default function ChatPage() {
                 })
             });
 
-            if (!response.ok) throw new Error('Network error');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Network error');
+            }
 
             const data = await response.json();
             setMessages(prev => [...prev, {
@@ -53,9 +56,9 @@ export default function ChatPage() {
                 content: data.answer,
                 citations: data.citations
             }]);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            setMessages(prev => [...prev, { role: 'model', content: "Sorry, I encountered an error connecting to the server. Please check if the backend is running." }]);
+            setMessages(prev => [...prev, { role: 'model', content: error.message || "Sorry, I encountered an error connecting to the server. Please check if the backend is running." }]);
         } finally {
             setLoading(false);
         }
