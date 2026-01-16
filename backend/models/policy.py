@@ -35,6 +35,7 @@ class PolicyStatus(str, Enum):
     RISK = "At Risk"
     NON_COMPLIANT = "Non-Compliant"
     CANNOT_ASSESS = "Cannot Be Assessed"
+    NOT_APPLICABLE = "Not Applicable"
 
 class PolicyAlignment(BaseModel):
     policy_area: str
