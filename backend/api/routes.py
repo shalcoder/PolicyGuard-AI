@@ -20,17 +20,32 @@ async def upload_policy(file: UploadFile = File(...)):
     text_content = content.decode('utf-8', errors='ignore')
     
     # Ingest
+    print(f"Ingesting policy: {file.filename}")
     cleaned_text = await ingestor.ingest_text(file.filename, text_content)
 
     # Analyze with Gemini (Immediate Feedback)
     try:
         print(f"Summarizing policy: {file.filename}")
         summary = await gemini.summarize_policy(cleaned_text)
+        
+        # --- RAG Ingestion ---
+        print("Chunking policy...")
+        chunks = await ingestor.chunk_policy(cleaned_text)
+        
+        vectors = []
+        if chunks:
+            print(f"Generating embeddings for {len(chunks)} chunks...")
+            for chunk in chunks:
+                vec = await gemini.create_embedding(chunk)
+                vectors.append(vec)
+            
     except Exception as e:
-        print(f"Gemini Error during summary: {e}")
+        print(f"Gemini Error during summary/embedding: {e}")
         # import traceback
         # traceback.print_exc()
         summary = "Summary unavailable (AI Error)"
+        chunks = []
+        vectors = []
     
     import uuid
     policy_id = str(uuid.uuid4())
@@ -42,8 +57,13 @@ async def upload_policy(file: UploadFile = File(...)):
         summary=summary
     )
     
-    # Save to In-Memory DB
+    # Save to In-Memory DB & Persistence
     policy_db.add_policy(policy)
+    
+    # Save Vectors
+    if chunks and vectors:
+        policy_db.add_policy_vectors(policy_id, chunks, vectors)
+        print(f"Saved {len(chunks)} vector chunks for {file.filename}")
     
     return policy
 
@@ -76,19 +96,41 @@ async def toggle_policy(policy_id: str):
 async def evaluate_workflow(workflow: WorkflowDefinition):
     try:
         print(f"Evaluating workflow: {workflow.name}")
-        # Retrieve active policies
-        # Retrieve active policies
-        all_policies = policy_db.get_all_policies()
-        policies = [p for p in all_policies if p.is_active]
-        print(f"Active policies count: {len(policies)}")
         
-        if not policies:
-            print("No policies found returning Error")
-            # If no policies, cannot generate report
-            raise HTTPException(status_code=400, detail="No active policies found. Please upload a policy first.")
+        # --- RAG Retrieval ---
+        print("Generating query embedding...")
+        query_vec = await gemini.create_embedding(workflow.description)
+        
+        relevant_chunks = []
+        if query_vec:
+            print("Searching vector store...")
+            relevant_items = policy_db.search_relevant_policies(query_vec, top_k=5)
+            relevant_chunks = [item['chunk_text'] for item in relevant_items]
+            
+            # Debug Print
+            print("\n--- RELEVANT POLICY SECTIONS FOUND ---")
+            for item in relevant_items:
+                print(f"Doc: {item['policy_id']} | Chunk ID: {item['chunk_id']} | Score (Sim): N/A")
+            print("--------------------------------------\n")
+        
+        # Fallback if no vectors (or empty DB) -> Use all active policies raw text (Legacy mode)
+        # But wait, search_relevant_policies checks 'is_active'.
+        # If relevant_chunks is empty, maybe we should just use full text of active policies?
+        # Let's be smart: if we have NO relevant chunks, either query is weird or DB is empty.
+        
+        all_policies = policy_db.get_all_policies()
+        active_policies = [p for p in all_policies if p.is_active]
+        
+        if not active_policies:
+             raise HTTPException(status_code=400, detail="No active policies found. Please upload a policy first.")
 
-        # context construction (Concatenate all policies)
-        policy_context = "\n\n".join([f"Policy '{p.name}':\n{p.content}" for p in policies])
+        if relevant_chunks:
+            # RAG Mode
+            policy_context = "\n\n--- RELEVANT POLICY EXCERPTS ---\n" + "\n\n".join(relevant_chunks)
+        else:
+            # Fallback Mode (Full Text)
+            print("No vector matches found. Falling back to full text analysis.")
+            policy_context = "\n\n".join([f"Policy '{p.name}':\n{p.content}" for p in active_policies])
         
         # Real Gemini Analysis
         print("Calling Gemini...")

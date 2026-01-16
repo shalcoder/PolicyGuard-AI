@@ -29,13 +29,15 @@ class PolicyStorage:
                 print("✅ Connected to Firebase Firestore")
                 # Initial Load
                 self._load_from_firebase()
+                self._load_vectors()
             except Exception as e:
                 print(f"❌ Firebase Init Failed: {e}")
                 self._load_from_disk()
+                self._load_vectors()
         else:
-            print("⚠️ Firebase Key not found. Using local JSON storage.")
+            print("⚠️ Firebase Key skipped (DEBUG MODE). Using local JSON storage.")
             self._load_from_disk()
-            self._load_evaluations()
+            self._load_vectors()
 
     # --- Loading Logic ---
     def _load_from_firebase(self):
@@ -43,16 +45,25 @@ class PolicyStorage:
             # Load Policies
             policy_ref = self.db.collection('policies')
             self._policies = []
+            count = 0
             for doc in policy_ref.stream():
-                data = doc.to_dict()
-                if "id" not in data: data["id"] = doc.id
-                self._policies.append(PolicyDocument(**data))
+                try:
+                    data = doc.to_dict()
+                    if "id" not in data: data["id"] = doc.id
+                    self._policies.append(PolicyDocument(**data))
+                    count += 1
+                except Exception as e:
+                    print(f"⚠️ Failed to parse policy {doc.id}: {e}")
             
+            print(f"✅ Loaded {count} policies from Firebase")
+
             # Load Evaluations (Limit 100 for startup performance)
             eval_ref = self.db.collection('evaluations').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(100)
             self._evaluations = []
             for doc in eval_ref.stream():
-                self._evaluations.append(doc.to_dict())
+                try:
+                    self._evaluations.append(doc.to_dict())
+                except: pass
             self._evaluations.reverse() # Keep internal order chronological if needed, or handle in getters
                 
         except Exception as e:
@@ -100,10 +111,128 @@ class PolicyStorage:
         else:
             self._save_to_disk()
 
+    # --- Vector Search Logic ---
+    def add_policy_vectors(self, policy_id: str, chunks: List[str], vectors: List[List[float]]):
+        """
+        Stores vectors in memory and persists them.
+        Structure: self._vectors = [ {"policy_id": "pid", "chunk_text": "...", "vector": [...], "chunk_id": "..."} ]
+        """
+        if not hasattr(self, '_vector_store'):
+            self._vector_store = []
+
+        # Remove existing vectors for this policy if update
+        self._vector_store = [v for v in self._vector_store if v['policy_id'] != policy_id]
+
+        new_entries = []
+        for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
+            entry = {
+                "policy_id": policy_id,
+                "chunk_id": f"{policy_id}_{i}",
+                "chunk_text": chunk,
+                "vector": vec
+            }
+            new_entries.append(entry)
+            self._vector_store.append(entry)
+        
+        # Persist
+        if self.use_firebase:
+            try:
+                # Store chunks in a subcollection 'vectors' under the policy document
+                batch = self.db.batch()
+                # Delete old vectors first (naive approach: limit 500 in batch)
+                # For MVP, we just add new ones. cleanup is harder in NoSQL without knowing IDs.
+                # Ideally, we list subcollection and delete.
+                
+                # Write new
+                for entry in new_entries:
+                    ref = self.db.collection('policies').document(policy_id).collection('vectors').document(entry['chunk_id'])
+                    batch.set(ref, entry)
+                batch.commit()
+            except Exception as e:
+                print(f"Firebase Vector Save Error: {e}")
+        else:
+            # We need a separate file for vectors to avoid bloating policy_store.json
+            self._save_vectors_disk()
+
+    def _save_vectors_disk(self):
+        try:
+            with open("vector_store.json", 'w') as f:
+                json.dump(self._vector_store, f)
+        except Exception as e: 
+            print(f"Vector Disk Save Error: {e}")
+
+    def _load_vectors(self):
+        self._vector_store = []
+        if self.use_firebase:
+            # Load all vectors? That might be heavy. 
+            # Better: We load on demand? No, for cosine similarity we need them in memory (numpy).
+            # If 100 policies * 10 chunks = 1000 vectors. Small enough for memory.
+            try:
+                policies = self.db.collection('policies').stream()
+                for p in policies:
+                    vecs = p.reference.collection('vectors').stream()
+                    for v in vecs:
+                        self._vector_store.append(v.to_dict())
+            except Exception as e:
+                print(f"Vector Load Error: {e}")
+        else:
+            if os.path.exists("vector_store.json"):
+                try:
+                    with open("vector_store.json", 'r') as f:
+                        self._vector_store = json.load(f)
+                except: pass
+
+    def search_relevant_policies(self, query_vec: List[float], top_k: int = 5) -> List[dict]:
+        """
+        Returns top_k chunks sorted by cosine similarity.
+        """
+        if not hasattr(self, '_vector_store') or not self._vector_store:
+            return []
+
+        from services.gemini import GeminiService # Circular import fix?
+        # Actually we need the math helper. Or just use numpy here.
+        import numpy as np
+        
+        scores = []
+        q_vec = np.array(query_vec)
+        q_norm = np.linalg.norm(q_vec)
+        
+        if q_norm == 0: return []
+
+        for item in self._vector_store:
+            # Check if policy is active
+            params = next((p for p in self._policies if p.id == item['policy_id']), None)
+            if not params or not params.is_active:
+                continue
+
+            doc_vec = np.array(item['vector'])
+            d_norm = np.linalg.norm(doc_vec)
+            
+            if d_norm == 0:
+                sim = 0
+            else:
+                sim = np.dot(q_vec, doc_vec) / (q_norm * d_norm)
+            
+            scores.append((sim, item))
+        
+        scores.sort(key=lambda x: x[0], reverse=True)
+        return [s[1] for s in scores[:top_k]]
+
+    # --- Initializer Update ---
+    # Need to call _load_vectors in __init__
+    
+    # --- CRUD Operations ---
+    def add_policy(self, policy: PolicyDocument):
+        self._policies.append(policy)
+        if self.use_firebase:
+            try:
+                self.db.collection('policies').document(policy.id).set(policy.model_dump())
+            except Exception as e: print(f"Firebase Error: {e}")
+        else:
+            self._save_to_disk()
+        # Vectors are added separately by the caller via add_policy_vectors
+
     def get_all_policies(self) -> List[PolicyDocument]:
-        # For MVP we keep in-memory sync, but in prod we'd fetch.
-        # Since we load on startup and add via this class, self._policies should be consistent.
-        # Ideally, we should fetch fresh from DB? For Hackathon, in-memory cache is faster.
         return self._policies
 
     def clear(self):

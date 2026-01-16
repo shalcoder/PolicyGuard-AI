@@ -181,6 +181,48 @@ class GeminiService:
         )
         return response.text
 
+    async def create_embedding(self, text: str) -> list[float]:
+        """Generates a vector embedding for the given text."""
+        # Using the standard embedding model
+        # Note: run_in_executor is not strictly needed for embed_content if using async client, 
+        # but consistent patterns help. 'embed_content' is a models method.
+        # However, the SDK syntax is: client.models.embed_content(model=..., contents=...)
+        import functools
+        loop = asyncio.get_running_loop()
+        
+        func = functools.partial(
+            self.client.models.embed_content,
+            model="text-embedding-004",
+            contents=text
+        )
+        
+        try:
+            response = await loop.run_in_executor(None, func)
+            # Response object has 'embeddings'. We sent 1 content, so we want the 1st embedding.
+            # print(f"DEBUG: Embedding Response Type: {type(response)}") 
+            # In latest SDK, response.embeddings[0].values is likely the list.
+            if hasattr(response, 'embeddings') and response.embeddings:
+                return response.embeddings[0].values
+            return []
+        except Exception as e:
+            print(f"Embedding Generation Failed: {e}")
+            return []
+
+    def calculate_cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
+        try:
+            import numpy as np
+        except ImportError:
+            print("CRITICAL: Numpy not installed or failed to import")
+            return 0.0
+            
+        v1 = np.array(vec1)
+        v2 = np.array(vec2)
+        
+        if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+            return 0.0
+            
+        return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
     async def analyze_sla(self, metrics: dict) -> str:
         prompt = f"""
         You are 'Gemini 3 Pro', an advanced Service Level Agreement (SLA) Analytics Engine.

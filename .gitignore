@@ -30,3 +30,6 @@ __pycache__/
 Thumbs.db
 
 serviceAccountKey.json
+policy_store.json
+vector_store.json
+evaluations.json
