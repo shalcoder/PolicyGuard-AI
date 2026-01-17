@@ -4,8 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertTriangle, FileText, Download, Shield, Activity, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 // --- Interfaces matching Backend Models ---
 
@@ -72,28 +70,11 @@ export interface ComplianceReport {
 
 interface ReadinessScorecardProps {
     report: ComplianceReport;
+    onDownload?: () => void;
 }
 
-export function ReadinessScorecard({ report }: ReadinessScorecardProps) {
+export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardProps) {
     const reportRef = useRef<HTMLDivElement>(null);
-
-    const handleDownloadPDF = async () => {
-        if (!reportRef.current) return;
-
-        try {
-            const canvas = await html2canvas(reportRef.current, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save('PolicyGuard_Compliance_Report.pdf');
-        } catch (error) {
-            console.error("PDF Export failed:", error);
-            alert("Failed to export PDF.");
-        }
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -118,10 +99,12 @@ export function ReadinessScorecard({ report }: ReadinessScorecardProps) {
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Report PDF
-                </Button>
+                {onDownload && (
+                    <Button onClick={onDownload} variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Certificate (PDF)
+                    </Button>
+                )}
             </div>
 
             <div ref={reportRef} className="space-y-6 bg-white dark:bg-zinc-950 p-6 rounded-xl border shadow-sm">
