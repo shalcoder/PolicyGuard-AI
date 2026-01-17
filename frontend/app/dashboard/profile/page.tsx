@@ -21,6 +21,8 @@ export default function ProfilePage() {
     const router = useRouter();
     const { profile, updateProfile } = useUser();
 
+
+
     return (
         <div className="space-y-6 pb-20">
             <div className="flex justify-between items-center">
@@ -134,7 +136,7 @@ export default function ProfilePage() {
                             <Switch checked={true} />
                         </div>
                         <div className="pt-4 space-y-2">
-                            <Button variant="outline" className="w-full">Change Password</Button>
+
                             <Button
                                 variant="destructive"
                                 className="w-full"

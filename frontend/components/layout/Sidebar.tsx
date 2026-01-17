@@ -1,5 +1,3 @@
-"use client"
-
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Home, Shield, Activity, Settings, FileText, ChevronRight, BarChart3, LogOut, Zap, MessageSquare } from 'lucide-react';
