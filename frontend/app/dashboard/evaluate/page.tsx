@@ -537,7 +537,7 @@ export default function EvaluatePage() {
                                                 </div>
                                             </div>
                                             <div className="text-sm space-y-2">
-                                                <p><span className="font-semibold">Target:</span> {JSON.parse(redTeamReport.system_profile_analyzed || "{}").substring(0, 50)}...</p>
+                                                <p><span className="font-semibold">Target:</span> {(redTeamReport.system_profile_analyzed || "").substring(0, 50)}...</p>
                                                 <p><span className="font-semibold">Vectors Found:</span> {redTeamReport.attack_vectors.length}</p>
                                             </div>
                                         </div>
