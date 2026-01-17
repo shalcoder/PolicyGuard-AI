@@ -227,9 +227,9 @@ export default function EvaluatePage() {
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         {/* Left: Input */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="lg:col-span-3 space-y-6">
                             <div className="p-6 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 shadow-sm">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold">Workflow Specification</h3>
@@ -279,7 +279,7 @@ export default function EvaluatePage() {
                                     </div>
                                 )}
 
-                                <div className="space-y-6 h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-6 pr-2">
                                     {/* 1. AI System Intent */}
                                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-zinc-950">
                                         <h4 className="font-medium text-blue-600 flex items-center gap-2">
