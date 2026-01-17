@@ -20,11 +20,21 @@ class PDFGenerator:
         pdf.alias_nb_pages()
         pdf.add_page()
         
+        # Helper to clean text for PDF (latin-1 only for core fonts)
+        def clean_text(text):
+            if text is None: return ""
+            text = str(text)
+            # Encode to latin-1, replacing errors with '?', then decode
+            return text.encode('latin-1', 'replace').decode('latin-1')
+
+        pdf.set_margins(10, 10, 10)
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
         # --- Title Section ---
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, f"Evaluation ID: {datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}", 0, 1)
+        pdf.cell(0, 10, clean_text(f"Evaluation ID: {datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"), 0, 1)
         pdf.set_font("Arial", "", 10)
-        pdf.cell(0, 10, f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1)
+        pdf.cell(0, 10, clean_text(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"), 0, 1)
         pdf.ln(5)
 
         report = report_data.get("report", {})
@@ -35,61 +45,56 @@ class PDFGenerator:
 
         # --- Executive Summary ---
         pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, "Executive Summary", 0, 1)
+        pdf.cell(0, 10, clean_text("Executive Summary"), 0, 1)
+        
+        # Explicit width 190 = 210(A4) - 20(Margins)
         pdf.set_fill_color(240, 240, 240)
         pdf.rect(10, pdf.get_y(), 190, 40, 'F')
         
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(40, 10, "System Name:", 0, 0)
+        pdf.cell(40, 10, clean_text("System Name:"), 0, 0)
         pdf.set_font("Arial", "", 10)
-        pdf.cell(0, 10, spec.get("primary_purpose", "N/A")[:60], 0, 1)
+        pdf.cell(0, 10, clean_text(spec.get("primary_purpose", "N/A")[:60]), 0, 1)
         
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(40, 10, "Verdict:", 0, 0)
+        pdf.cell(40, 10, clean_text("Verdict:"), 0, 0)
         
         status_color = (200, 50, 50) if verdict.get("approved") is False else (50, 150, 50)
         pdf.set_text_color(*status_color)
-        pdf.cell(0, 10, verdict.get("status_label", "Unknown").upper(), 0, 1)
+        pdf.cell(0, 10, clean_text(verdict.get("status_label", "Unknown").upper()), 0, 1)
         pdf.set_text_color(0, 0, 0)
 
         pdf.set_font("Arial", "B", 10)
-        pdf.cell(40, 10, "Overall Risk:", 0, 0)
-        pdf.cell(0, 10, f"{risk.get('overall_rating', 'Unknown')} ({risk.get('overall_score', 0)}/100)", 0, 1)
+        pdf.cell(40, 10, clean_text("Overall Risk:"), 0, 0)
+        pdf.cell(0, 10, clean_text(f"{risk.get('overall_rating', 'Unknown')} ({risk.get('overall_score', 0)}/100)"), 0, 1)
         pdf.ln(15)
 
         # --- Business Impact ---
         if biz:
             pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, "Business Impact Analysis", 0, 1)
+            pdf.cell(0, 10, clean_text("Business Impact Analysis"), 0, 1)
             pdf.set_font("Arial", "", 10)
             
             data = [
                 ("Financial Exposure", biz.get("financial_exposure", "-"), biz.get("estimated_cost", "-")),
-                ("Regulatory Penalty", "High Risk" if "High" in biz.get("regulatory_penalty", "") else "Standard", biz.get("regulatory_penalty", "-")[:80]),
-                ("Brand Reputation", biz.get("brand_reputation", "-")[:30], biz.get("brand_reputation", "-")),
+                ("Regulatory Penalty", "High Risk" if "High" in str(biz.get("regulatory_penalty", "")) else "Standard", str(biz.get("regulatory_penalty", "-"))[:80]),
+                ("Brand Reputation", str(biz.get("brand_reputation", "-"))[:30], biz.get("brand_reputation", "-")),
             ]
             
-            # Simple Table
+            # Table: 50+30+110 = 190
             pdf.set_font("Arial", "B", 10)
-            pdf.cell(50, 8, "Category", 1)
-            pdf.cell(40, 8, "Level", 1)
-            pdf.cell(100, 8, "Details", 1)
+            pdf.cell(50, 8, clean_text("Category"), 1)
+            pdf.cell(30, 8, clean_text("Level"), 1)
+            pdf.cell(0, 8, clean_text("Details"), 1) # Use remaining width
             pdf.ln()
             
             pdf.set_font("Arial", "", 10)
             for row in data:
-                pdf.cell(50, 8, row[0], 1)
-                pdf.cell(40, 8, row[1], 1)
-                pdf.cell(100, 8, row[2], 1)
+                pdf.cell(50, 8, clean_text(row[0]), 1)
+                pdf.cell(30, 8, clean_text(row[1]), 1)
+                pdf.cell(0, 8, clean_text(row[2]), 1)
                 pdf.ln()
             pdf.ln(10)
-
-        # --- Policy Violations ---
-        # Helper to clean text for PDF (latin-1 only for core fonts)
-        def clean_text(text):
-            if not isinstance(text, str): return str(text)
-            # Encode to latin-1, ignoring errors (strips emojis/unsupported chars), then decode back
-            return text.encode('latin-1', 'ignore').decode('latin-1')
 
         # --- Policy Violations ---
         pdf.set_font("Arial", "B", 14)
@@ -101,24 +106,28 @@ class PDFGenerator:
             pdf.cell(0, 10, clean_text("No major violations detected."), 0, 1)
         else:
             for item in evidence:
+                # Ensure X is reset to margin before writing block
+                pdf.set_x(10)
+                
                 pdf.set_font("Arial", "B", 10)
                 sev = clean_text(item.get('severity', 'WARN'))
                 sect = clean_text(item.get('policy_section', 'General'))
-                pdf.cell(0, 8, f"{sev} - {sect}", 0, 1)
+                # Explicit width 190
+                pdf.multi_cell(190, 6, f"{sev} - {sect}")
                 
                 pdf.set_font("Arial", "", 9)
                 desc = clean_text(item.get('issue_description', ''))
-                pdf.multi_cell(0, 6, f"Issue: {desc}")
+                pdf.multi_cell(190, 6, f"Issue: {desc}")
                 
                 pdf.set_font("Courier", "", 8)
                 snip = clean_text(item.get('snippet', ''))
-                pdf.multi_cell(0, 6, f"Snippet: \"{snip}\"")
+                pdf.multi_cell(190, 6, f"Snippet: \"{snip}\"")
                 pdf.ln(3)
 
         # Output
-        # fpdf2 `output()` returns bytes if no dest provided, or use `output(dest='S')`
+        # fpdf2 `output()` returns bytes/bytearray
         try:
-            return pdf.output()
-        except TypeError: # Older versions might need dest='S'.encode('latin-1') logic manually
-            # Fallback for some versions
-            return getattr(pdf, 'output')(dest='S').encode('latin-1')
+            return bytes(pdf.output())
+        except Exception as e:
+            print(f"FAILED TO SERIALIZE PDF: {e}")
+            raise e

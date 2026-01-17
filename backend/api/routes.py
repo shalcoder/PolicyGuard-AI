@@ -216,8 +216,14 @@ async def export_report_pdf(report_id: str):
             headers={"Content-Disposition": f"attachment; filename=compliance_certificate_{report_id}.pdf"}
         )
     except Exception as e:
-        print(f"PDF Gen Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate PDF")
+        import traceback
+        err_msg = f"{str(e)}\n{traceback.format_exc()}"
+        print(f"PDF Gen Error: {err_msg}")
+        # Write to debug file
+        with open("pdf_debug.log", "w") as f:
+            f.write(err_msg)
+            
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
 
 from services.sla_predictor import sla_predictor
 from pydantic import BaseModel
@@ -354,7 +360,8 @@ async def simulate_red_team_attack(workflow: WorkflowDefinition):
             # Remove any trailing markdown fences inside the capture if strict regex missed it
             clean_json = clean_json.replace("```json", "").replace("```", "")
         else:
-            clean_json = analysis_json.strip()
+            print(f"Failed to find JSON in output:\n{analysis_json}")
+            raise HTTPException(status_code=500, detail="AI returned invalid format. Please retry.")
             
         print(f"Red Team JSON: {clean_json[:100]}...")
         
