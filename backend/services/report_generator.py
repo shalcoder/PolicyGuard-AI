@@ -75,10 +75,18 @@ class PDFGenerator:
             pdf.cell(0, 10, clean_text("Business Impact Analysis"), 0, 1)
             pdf.set_font("Arial", "", 10)
             
+            # Helper to guess level from text
+            def get_level(text):
+                t = str(text).lower()
+                if "high" in t or "severe" in t or "critical" in t: return "High"
+                if "medium" in t or "moderate" in t: return "Medium"
+                if "low" in t: return "Low"
+                return "Info"
+
             data = [
                 ("Financial Exposure", biz.get("financial_exposure", "-"), biz.get("estimated_cost", "-")),
-                ("Regulatory Penalty", "High Risk" if "High" in str(biz.get("regulatory_penalty", "")) else "Standard", str(biz.get("regulatory_penalty", "-"))[:80]),
-                ("Brand Reputation", str(biz.get("brand_reputation", "-"))[:30], biz.get("brand_reputation", "-")),
+                ("Regulatory Penalty", get_level(biz.get("regulatory_penalty", "")), str(biz.get("regulatory_penalty", "-"))[:100]),
+                ("Brand Reputation", get_level(biz.get("brand_reputation", "")), str(biz.get("brand_reputation", "-"))[:100]),
             ]
             
             # Table: 50+30+110 = 190
@@ -117,10 +125,12 @@ class PDFGenerator:
                 
                 pdf.set_font("Arial", "", 9)
                 desc = clean_text(item.get('issue_description', ''))
+                pdf.set_x(10) # FORCE RESET X
                 pdf.multi_cell(190, 6, f"Issue: {desc}")
                 
                 pdf.set_font("Courier", "", 8)
                 snip = clean_text(item.get('snippet', ''))
+                pdf.set_x(10) # FORCE RESET X
                 pdf.multi_cell(190, 6, f"Snippet: \"{snip}\"")
                 pdf.ln(3)
 
