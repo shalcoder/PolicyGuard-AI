@@ -160,7 +160,7 @@ export default function MonitorPage() {
                                                 <tr key={trace.id} className="bg-white dark:bg-zinc-950 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors animate-in fade-in slide-in-from-top-2 duration-300">
                                                     <td className="px-6 py-4 font-mono text-gray-500">{trace.timestamp}</td>
                                                     <td className="px-6 py-4 font-medium">{trace.id}</td>
-                                                    <td className="px-6 py-4">{trace.agent}</td>
+                                                    <td className="px-6 py-4 truncate max-w-[200px]" title={trace.agent}>{trace.agent}</td>
                                                     <td className="px-6 py-4">{trace.action}</td>
                                                     <td className="px-6 py-4">
                                                         {trace.status === 'pass' && <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">PASS</Badge>}

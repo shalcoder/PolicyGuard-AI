@@ -163,7 +163,7 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
         try:
             result_data = json.loads(clean_json)
             # Direct Pydantic validation
-            report = ComplianceReport(**result_data)
+            report = ComplianceReport(workflow_name=workflow.name, **result_data)
             
             # Save Report to History
             policy_db.add_evaluation(report.model_dump())

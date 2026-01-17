@@ -404,7 +404,7 @@ class PolicyStorage:
             traces.append({
                 "id": f"TR-{1000 + idx}",
                 "timestamp": datetime.datetime.fromisoformat(entry['timestamp']).strftime("%H:%M:%S"),
-                "agent": spec.get('primary_purpose', 'AI Agent')[:20],
+                "agent": report.get('workflow_name') or spec.get('agent_name') or " ".join(spec.get('primary_purpose', 'AI Agent').split()[:2]),
                 "action": "Policy Scan",
                 "status": status,
                 "details": verdict.get('status_label', 'Evaluated')

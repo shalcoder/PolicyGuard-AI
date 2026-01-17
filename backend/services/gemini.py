@@ -116,6 +116,7 @@ class GeminiService:
         OUTPUT FORMAT (Strict JSON, no markdown):
         {{
             "system_spec": {{
+                "agent_name": "Short, descriptive name for the agent (2-4 words max). e.g. 'Mortgage Assistant'",
                 "summary": "Technical summary of the inferred system.",
                 "primary_purpose": "...",
                 "decision_authority": "Human vs AI",

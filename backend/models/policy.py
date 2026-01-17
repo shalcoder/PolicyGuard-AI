@@ -16,6 +16,7 @@ class WorkflowDefinition(BaseModel):
 # --- New Report Structure Models ---
 
 class AISystemSpec(BaseModel):
+    agent_name: str # e.g. "MortgageBot", "PaymentAssistant"
     summary: str
     primary_purpose: str
     decision_authority: str
@@ -84,6 +85,7 @@ class BusinessImpact(BaseModel):
     estimated_cost: str # "$50k - $200k"
 
 class ComplianceReport(BaseModel):
+    workflow_name: Optional[str] = None # Preserved from input
     system_spec: AISystemSpec
     data_map: DataInteractionMap
     policy_matrix: List[PolicyAlignment]
