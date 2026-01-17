@@ -1,7 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Activity, CheckCircle, ShieldAlert, FileText, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Activity, CheckCircle, ShieldAlert, FileText, TrendingUp, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -89,9 +90,9 @@ export default function OverviewPage() {
                 <p className="text-gray-500 dark:text-gray-400 mt-2">Real-time compliance posture and risk analytics.</p>
             </div>
 
-            {/* KPI Cards */}
+            {/* KPI Cards Row - Animated & Interactive */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="shadow-sm border-l-4 border-l-blue-500">
+                <Card className="shadow-sm border-l-4 border-l-blue-500 hover:scale-105 transition-transform duration-200 cursor-default bg-white dark:bg-zinc-900">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Traces Analyzed</CardTitle>
                         <Activity className="h-4 w-4 text-blue-500" />
@@ -101,7 +102,7 @@ export default function OverviewPage() {
                         <p className="text-xs text-gray-500">Total AI workflow evaluations</p>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm border-l-4 border-l-red-500">
+                <Card className="shadow-sm border-l-4 border-l-red-500 hover:scale-105 transition-transform duration-200 cursor-default bg-white dark:bg-zinc-900">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Critical Violations</CardTitle>
                         <ShieldAlert className="h-4 w-4 text-red-500" />
@@ -111,17 +112,17 @@ export default function OverviewPage() {
                         <p className="text-xs text-gray-500">Blocked high-risk deployments</p>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm border-l-4 border-l-indigo-500">
+                <Card className="shadow-sm border-l-4 border-l-indigo-500 hover:scale-105 transition-transform duration-200 cursor-default bg-white dark:bg-zinc-900">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Policies</CardTitle>
-                        <FileText className="h-4 w-4 text-gray-500" />
+                        <FileText className="h-4 w-4 text-indigo-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.active_policies}</div>
                         <p className="text-xs text-gray-500">Enforced across all agents</p>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm border-l-4 border-l-green-500">
+                <Card className="shadow-sm border-l-4 border-l-green-500 hover:scale-105 transition-transform duration-200 cursor-default bg-white dark:bg-zinc-900">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Compliance Score</CardTitle>
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -133,86 +134,11 @@ export default function OverviewPage() {
                 </Card>
             </div>
 
-            {/* Business Impact Signals (BizOps) */}
-            {stats.top_business_risks && (
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card
-                        className="bg-gradient-to-br from-white to-red-50 dark:from-zinc-900 dark:to-red-950/20 shadow-sm border-l-4 border-l-orange-500 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setSelectedRisk({
-                            title: "Financial Exposure",
-                            icon: "💰",
-                            text: stats.top_business_risks!.financial,
-                            subtext: stats.top_business_risks!.financial_cost,
-                            type: "Cost Estimate"
-                        })}
-                    >
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center text-orange-700 dark:text-orange-400">
-                                <span className="mr-2">💰</span> Financial Exposure
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.top_business_risks.financial}</div>
-                            <p className="text-sm font-semibold text-red-600 mt-1">{stats.top_business_risks.financial_cost}</p>
-                            <p className="text-xs text-gray-500 mt-1">Est. Remediation Cost</p>
-                            <button className="text-xs text-blue-600 dark:text-blue-400 underline mt-2">Read full report</button>
-                        </CardContent>
-                    </Card>
-
-                    <Card
-                        className="bg-gradient-to-br from-white to-blue-50 dark:from-zinc-900 dark:to-blue-950/20 shadow-sm border-l-4 border-l-blue-500 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setSelectedRisk({
-                            title: "Regulatory Penalty",
-                            icon: "⚖️",
-                            text: stats.top_business_risks!.regulatory,
-                            subtext: "Legal Liability Analysis",
-                            type: "Compliance Impact"
-                        })}
-                    >
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center text-blue-700 dark:text-blue-400">
-                                <span className="mr-2">⚖️</span> Regulatory Penalty
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-3">
-                                {stats.top_business_risks.regulatory}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">Legal Liability</p>
-                            <button className="text-xs text-blue-600 dark:text-blue-400 underline mt-2">Read full report</button>
-                        </CardContent>
-                    </Card>
-
-                    <Card
-                        className="bg-gradient-to-br from-white to-purple-50 dark:from-zinc-900 dark:to-purple-950/20 shadow-sm border-l-4 border-l-purple-500 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setSelectedRisk({
-                            title: "Brand Reputation",
-                            icon: "📢",
-                            text: stats.top_business_risks!.brand,
-                            subtext: "Public Trust Impact Analysis",
-                            type: "Reputation Impact"
-                        })}
-                    >
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center text-purple-700 dark:text-purple-400">
-                                <span className="mr-2">📢</span> Brand Reputation
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-sm font-bold text-gray-900 dark:text-gray-100 line-clamp-3">
-                                {stats.top_business_risks.brand}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">Public Trust Impact</p>
-                            <button className="text-xs text-blue-600 dark:text-blue-400 underline mt-2">Read full report</button>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* Chart Section */}
+            {/* Main Content Grid: Charts + Risk Widget */}
             <div className="grid gap-4 md:grid-cols-7">
-                {/* Trend Chart (4 cols) */}
-                <Card className="col-span-4 shadow-sm">
+
+                {/* 1. Compliance Trend Chart (Left - Wider) */}
+                <Card className="col-span-4 lg:col-span-5 shadow-sm border-0 ring-1 ring-gray-200 dark:ring-zinc-800">
                     <CardHeader>
                         <CardTitle className="flex items-center">
                             <TrendingUp className="mr-2 h-5 w-5 text-blue-600" />
@@ -243,8 +169,126 @@ export default function OverviewPage() {
                     </CardContent>
                 </Card>
 
+                {/* 2. Compact Business Risk Widget (Right) */}
+                <Card className="col-span-3 lg:col-span-2 shadow-sm border-0 ring-1 ring-gray-200 dark:ring-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-orange-500" />
+                            Business Impact
+                        </CardTitle>
+                        <CardDescription className="text-xs">Projected risks based on current violations.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {stats.top_business_risks ? (
+                            <Tabs defaultValue="financial" className="w-full">
+                                <TabsList className="grid w-full grid-cols-3 mb-4">
+                                    <TabsTrigger value="financial" className="text-xs">💰 Cost</TabsTrigger>
+                                    <TabsTrigger value="legal" className="text-xs">⚖️ Legal</TabsTrigger>
+                                    <TabsTrigger value="brand" className="text-xs">📢 Brand</TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="financial" className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="p-3 bg-white dark:bg-zinc-800 rounded-lg border border-red-100 dark:border-red-900/30 shadow-sm">
+                                        <h4 className="font-bold text-red-600 mb-1">{stats.top_business_risks.financial_cost}</h4>
+                                        <p className="text-xs text-gray-500 mb-2">Est. Remediation</p>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+                                            {stats.top_business_risks.financial}
+                                        </p>
+                                    </div>
+                                    <button
+                                        className="text-xs text-blue-600 hover:underline w-full text-right"
+                                        onClick={() => setSelectedRisk({
+                                            title: "Financial Exposure", icon: "💰", text: stats.top_business_risks!.financial, subtext: stats.top_business_risks!.financial_cost, type: "Cost Estimate"
+                                        })}
+                                    >
+                                        Read Analysis →
+                                    </button>
+                                </TabsContent>
+
+                                <TabsContent value="legal" className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="p-3 bg-white dark:bg-zinc-800 rounded-lg border border-blue-100 dark:border-blue-900/30 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">GDPR/CCPA</span>
+                                        </div>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug line-clamp-4">
+                                            {stats.top_business_risks.regulatory}
+                                        </p>
+                                    </div>
+                                    <button
+                                        className="text-xs text-blue-600 hover:underline w-full text-right"
+                                        onClick={() => setSelectedRisk({
+                                            title: "Regulatory Penalty", icon: "⚖️", text: stats.top_business_risks!.regulatory, subtext: "Legal Liability Analysis", type: "Compliance Impact"
+                                        })}
+                                    >
+                                        Read Analysis →
+                                    </button>
+                                </TabsContent>
+
+                                <TabsContent value="brand" className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="p-3 bg-white dark:bg-zinc-800 rounded-lg border border-purple-100 dark:border-purple-900/30 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Trust Score</span>
+                                        </div>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug line-clamp-4">
+                                            {stats.top_business_risks.brand}
+                                        </p>
+                                    </div>
+                                    <button
+                                        className="text-xs text-blue-600 hover:underline w-full text-right"
+                                        onClick={() => setSelectedRisk({
+                                            title: "Brand Reputation", icon: "📢", text: stats.top_business_risks!.brand, subtext: "Public Trust Impact Analysis", type: "Reputation Impact"
+                                        })}
+                                    >
+                                        Read Analysis →
+                                    </button>
+                                </TabsContent>
+                            </Tabs>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-[200px] text-gray-400">
+                                <ShieldCheck className="w-8 h-8 mb-2 opacity-50" />
+                                <span className="text-xs">No critical business risks detected.</span>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Bottom Row: Recent & Distribution */}
+            <div className="grid gap-4 md:grid-cols-7">
+                {/* Recent Activity */}
+                <Card className="col-span-4 lg:col-span-5 shadow-sm">
+                    <CardHeader>
+                        <CardTitle>Recent Evaluations</CardTitle>
+                        <CardDescription>Latest audit logs from the AI Gatekeeper</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {stats.recent_evaluations.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-dashed border-gray-200">
+                                    No evaluations yet. Run an audit to populate this feed.
+                                </div>
+                            ) : (
+                                stats.recent_evaluations.map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 rounded-lg hover:shadow-md transition-shadow">
+                                        <div className="flex items-center">
+                                            <div className={`h-2 w-2 rounded-full mr-3 ${item.verdict === 'PASS' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                            <div>
+                                                <p className="font-medium text-gray-900 dark:text-gray-100">{item.workflow_name}</p>
+                                                <p className="text-xs text-gray-500">{getRelativeTime(item.timestamp)}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`px-3 py-1 rounded-full text-xs font-bold ${item.verdict === 'PASS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {item.verdict}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Risk Distribution Chart (3 cols) */}
-                <Card className="col-span-3 shadow-sm">
+                <Card className="col-span-3 lg:col-span-2 shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center">
                             <AlertTriangle className="mr-2 h-5 w-5 text-orange-500" />
