@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, CheckCircle, ShieldAlert, FileText, TrendingUp, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Activity, CheckCircle, ShieldAlert, FileText, TrendingUp, AlertTriangle, ShieldCheck, DollarSign, Scale, Megaphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -182,9 +182,9 @@ export default function OverviewPage() {
                         {stats.top_business_risks ? (
                             <Tabs defaultValue="financial" className="w-full">
                                 <TabsList className="grid w-full grid-cols-3 mb-4">
-                                    <TabsTrigger value="financial" className="text-xs">💰 Cost</TabsTrigger>
-                                    <TabsTrigger value="legal" className="text-xs">⚖️ Legal</TabsTrigger>
-                                    <TabsTrigger value="brand" className="text-xs">📢 Brand</TabsTrigger>
+                                    <TabsTrigger value="financial" className="text-xs flex items-center justify-center gap-1"><DollarSign className="w-3 h-3" /> Cost</TabsTrigger>
+                                    <TabsTrigger value="legal" className="text-xs flex items-center justify-center gap-1"><Scale className="w-3 h-3" /> Legal</TabsTrigger>
+                                    <TabsTrigger value="brand" className="text-xs flex items-center justify-center gap-1"><Megaphone className="w-3 h-3" /> Brand</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="financial" className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -198,7 +198,7 @@ export default function OverviewPage() {
                                     <button
                                         className="text-xs text-blue-600 hover:underline w-full text-right"
                                         onClick={() => setSelectedRisk({
-                                            title: "Financial Exposure", icon: "💰", text: stats.top_business_risks!.financial, subtext: stats.top_business_risks!.financial_cost, type: "Cost Estimate"
+                                            title: "Financial Exposure", icon: <DollarSign className="w-8 h-8 text-orange-500" />, text: stats.top_business_risks!.financial, subtext: stats.top_business_risks!.financial_cost, type: "Cost Estimate"
                                         })}
                                     >
                                         Read Analysis →
@@ -217,7 +217,7 @@ export default function OverviewPage() {
                                     <button
                                         className="text-xs text-blue-600 hover:underline w-full text-right"
                                         onClick={() => setSelectedRisk({
-                                            title: "Regulatory Penalty", icon: "⚖️", text: stats.top_business_risks!.regulatory, subtext: "Legal Liability Analysis", type: "Compliance Impact"
+                                            title: "Regulatory Penalty", icon: <Scale className="w-8 h-8 text-blue-500" />, text: stats.top_business_risks!.regulatory, subtext: "Legal Liability Analysis", type: "Compliance Impact"
                                         })}
                                     >
                                         Read Analysis →
@@ -236,7 +236,7 @@ export default function OverviewPage() {
                                     <button
                                         className="text-xs text-blue-600 hover:underline w-full text-right"
                                         onClick={() => setSelectedRisk({
-                                            title: "Brand Reputation", icon: "📢", text: stats.top_business_risks!.brand, subtext: "Public Trust Impact Analysis", type: "Reputation Impact"
+                                            title: "Brand Reputation", icon: <Megaphone className="w-8 h-8 text-purple-500" />, text: stats.top_business_risks!.brand, subtext: "Public Trust Impact Analysis", type: "Reputation Impact"
                                         })}
                                     >
                                         Read Analysis →
