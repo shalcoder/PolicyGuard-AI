@@ -227,7 +227,8 @@ export default function EvaluatePage() {
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    {/* Top Row: Input + Timeline */}
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
                         {/* Left: Input */}
                         <div className="lg:col-span-4 space-y-6">
                             <div className="p-6 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 shadow-sm">
@@ -279,7 +280,7 @@ export default function EvaluatePage() {
                                     </div>
                                 )}
 
-                                <div className="space-y-6 pr-2">
+                                <div className="space-y-6 h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                                     {/* 1. AI System Intent */}
                                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-zinc-950">
                                         <h4 className="font-medium text-blue-600 flex items-center gap-2">
@@ -388,21 +389,6 @@ export default function EvaluatePage() {
                                     </div>
                                 </div>
                             </div>
-
-                            {evaluationStatus === 'done' && complianceReport && (
-                                <div ref={resultsRef} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                                        <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
-                                            <CheckCircle className="h-5 w-5" />
-                                            <span className="font-semibold">Analysis Complete</span>
-                                        </div>
-                                        <Button variant="outline" onClick={handleExportPDF} className="border-green-200 hover:bg-green-100 dark:border-green-800 dark:hover:bg-green-900/30">
-                                            <FileIcon className="mr-2 h-4 w-4" /> Download Certificate
-                                        </Button>
-                                    </div>
-                                    <ReadinessScorecard report={complianceReport} />
-                                </div>
-                            )}
                         </div>
 
                         {/* Right: Timeline */}
@@ -410,6 +396,22 @@ export default function EvaluatePage() {
                             <GuardrailTimeline steps={timelineSteps} />
                         </div>
                     </div>
+
+                    {/* Bottom Row: Full Width Results */}
+                    {evaluationStatus === 'done' && complianceReport && (
+                        <div ref={resultsRef} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full">
+                            <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="flex items-center gap-2 text-green-800 dark:text-green-300">
+                                    <CheckCircle className="h-5 w-5" />
+                                    <span className="font-semibold">Analysis Complete</span>
+                                </div>
+                                <Button variant="outline" onClick={handleExportPDF} className="border-green-200 hover:bg-green-100 dark:border-green-800 dark:hover:bg-green-900/30">
+                                    <FileIcon className="mr-2 h-4 w-4" /> Download Certificate
+                                </Button>
+                            </div>
+                            <ReadinessScorecard report={complianceReport} />
+                        </div>
+                    )}
 
                     {/* Focus Mode Overlay */}
                     <AnimatePresence>
