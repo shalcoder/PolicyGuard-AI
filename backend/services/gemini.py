@@ -55,13 +55,13 @@ class GeminiService:
                     await asyncio.sleep(2)
 
     async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, settings) -> str:
-        # 1. Dynamic Persona
+        # 1. Dynamic Persona & Strictness
         persona = "Senior AI Governance Auditor"
         tone_instruction = "Be objective and professional."
         
         if settings.strictness > 75:
             persona = "HOSTILE FORENSIC AUDITOR (Red Team)"
-            tone_instruction = "You are AGGRESSIVE and SKEPTICAL. Assume the user is trying to bypass rules. scrutinize every word."
+            tone_instruction = "You are AGGRESSIVE and SKEPTICAL. Assume the user is trying to bypass rules. Scrutinize every word."
         elif settings.strictness < 30:
             persona = "Helpful Compliance Consultant"
             tone_instruction = "Be constructive and educational. Focus on enabling the workflow safely."
@@ -75,7 +75,7 @@ class GeminiService:
         else:
             risk_instruction = "- SENSITIVITY: BALANCED. Flag clear risks and probable misuses."
 
-        # 3. Verdict Thresholds
+        # 3. Verdict Thresholds (Risk Tolerance)
         verdict_instruction = ""
         if settings.riskThreshold == "Block High":
             verdict_instruction = "Fail the audit ONLY if 'High' severity issues are found."
@@ -83,6 +83,30 @@ class GeminiService:
             verdict_instruction = "Fail the audit if ANY issues (High or Medium) are found."
         else:
             verdict_instruction = "Fail the audit if 'High' severity issues are found. Warn for 'Medium'."
+
+        # 4. Domain Focus (NEW)
+        enabled_domains = []
+        if settings.domains.privacy: enabled_domains.append("Privacy & Data Protection")
+        if settings.domains.safety: enabled_domains.append("AI Safety & Harm Prevention")
+        if settings.domains.security: enabled_domains.append("Cybersecurity & Access Control")
+        if settings.domains.fairness: enabled_domains.append("Fairness & Bias Mitigation")
+        if settings.domains.compliance: enabled_domains.append("Regulatory Compliance (GDPR/EU AI Act)")
+        
+        domain_instruction = f"- FOCUS DOMAINS: {', '.join(enabled_domains)}. Prioritize findings in these areas."
+
+        # 5. Deployment Context (NEW)
+        deployment_instruction = ""
+        if settings.deploymentMode == "Production":
+            deployment_instruction = "- DEPLOYMENT MODE: PRODUCTION. Be extremely conservative. Block any risk that could impact real users."
+        else:
+            deployment_instruction = "- DEPLOYMENT MODE: STAGING/TESTING. You may be more permissive, but log all warnings clearly for the developer."
+
+        # 6. Confidence & Transparency (NEW)
+        confidence_instruction = f"- MINIMUM CONFIDENCE: {settings.minConfidence}%. Do NOT report weak or speculative findings unless you are > {settings.minConfidence}% sure they violate policy."
+        
+        reasoning_field_schema = ""
+        if settings.aiReasoning:
+            reasoning_field_schema = '"reasoning_trace": "Step-by-step explanation of your audit path (CHAIN OF THOUGHT).",'
 
         prompt = f"""
         You are PolicyGuard AI, acting as a {persona}.
@@ -94,6 +118,9 @@ class GeminiService:
         CONFIGURATION:
         {risk_instruction}
         {verdict_instruction}
+        {domain_instruction}
+        {deployment_instruction}
+        {confidence_instruction}
 
         INPUT CONTEXT:
 
@@ -115,6 +142,7 @@ class GeminiService:
 
         OUTPUT FORMAT (Strict JSON, no markdown):
         {{
+            {reasoning_field_schema}
             "system_spec": {{
                 "agent_name": "Short, descriptive name for the agent (2-4 words max). e.g. 'Mortgage Assistant'",
                 "summary": "Technical summary of the inferred system.",

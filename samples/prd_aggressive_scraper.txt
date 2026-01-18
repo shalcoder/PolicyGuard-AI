@@ -1,0 +1,19 @@
+# PRD: Social Media Sentiment Bot
+
+## 1. Objective
+Build an AI bot that scrapes social media to determine user sentiment about our brand.
+
+## 2. Data Collection Strategy
+*   **Source**: Twitter/X, Reddit public APIs, and *web scraping* where APIs are limited.
+*   **Data Points**:
+    *   Post content
+    *   Usernames (to track repeat detractors)
+    *   Profile Bios (to categorize user demographics)
+    *   Locations (inferred or explicit)
+
+## 3. Storage & Processing
+*   We need to store the *raw JSON* of every post effectively forever to train future models.
+*   **Sharing**: The raw dataset will be shared with our partner "AnalyticsCorp" for deeper sentiment scoring (they require full context, so no redaction).
+
+## 4. Operational "Speed Lanes"
+*   If the bot detects a "Viral PR Crisis" (sentiment < -0.8 for > 1000 posts), it should automatically DM the users offering a discount code. This requires instant access to the user ID database without manual approval.

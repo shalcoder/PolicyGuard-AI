@@ -1,0 +1,14 @@
+# Financial Data Security Policy (Strict)
+
+## A. Classification
+1. **Critical Financial Data (CFD)**: Credit Card numbers, Bank Account IBANs, SSNs, and Transaction Layouts.
+2. **Standard Data**: Names, Emails.
+
+## B. Storage & Transit
+1. **CFD MUST NEVER** be stored in plain text. It must be hashed (SHA-256) or encrypted (AES-256) at rest.
+2. **CFD MUST NEVER** leave the Secure Enclave Environment (SEE). No export to external partners, no moving to "Development" or "Staging" environments.
+3. **Logs**: Application logs must absolutely NOT contain CFD.
+
+## C. AI Interaction
+1. AI Models are **strictly prohibited** from receiving CFD in the prompt context.
+2. AI may only receive "Transaction IDs" or "Risk Scores" (integers).

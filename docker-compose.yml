@@ -16,7 +16,7 @@ services:
       # Application Settings
       - PYTHONUNBUFFERED=1
       # Google API Key (Loaded from backend/.env if present, or passed from host)
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3-pro-preview}
     # No external DB dependencies for MVP (Using File Storage)
 
