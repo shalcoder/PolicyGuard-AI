@@ -197,14 +197,20 @@ export default function SettingsPage() {
     };
 
     const GroupHeader = ({ title, description }: { title: string, description?: string }) => (
-        <div className="mb-3 px-1">
-            <h3 className="text-lg font-semibold tracking-tight text-gray-900">{title}</h3>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        <div className="mb-5 px-1">
+            <h3 className="text-xl font-semibold tracking-tight text-foreground">{title}</h3>
+            {description && <p className="text-sm text-muted-foreground mt-1.5">{description}</p>}
         </div>
     );
 
-    const SettingsRow = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-        <div className={cn("flex items-center justify-between p-4 bg-white first:rounded-t-xl last:rounded-b-xl border-b last:border-b-0 border-gray-100", className)}>
+    const SettingsGroup = ({ children }: { children: React.ReactNode }) => (
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm px-6">
+            {children}
+        </div>
+    );
+
+    const SettingsRow = ({ children, className, noDivider }: { children: React.ReactNode, className?: string, noDivider?: boolean }) => (
+        <div className={cn("flex items-center justify-between py-5", !noDivider && "border-b border-border/40", className)}>
             {children}
         </div>
     );
@@ -214,7 +220,7 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-6">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">Settings</h2>
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground">Settings</h2>
                     <p className="text-muted-foreground mt-1 text-base">
                         Manage your agent governance and policies.
                     </p>
@@ -277,7 +283,7 @@ export default function SettingsPage() {
                     {activeSection === 'general' && (
                         <div className="max-w-2xl">
                             <GroupHeader title="Environment" description="Configure the lifecycle stage and region." />
-                            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+                            <SettingsGroup>
                                 <SettingsRow>
                                     <div className="space-y-0.5">
                                         <Label className="text-base font-medium">Deployment Mode</Label>
@@ -294,7 +300,7 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </SettingsRow>
-                                <SettingsRow>
+                                <SettingsRow noDivider>
                                     <div className="space-y-0.5">
                                         <Label className="text-base font-medium">Region</Label>
                                         <p className="text-sm text-muted-foreground">Data sovereignty compliance.</p>
@@ -311,7 +317,7 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </SettingsRow>
-                            </div>
+                            </SettingsGroup>
 
                             <div className="mt-4 px-1">
                                 <div className={cn(
@@ -329,9 +335,9 @@ export default function SettingsPage() {
                         <div className="grid gap-8 md:grid-cols-2">
                             <div>
                                 <GroupHeader title="Risk Scope" />
-                                <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-                                    {Object.entries(settings.domains).map(([key, val]) => (
-                                        <SettingsRow key={key}>
+                                <SettingsGroup>
+                                    {Object.entries(settings.domains).map(([key, val], idx, arr) => (
+                                        <SettingsRow key={key} noDivider={idx === arr.length - 1}>
                                             <Label htmlFor={`domain-${key}`} className="text-base font-normal capitalize flex-1 cursor-pointer">{key}</Label>
                                             <Switch
                                                 id={`domain-${key}`}
@@ -340,13 +346,14 @@ export default function SettingsPage() {
                                             />
                                         </SettingsRow>
                                     ))}
-                                </div>
+                                </SettingsGroup>
                             </div>
 
                             <div className="space-y-8">
                                 <div>
                                     <GroupHeader title="Sensitivity" />
-                                    <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+
+                                    <SettingsGroup>
                                         <SettingsRow>
                                             <Label className="text-base">Level</Label>
                                             <Select value={settings.sensitivity} onValueChange={(v) => updateDirect('sensitivity', v)}>
@@ -360,7 +367,7 @@ export default function SettingsPage() {
                                                 </SelectContent>
                                             </Select>
                                         </SettingsRow>
-                                        <SettingsRow>
+                                        <SettingsRow noDivider>
                                             <Label className="text-base">Action</Label>
                                             <Select value={settings.riskThreshold} onValueChange={(v) => updateDirect('riskThreshold', v)}>
                                                 <SelectTrigger className="w-[160px] border-none shadow-none text-right font-medium text-blue-600 focus:ring-0 h-auto p-0">
@@ -373,7 +380,7 @@ export default function SettingsPage() {
                                                 </SelectContent>
                                             </Select>
                                         </SettingsRow>
-                                    </div>
+                                    </SettingsGroup>
                                 </div>
 
                                 <div>
@@ -414,8 +421,9 @@ export default function SettingsPage() {
                     {activeSection === 'guardrails' && (
                         <div className="max-w-2xl">
                             <GroupHeader title="Enforcement" />
-                            <div className="rounded-xl border bg-white shadow-sm overflow-hidden mb-6">
-                                <SettingsRow>
+
+                            <SettingsGroup>
+                                <SettingsRow noDivider>
                                     <div className="space-y-0.5">
                                         <Label className="text-base">Violation Action</Label>
                                         <p className="text-xs text-muted-foreground">What happens when policies fail.</p>
@@ -432,10 +440,11 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </SettingsRow>
-                            </div>
+                            </SettingsGroup>
 
                             <GroupHeader title="Explainability" />
-                            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+
+                            <SettingsGroup>
                                 <SettingsRow>
                                     <Label className="text-base font-normal flex-1">Explain Decisions</Label>
                                     <Switch
@@ -443,14 +452,14 @@ export default function SettingsPage() {
                                         onCheckedChange={(c) => updateDirect('guardrailExplain', c)}
                                     />
                                 </SettingsRow>
-                                <SettingsRow>
+                                <SettingsRow noDivider>
                                     <Label className="text-base font-normal flex-1">Include Citations</Label>
                                     <Switch
                                         checked={settings.guardrailCite}
                                         onCheckedChange={(c) => updateDirect('guardrailCite', c)}
                                     />
                                 </SettingsRow>
-                            </div>
+                            </SettingsGroup>
                         </div>
                     )}
 
@@ -462,7 +471,7 @@ export default function SettingsPage() {
                                         key={key}
                                         className={cn(
                                             "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer",
-                                            val ? "bg-white border-blue-200 shadow-sm ring-1 ring-blue-100" : "bg-gray-50 border-transparent opacity-80"
+                                            val ? "bg-card border-blue-200 shadow-sm ring-1 ring-blue-100" : "bg-card/50 border-transparent opacity-80"
                                         )}
                                         onClick={() => updateSetting('sources', key, !val)}
                                     >
@@ -492,7 +501,8 @@ export default function SettingsPage() {
                         <div className="max-w-2xl space-y-8">
                             <div>
                                 <GroupHeader title="Channels" />
-                                <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+
+                                <SettingsGroup>
                                     <SettingsRow>
                                         <div className="flex items-center gap-3">
                                             <div className="p-1.5 bg-orange-100 rounded text-orange-600"><Bell className="h-3.5 w-3.5" /></div>
@@ -500,26 +510,27 @@ export default function SettingsPage() {
                                         </div>
                                         <Switch checked={settings.notifications.email} onCheckedChange={(c) => updateSetting('notifications', 'email', c)} />
                                     </SettingsRow>
-                                    <SettingsRow>
+                                    <SettingsRow noDivider>
                                         <div className="flex items-center gap-3">
                                             <div className="p-1.5 bg-purple-100 rounded text-purple-600"><Network className="h-3.5 w-3.5" /></div>
                                             <Label className="text-base font-normal">Slack / Discord</Label>
                                         </div>
                                         <Switch checked={settings.notifications.slack} onCheckedChange={(c) => updateSetting('notifications', 'slack', c)} />
                                     </SettingsRow>
-                                </div>
+                                </SettingsGroup>
                             </div>
 
                             <div>
                                 <GroupHeader title="Triggers" />
-                                <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-                                    {Object.entries(settings.notifications.triggers).map(([key, val]) => (
-                                        <SettingsRow key={key}>
+
+                                <SettingsGroup>
+                                    {Object.entries(settings.notifications.triggers).map(([key, val], idx, arr) => (
+                                        <SettingsRow key={key} noDivider={idx === arr.length - 1}>
                                             <Label className="capitalize font-normal text-base">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
                                             <Switch checked={val} onCheckedChange={(c) => updateSetting('notifications', 'triggers', { ...settings.notifications.triggers, [key]: c })} />
                                         </SettingsRow>
                                     ))}
-                                </div>
+                                </SettingsGroup>
                             </div>
                         </div>
                     )}
@@ -527,7 +538,8 @@ export default function SettingsPage() {
                     {activeSection === 'audit' && (
                         <div className="max-w-2xl">
                             <GroupHeader title="Compliance" />
-                            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+
+                            <SettingsGroup>
                                 <SettingsRow>
                                     <Label className="text-base font-medium">Log Level</Label>
                                     <Select value={settings.auditLevel} onValueChange={(v) => updateDirect('auditLevel', v)}>
@@ -541,7 +553,7 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </SettingsRow>
-                                <SettingsRow>
+                                <SettingsRow noDivider>
                                     <Label className="text-base font-medium">Retention</Label>
                                     <Select value={settings.auditRetention} onValueChange={(v) => updateDirect('auditRetention', v)}>
                                         <SelectTrigger className="w-[180px]">
@@ -555,14 +567,15 @@ export default function SettingsPage() {
                                         </SelectContent>
                                     </Select>
                                 </SettingsRow>
-                            </div>
+                            </SettingsGroup>
                         </div>
                     )}
 
                     {activeSection === 'ai' && (
                         <div className="max-w-2xl">
                             <GroupHeader title="Transparency" description="Control how much internal reasoning is revealed." />
-                            <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+
+                            <SettingsGroup>
                                 <SettingsRow>
                                     <div className="space-y-0.5">
                                         <Label className="text-base">Reasoning Steps</Label>
@@ -570,14 +583,14 @@ export default function SettingsPage() {
                                     </div>
                                     <Switch checked={settings.aiReasoning} onCheckedChange={(c) => updateDirect('aiReasoning', c)} />
                                 </SettingsRow>
-                                <SettingsRow>
+                                <SettingsRow noDivider>
                                     <div className="space-y-0.5">
                                         <Label className="text-base">Conflict Alerts</Label>
                                         <p className="text-xs text-muted-foreground">Highlight policy contradictions.</p>
                                     </div>
                                     <Switch checked={settings.aiConflict} onCheckedChange={(c) => updateDirect('aiConflict', c)} />
                                 </SettingsRow>
-                            </div>
+                            </SettingsGroup>
                         </div>
                     )}
                 </motion.div>
