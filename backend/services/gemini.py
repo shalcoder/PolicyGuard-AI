@@ -479,7 +479,35 @@ class GeminiService:
         )
         return response.text
 
-    async def generate_guardrail_code(self, policy_summary: str, language: str = "python") -> str:
+    async def remediate_spec_stream(self, original_text: str, violations: list):
+        prompt = f"""
+        You are a Chief Compliance Officer & Technical Writer.
+        
+        TASK:
+        Rewrite the following SYSTEM SPECIFICATION to purely and explicitly fix the cited policy violations.
+        
+        VIOLATIONS TO FIX:
+        {violations}
+        
+        INPUT SPECIFICATION:
+        {original_text[:15000]}
+        
+        INSTRUCTIONS:
+        1. Keep the original structure and intent.
+        2. Insert specific clauses/controls to address each violation.
+        3. Highlight your changes by wrapping them in **bold**.
+        
+        OUTPUT:
+        Stream the rewritten document text immediately.
+        """
+        async for chunk in await self.client.models.generate_content_stream(
+            model=settings.GEMINI_MODEL,
+            contents=prompt
+        ):
+            if chunk.text:
+                yield chunk.text
+
+    async def generate_guardrail_code_stream(self, policy_summary: str, language: str = "python"):
         if language.lower() == "python":
             lang_instruction = "Generate a Python `Pydantic` model with `@validator` methods."
         elif language.lower() == "java":
@@ -514,22 +542,12 @@ class GeminiService:
         Return ONLY the raw code (no markdown fences if possible, or standard markdown).
         """
         
-        response = await self._generate_with_retry(
+        async for chunk in await self.client.models.generate_content_stream(
             model=settings.GEMINI_MODEL,
             contents=prompt
-        )
-        # For code we might want to strip backticks too, but usually we display them. 
-        # But user wants a "Terminal" view, so raw code is better.
-        text = response.text
-        # Naive strip of backticks for code to raw text
-        if text.strip().startswith("```"):
-            lines = text.strip().split('\n')
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines[-1].startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines)
-        return text
+        ):
+            if chunk.text:
+               yield chunk.text
 
     async def explain_remediation_strategy(self, violations: list, original_text: str) -> str:
         prompt = f"""

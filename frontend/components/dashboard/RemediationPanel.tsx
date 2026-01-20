@@ -44,6 +44,7 @@ export function RemediationPanel({ originalText, violations, policySummary }: Re
 
     const fixDoc = async () => {
         setIsFixing(true);
+        setRemediatedDoc(""); // Clear previous
         try {
             const violationStrings = violations.map(v => `${v.policy_area}: ${v.reason}`);
             const res = await fetch(`${serverUrl}/api/v1/remediate/doc`, {
@@ -54,22 +55,40 @@ export function RemediationPanel({ originalText, violations, policySummary }: Re
                     violations: violationStrings
                 })
             });
-            const data = await res.json();
-            setRemediatedDoc(data.remediated_text);
+
+            if (!res.body) return;
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                setRemediatedDoc((prev) => (prev || "") + chunk);
+            }
         } catch (e) { console.error(e); } finally { setIsFixing(false); }
     };
 
     const generateCode = async (language: string) => {
         setIsGenerating(true);
-        setGeneratedCode(null);
+        setGeneratedCode(""); // Clear previous
         try {
             const res = await fetch(`${serverUrl}/api/v1/remediate/code`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ policy_summary: policySummary, language: language })
             });
-            const data = await res.json(); // Backend now returns safe text via clean_json_text
-            setGeneratedCode(data.code);
+
+            if (!res.body) return;
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                setGeneratedCode((prev) => (prev || "") + chunk);
+            }
         } catch (e) { console.error(e); } finally { setIsGenerating(false); }
     };
 
@@ -203,7 +222,7 @@ export function RemediationPanel({ originalText, violations, policySummary }: Re
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-0">
-                                    {isFixing ? (
+                                    {isFixing && !remediatedDoc ? (
                                         <div className="flex flex-col items-center justify-center p-12 space-y-4">
                                             <div className="h-4 w-4 bg-indigo-500 rounded-full animate-bounce"></div>
                                             <p className="text-sm text-muted-foreground animate-pulse">Rewriting document...</p>
@@ -240,7 +259,7 @@ export function RemediationPanel({ originalText, violations, policySummary }: Re
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-0 relative group min-h-[400px]">
-                                    {isGenerating ? (
+                                    {isGenerating && !generatedCode ? (
                                         <div className="flex flex-col items-center justify-center p-12 space-y-4 h-full">
                                             <span className="font-mono text-green-500 animate-pulse">{`> Compiling ${selectedLanguage} safeguards...`}</span>
                                             <span className="font-mono text-green-500/50 text-xs">Processing logic blocks...</span>

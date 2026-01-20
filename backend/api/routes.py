@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import StreamingResponse
 from models.policy import PolicyDocument, WorkflowDefinition, ComplianceReport
 from models.chat import ChatRequest, ChatResponse
 from models.settings import PolicySettings
@@ -417,8 +418,10 @@ async def analyze_workflow_doc(file: UploadFile = File(...)):
 @router.post("/remediate/doc")
 async def remediate_document(request: RemediationRequest):
     try:
-        new_text = await gemini.remediate_spec(request.original_text, request.violations)
-        return {"remediated_text": new_text}
+        return StreamingResponse(
+            gemini.remediate_spec_stream(request.original_text, request.violations),
+            media_type="text/plain"
+        )
     except Exception as e:
         print(f"Remediation Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -426,8 +429,10 @@ async def remediate_document(request: RemediationRequest):
 @router.post("/remediate/code")
 async def generate_guardrail_code(request: CodeGenRequest):
     try:
-        code = await gemini.generate_guardrail_code(request.policy_summary, request.language)
-        return {"code": code}
+        return StreamingResponse(
+            gemini.generate_guardrail_code_stream(request.policy_summary, request.language),
+            media_type="text/plain"
+        )
     except Exception as e:
         print(f"Code Gen Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
