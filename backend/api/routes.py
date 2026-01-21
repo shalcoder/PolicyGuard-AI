@@ -158,15 +158,8 @@ async def evaluate_workflow(workflow: WorkflowDefinition):
             
         print(f"Gemini Response Length: {len(analysis_json_str)}")
         
-        # Clean JSON string (remove markdown fences if present - though handled by SDK mostly)
-        # Robust cleaning using regex
-        import re
-        # Find the first JSON object or array
-        match = re.search(r'(\{.*\}|\[.*\])', analysis_json_str, re.DOTALL)
-        if match:
-            clean_json = match.group(1)
-        else:
-            clean_json = analysis_json_str.strip()
+        # JSON is already cleaned by gemini.analyze_policy_conflict
+        clean_json = analysis_json_str.strip()
             
         print(f"Cleaned JSON Preview: {clean_json[:100]}...")
         
@@ -380,6 +373,8 @@ async def simulate_red_team_attack(workflow: WorkflowDefinition):
         return ThreatReport(**result)
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Red Team Simulation Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Simulation Failed: {str(e)}")
 
@@ -417,25 +412,31 @@ async def analyze_workflow_doc(file: UploadFile = File(...)):
 
 @router.post("/remediate/doc")
 async def remediate_document(request: RemediationRequest):
-    try:
-        return StreamingResponse(
-            gemini.remediate_spec_stream(request.original_text, request.violations),
-            media_type="text/plain"
-        )
-    except Exception as e:
-        print(f"Remediation Failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    async def stream_wrapper():
+        try:
+            async for chunk in gemini.remediate_spec_stream(request.original_text, request.violations):
+                yield chunk
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Stream Error (Doc): {e}")
+            yield f"\n[ERROR] Stream interrupted: {str(e)}"
+
+    return StreamingResponse(stream_wrapper(), media_type="text/plain")
 
 @router.post("/remediate/code")
 async def generate_guardrail_code(request: CodeGenRequest):
-    try:
-        return StreamingResponse(
-            gemini.generate_guardrail_code_stream(request.policy_summary, request.language),
-            media_type="text/plain"
-        )
-    except Exception as e:
-        print(f"Code Gen Failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    async def stream_wrapper():
+        try:
+            async for chunk in gemini.generate_guardrail_code_stream(request.policy_summary, request.language):
+                yield chunk
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Stream Error (Code): {e}")
+            yield f"\n// [ERROR] Stream interrupted: {str(e)}"
+
+    return StreamingResponse(stream_wrapper(), media_type="text/plain")
 
 @router.post("/remediate/explain")
 async def explain_remediation(request: RemediationRequest):
@@ -443,5 +444,9 @@ async def explain_remediation(request: RemediationRequest):
         explanation = await gemini.explain_remediation_strategy(request.violations, request.original_text)
         return json.loads(explanation)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Explanation Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+

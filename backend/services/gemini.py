@@ -16,19 +16,34 @@ class GeminiService:
         self.model_name = settings.GEMINI_MODEL
     
     def clean_json_text(self, text: str) -> str:
-        """Helper to strip markdown code blocks from JSON response using Regex."""
+        """Helper to extract the first valid JSON object from text."""
         # Remove markdown code blocks
         text = re.sub(r'```[a-zA-Z]*', '', text)
         text = text.replace('```', '')
         
-        # Find first { and last }
-        start = text.find('{')
-        end = text.rfind('}')
+        # Remove C-style comments // ...
+        text = re.sub(r'//.*', '', text)
         
-        if start != -1 and end != -1:
-            return text[start:end+1]
+        # Find first {
+        start = text.find('{')
+        if start == -1:
+            return text.strip()
             
-        return text.strip()
+        text = text[start:]
+        
+        # Remove trailing commas (heuristic)
+        text = re.sub(r',(\s*[}\]])', r'\1', text)
+
+        try:
+            import json
+            obj, idx = json.JSONDecoder().raw_decode(text)
+            return json.dumps(obj)
+        except:
+             # Fallback to brace matching if raw_decode fails (e.g. malformed)
+             end = text.rfind('}')
+             if end != -1:
+                 return text[:end+1]
+             return text.strip()
 
     async def _generate_with_retry(self, model, contents, config=None, retries=5):
         """Helper to retry API calls on transient network errors. 
@@ -500,7 +515,7 @@ class GeminiService:
         OUTPUT:
         Stream the rewritten document text immediately.
         """
-        async for chunk in await self.client.models.generate_content_stream(
+        async for chunk in await self.client.aio.models.generate_content_stream(
             model=settings.GEMINI_MODEL,
             contents=prompt
         ):
@@ -542,7 +557,7 @@ class GeminiService:
         Return ONLY the raw code (no markdown fences if possible, or standard markdown).
         """
         
-        async for chunk in await self.client.models.generate_content_stream(
+        async for chunk in await self.client.aio.models.generate_content_stream(
             model=settings.GEMINI_MODEL,
             contents=prompt
         ):

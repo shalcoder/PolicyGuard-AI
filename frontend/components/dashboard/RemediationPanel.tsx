@@ -16,6 +16,44 @@ interface Violation {
     reason: string;
 }
 
+const MOCK_REPORT: any = {
+    workflow_name: "Mortgage Loan Assistant",
+    system_spec: {
+        agent_name: "MortgageBot_V1",
+        summary: "AI agent for processing loan applications.",
+        primary_purpose: "Loan Origination",
+        decision_authority: "High",
+        automation_level: "Full",
+        deployment_stage: "Production",
+        geographic_exposure: ["US", "EU"]
+    },
+    data_map: {
+        data_categories_detected: ["Credit Score", "SSN", "Income Data", "Loan History"],
+        data_flow_source: "User Input -> Vector DB",
+        data_storage_retention: "Indefinite",
+        cross_border_transfer: "Detected"
+    },
+    policy_matrix: [
+        { policy_area: "GDPR Data Processing", status: "Non-Compliant", reason: "Data storage indefinite" },
+        { policy_area: "Fair Lending Act", status: "At Risk", reason: "Potential bias in training data" },
+        { policy_area: "CCPA Privacy", status: "Compliant", reason: "Opt-out mechanism present" },
+        { policy_area: "SOC2 Security", status: "Non-Compliant", reason: "Missing encryption at rest" }
+    ],
+    risk_assessment: {
+        overall_score: 45,
+        overall_rating: "High",
+        confidence_score: "High",
+        breakdown: { "Regulatory": "High", "Reputation": "Medium" }
+    },
+    evidence: [
+        { policy_section: "GDPR Art 5", issue_description: "Storage limitation violated", severity: "High", workflow_component: "Database", source_doc: "System Spec" },
+        { policy_section: "Fair Lending", issue_description: "Zip code used as proxy", severity: "Medium", workflow_component: "Model Weights", source_doc: "Training Config" },
+        { policy_section: "SOC2", issue_description: "No KMS integration", severity: "High", workflow_component: "Storage", source_doc: "Infra Config" }
+    ],
+    recommendations: [],
+    verdict: { approved: false, status_label: "Rejected", approval_conditions: ["Fix GDPR", "Encrypt Data"] }
+};
+
 interface RemediationPanelProps {
     originalText: string;
     violations: Violation[];
@@ -34,8 +72,12 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
     const [generatedCode, setGeneratedCode] = useState<string | null>(null);
     const [explanation, setExplanation] = useState<any | null>(null);
     const [selectedLanguage, setSelectedLanguage] = useState("Python");
+    const [reportData, setReportData] = useState<any>(null); // State for report
 
     const serverUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+    // Use prop report or state report (for mock)
+    const effectiveReport = report || reportData;
 
     const handleAutoRemediate = async () => {
         setIsOpen(true);
@@ -78,20 +120,29 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
             const res = await fetch(`${serverUrl}/api/v1/remediate/code`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ policy_summary: policySummary, language: language })
+                body: JSON.stringify({ policy_summary: policySummary || "General Security Standards", language: language })
             });
+
+            if (!res.ok) {
+                const err = await res.text();
+                setGeneratedCode(`// Generation Failed: ${res.status} ${res.statusText}\n// ${err}`);
+                return;
+            }
 
             if (!res.body) return;
             const reader = res.body.getReader();
-            const decoder = new TextDecoder();
+            const decoder = new TextDecoder("utf-8");
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value);
+                const chunk = decoder.decode(value, { stream: true });
                 setGeneratedCode((prev) => (prev || "") + chunk);
             }
-        } catch (e) { console.error(e); } finally { setIsGenerating(false); }
+        } catch (e) {
+            console.error(e);
+            setGeneratedCode(`// Client Error: ${e}`);
+        } finally { setIsGenerating(false); }
     };
 
     const getExplanation = async () => {
@@ -122,6 +173,11 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                     <Wrench className="w-5 h-5 mr-2" />
                     Auto-Remediate Violations
                 </Button>
+                <div className="mt-4">
+                    <Button variant="link" onClick={() => { setIsOpen(true); setReportData(MOCK_REPORT); setActiveTab("graph"); }}>
+                        (API Limit Reached? Try Demo Mode)
+                    </Button>
+                </div>
             </motion.div>
         );
     }
@@ -226,7 +282,17 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                                     <CardDescription>Visualizing policy constraints and risk vectors.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-0">
-                                    {report ? <ComplianceGraph report={report} /> : <div className="p-12 text-center text-muted-foreground">Generating Graph Data...</div>}
+                                    {effectiveReport ? <ComplianceGraph report={effectiveReport} /> : (
+                                        <div className="p-12 text-center flex flex-col items-center gap-4">
+                                            <p className="text-muted-foreground">Waiting for analysis...</p>
+                                            <div className="flex flex-col gap-2">
+                                                <p className="text-xs text-muted-foreground/50">API Quota Exceeded?</p>
+                                                <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/10" onClick={() => setReportData(MOCK_REPORT)}>
+                                                    Load Sample 3D Data
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </motion.div>
