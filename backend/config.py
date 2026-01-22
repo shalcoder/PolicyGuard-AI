@@ -8,7 +8,7 @@ class Settings(BaseModel):
     
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    GEMINI_MODEL: str = "gemini-2.5-flash-lite" # Attempting 2.5 Lite for better quota
+    GEMINI_MODEL: str = "gemini-2.0-flash-exp" # Fast, experimental 2.0 Flash
     EMBEDDING_MODEL: str = "text-embedding-004"
     
     # DB Config
@@ -16,7 +16,7 @@ class Settings(BaseModel):
     WEAVIATE_URL: str = os.getenv("WEAVIATE_URL", "http://localhost:8080")
     
     # SLA Config
-    SLA_MODEL: str = "gemini-2.5-flash-lite" # consistent model
+    SLA_MODEL: str = "gemini-2.0-flash-exp" # consistent model
     
     # Firestore Config
     FIREBASE_CREDENTIALS: str = "serviceAccountKey.json"

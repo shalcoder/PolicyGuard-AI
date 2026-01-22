@@ -23,7 +23,7 @@ interface DataInteractionMap {
     cross_border_transfer: string;
 }
 
-interface PolicyAlignment {
+export interface PolicyAlignment {
     policy_area: string;
     status: 'Compliant' | 'Partial Compliance' | 'At Risk' | 'Non-Compliant';
     reason: string;

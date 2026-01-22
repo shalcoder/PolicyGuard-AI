@@ -438,8 +438,8 @@ export default function EvaluatePage() {
                                 <RemediationPanel
                                     originalText={JSON.stringify(workflowData, null, 2)}
                                     violations={complianceReport.policy_matrix
-                                        .filter((p: any) => p.status !== "Compliant")
-                                        .map((p: any) => ({
+                                        .filter((p) => p.status !== "Compliant")
+                                        .map((p) => ({
                                             policy_area: p.policy_area,
                                             status: p.status,
                                             reason: p.reason

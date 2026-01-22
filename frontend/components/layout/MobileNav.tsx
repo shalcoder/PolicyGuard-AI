@@ -10,47 +10,94 @@ export function MobileNav() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-white dark:bg-zinc-950 dark:border-zinc-800">
-            <div className="flex items-center">
-                <Shield className="h-6 w-6 text-blue-600 mr-2" />
-                <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">PolicyGuard AI</span>
+        <div className="fixed top-0 w-full z-50 lg:hidden flex items-center justify-between p-4 border-b border-white/10 bg-[#0B0F19] text-white">
+            <div className="flex items-center gap-2">
+                <Shield className="h-6 w-6 text-[#7C3AED]" /> {/* Purple Icon */}
+                <span className="text-lg font-bold tracking-tight">PolicyGuard AI</span>
             </div>
 
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)} className="text-white hover:bg-white/10">
                 <Menu className="w-6 h-6" />
             </Button>
 
-            {/* Mobile Drawer */}
+            {/* Mobile Full Screen Overlay */}
             <AnimatePresence>
                 {isOpen && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-                        />
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed inset-0 z-50 bg-[#0B0F19] flex flex-col overflow-y-auto"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-white/5">
+                            <div className="flex items-center gap-2">
+                                <Shield className="h-6 w-6 text-[#7C3AED]" />
+                                <span className="text-lg font-bold tracking-tight text-white">PolicyGuard AI</span>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white hover:bg-white/10">
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
 
-                        {/* Drawer */}
-                        <motion.div
-                            initial={{ x: "-100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "-100%" }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            className="fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-zinc-950 shadow-xl border-r dark:border-zinc-800"
-                        >
-                            <div className="flex justify-end p-4 absolute top-0 right-0 z-50">
-                                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                                    <X className="w-5 h-5" />
+                        {/* Menu Links */}
+                        <div className="flex-1 px-6 py-8 space-y-6">
+                            <nav className="space-y-6 text-lg font-medium text-gray-300">
+                                <a href="#" className="block hover:text-white transition-colors">Home</a>
+                                <div className="h-px bg-white/5 w-full" />
+                                <a href="#" className="block hover:text-white transition-colors">Pricing</a>
+                                <div className="h-px bg-white/5 w-full" />
+                                <a href="#" className="block hover:text-white transition-colors">How It Works</a>
+                                <div className="h-px bg-white/5 w-full" />
+                                <a href="#" className="block hover:text-white transition-colors">Support</a>
+                                <div className="h-px bg-white/5 w-full" />
+                                <a href="#" className="block hover:text-white transition-colors">Team</a>
+                                <div className="h-px bg-white/5 w-full" />
+                            </nav>
+
+                            <div className="pt-8 space-y-4">
+                                <div className="text-center">
+                                    <a href="/login" className="text-gray-300 hover:text-white font-medium">Login</a>
+                                </div>
+                                <Button className="w-full bg-[#5B21B6] hover:bg-[#4C1D95] text-white h-12 text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+                                    Get Started
                                 </Button>
                             </div>
 
-                            {/* Reusing Sidebar Component */}
-                            <Sidebar className="w-full flex h-full pt-10" onNavigate={() => setIsOpen(false)} />
-                        </motion.div>
-                    </>
+                            {/* Secondary Links */}
+                            <div className="pt-8 space-y-4 text-sm text-gray-500">
+                                <a href="#" className="block hover:text-gray-300">FAQs</a>
+                                <a href="#" className="block hover:text-gray-300">Contact Us</a>
+                            </div>
+
+                            {/* Legal */}
+                            <div className="pt-8 space-y-4">
+                                <h4 className="text-white font-bold">Legal</h4>
+                                <div className="space-y-2 text-sm text-gray-500">
+                                    <a href="#" className="block hover:text-gray-300">Terms of Service</a>
+                                    <a href="#" className="block hover:text-gray-300">Privacy Policy</a>
+                                    <a href="#" className="block hover:text-gray-300">Cookie Policy</a>
+                                </div>
+                            </div>
+
+                            {/* Connect With Us */}
+                            <div className="pt-8 space-y-4 pb-8">
+                                <h4 className="text-white font-bold">Connect With Us</h4>
+                                <div className="flex gap-4">
+                                    {/* Social placeholders */}
+                                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer"><span className="text-xs">FB</span></div>
+                                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer"><span className="text-xs">TW</span></div>
+                                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer"><span className="text-xs">IG</span></div>
+                                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer"><span className="text-xs">IN</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-white/5 text-center text-xs text-gray-600">
+                            © 2026 PolicyGuard AI. All rights reserved.
+                        </div>
+
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

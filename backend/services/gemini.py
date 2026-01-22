@@ -45,7 +45,7 @@ class GeminiService:
                  return text[:end+1]
              return text.strip()
 
-    async def _generate_with_retry(self, model, contents, config=None, retries=5):
+    async def _generate_with_retry(self, model, contents, config=None, retries=8):
         """Helper to retry API calls on transient network errors. 
            Aggressive handling for 429 Resource Exhausted."""
         
@@ -53,18 +53,12 @@ class GeminiService:
         
         for attempt in range(retries):
             try:
-                # Wrap sync call in executor
-                import functools
-                loop = asyncio.get_running_loop()
-                
-                func = functools.partial(
-                    self.client.models.generate_content,
+                # Use Async Client (aio) directly
+                response = await self.client.aio.models.generate_content(
                     model=model,
                     contents=contents,
                     config=config
                 )
-                
-                response = await loop.run_in_executor(None, func)
                 return response
                 
             except Exception as e:
@@ -77,9 +71,19 @@ class GeminiService:
                     raise e
                 
                 if is_rate_limit:
-                    wait_time = base_delay * (2 ** attempt) # 5, 10, 20, 40, 80...
-                    # Add jitter? Maybe not needed for single user app.
-                    print(f"⚠️ Rate Limit Hit (429). Waiting {wait_time}s before retry {attempt+2}/{retries}...")
+                    # Smart Retry: Parse 'retryDelay'
+                    wait_time = base_delay * (2 ** attempt) # Default exponential
+                    
+                    # Look for "retryDelay": "18s"
+                    import re
+                    match = re.search(r"retryDelay['\"]?:\s*['\"]?(\d+\.?\d*)s", error_str)
+                    if match:
+                        server_delay = float(match.group(1))
+                        wait_time = max(wait_time, server_delay + 2.0) # Add 2s buffer
+                        print(f"⚠️ Rate Limit (Smart Wait). Server requested {server_delay}s. Waiting {wait_time}s...")
+                    else:
+                        print(f"⚠️ Rate Limit Hit (429). Exponential wait {wait_time}s...")
+                    
                     await asyncio.sleep(wait_time)
                 else:
                     # Generic error, shorter backoff
@@ -515,12 +519,27 @@ class GeminiService:
         OUTPUT:
         Stream the rewritten document text immediately.
         """
-        async for chunk in await self.client.aio.models.generate_content_stream(
-            model=settings.GEMINI_MODEL,
-            contents=prompt
-        ):
-            if chunk.text:
-                yield chunk.text
+        
+        # Retry Logic for Stream
+        import asyncio
+        for attempt in range(5):
+             try:
+                async for chunk in await self.client.aio.models.generate_content_stream(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                ):
+                    if chunk.text:
+                        yield chunk.text
+                return # Success
+             except Exception as e:
+                is_rate_limit = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
+                if is_rate_limit and attempt < 4:
+                     wait = 2 ** (attempt + 2) # 4, 8, 16...
+                     print(f"Stream Rate Limit (Doc). Retrying in {wait}s...")
+                     yield f"// [INFO] Rate limit hit. Retrying in {wait}s...\n"
+                     await asyncio.sleep(wait)
+                else:
+                     raise e
 
     async def generate_guardrail_code_stream(self, policy_summary: str, language: str = "python"):
         if language.lower() == "python":
@@ -557,12 +576,25 @@ class GeminiService:
         Return ONLY the raw code (no markdown fences if possible, or standard markdown).
         """
         
-        async for chunk in await self.client.aio.models.generate_content_stream(
-            model=settings.GEMINI_MODEL,
-            contents=prompt
-        ):
-            if chunk.text:
-               yield chunk.text
+        import asyncio
+        for attempt in range(5):
+            try:
+                async for chunk in await self.client.aio.models.generate_content_stream(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                ):
+                    if chunk.text:
+                       yield chunk.text
+                return # Success
+            except Exception as e:
+                is_rate_limit = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
+                if is_rate_limit and attempt < 4:
+                     wait = 2 ** (attempt + 2)
+                     print(f"Stream Rate Limit (Code). Retrying in {wait}s...")
+                     yield f"// [INFO] Rate limit hit. Retrying in {wait}s...\n"
+                     await asyncio.sleep(wait)
+                else:
+                     raise e
 
     async def explain_remediation_strategy(self, violations: list, original_text: str) -> str:
         prompt = f"""
