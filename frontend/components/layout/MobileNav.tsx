@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Menu, X, Shield } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,15 +44,15 @@ export function MobileNav() {
                         {/* Menu Links */}
                         <div className="flex-1 px-6 py-8 space-y-6">
                             <nav className="space-y-6 text-lg font-medium text-gray-300">
-                                <a href="#" className="block hover:text-white transition-colors">Home</a>
+                                <Link href="/" className="block hover:text-white transition-colors" onClick={() => setIsOpen(false)}>Home</Link>
                                 <div className="h-px bg-white/5 w-full" />
-                                <a href="#" className="block hover:text-white transition-colors">Pricing</a>
+                                <Link href="/pricing" className="block hover:text-white transition-colors" onClick={() => setIsOpen(false)}>Pricing</Link>
                                 <div className="h-px bg-white/5 w-full" />
-                                <a href="#" className="block hover:text-white transition-colors">How It Works</a>
+                                <Link href="/how-it-works" className="block hover:text-white transition-colors" onClick={() => setIsOpen(false)}>How It Works</Link>
                                 <div className="h-px bg-white/5 w-full" />
-                                <a href="#" className="block hover:text-white transition-colors">Support</a>
+                                <Link href="#" className="block hover:text-white transition-colors" onClick={() => setIsOpen(false)}>Support</Link>
                                 <div className="h-px bg-white/5 w-full" />
-                                <a href="#" className="block hover:text-white transition-colors">Team</a>
+                                <Link href="/team" className="block hover:text-white transition-colors" onClick={() => setIsOpen(false)}>Team</Link>
                                 <div className="h-px bg-white/5 w-full" />
                             </nav>
 

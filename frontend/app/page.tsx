@@ -55,12 +55,12 @@ export default function LandingPage() {
                         <span>PolicyGuard AI</span>
                     </div>
 
-                    <div className="flex items-center gap-8 text-sm font-medium text-gray-300">
-                        <Link href="#" className="hover:text-white transition-colors">Home</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Pricing</Link>
-                        <Link href="#" className="hover:text-white transition-colors">How It Works</Link>
+                    <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-300">
+                        <Link href="/" className="hover:text-white transition-colors">Home</Link>
+                        <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+                        <Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link>
                         <Link href="#" className="hover:text-white transition-colors">Support</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Team</Link>
+                        <Link href="/team" className="hover:text-white transition-colors">Team</Link>
                     </div>
 
                     <div className="flex items-center gap-6">
