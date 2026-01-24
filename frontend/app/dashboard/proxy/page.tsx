@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Shield, AlertTriangle, Code, Terminal, Copy } from 'lucide-react';
+import { CheckCircle2, Shield, AlertTriangle, Code, Terminal, Copy, Activity } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -147,7 +147,7 @@ HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());`
                                     </Button>
                                 </div>
                                 <SyntaxHighlighter
-                                    language={selectedLang === 'curl' ? 'bash' : selectedLang}
+                                    language={selectedLang === 'curl' ? 'bash' : selectedLang === 'node' ? 'javascript' : selectedLang}
                                     style={vscDarkPlus}
                                     customStyle={{ margin: 0, borderRadius: '0.5rem', height: '350px' }}
                                     showLineNumbers={true}
@@ -166,20 +166,28 @@ HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());`
                     <CardTitle>How it works</CardTitle>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-3 gap-8">
-                    <div className="flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mb-4 text-xl">1</div>
-                        <h3 className="font-semibold mb-2">Connect</h3>
-                        <p className="text-sm text-gray-500">Change your <code>base_url</code> to point to PolicyGuard instead of OpenAI direct.</p>
+                    <div className="flex flex-col items-center text-center group hover:scale-105 transition-transform duration-300">
+                        <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-4 ring-4 ring-indigo-50 dark:ring-indigo-900/10 group-hover:ring-indigo-200 dark:group-hover:ring-indigo-800 transition-all">
+                            <Terminal className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <h3 className="font-semibold mb-2 text-lg">1. Connect</h3>
+                        <p className="text-sm text-gray-500 max-w-[250px]">Change your <code>base_url</code> to point to PolicyGuard. We mimic the OpenAI API perfectly.</p>
                     </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4 text-xl">2</div>
-                        <h3 className="font-semibold mb-2">Audit</h3>
-                        <p className="text-sm text-gray-500">We intercept the request. If it matches a "BLOCK" policy, we reject it. Otherwise, we forward it.</p>
+
+                    <div className="flex flex-col items-center text-center group hover:scale-105 transition-transform duration-300">
+                        <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4 ring-4 ring-blue-50 dark:ring-blue-900/10 group-hover:ring-blue-200 dark:group-hover:ring-blue-800 transition-all">
+                            <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h3 className="font-semibold mb-2 text-lg">2. Audit</h3>
+                        <p className="text-sm text-gray-500 max-w-[250px]">We intercept the request. If it violates active policies, we block it instantly or flag it asynchronously.</p>
                     </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 text-xl">3</div>
-                        <h3 className="font-semibold mb-2">Monitor</h3>
-                        <p className="text-sm text-gray-500">All interactions appear in the "Evaluation" and "Overview" dashboards automatically.</p>
+
+                    <div className="flex flex-col items-center text-center group hover:scale-105 transition-transform duration-300">
+                        <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 ring-4 ring-green-50 dark:ring-green-900/10 group-hover:ring-green-200 dark:group-hover:ring-green-800 transition-all">
+                            <Activity className="w-8 h-8 text-green-600 dark:text-green-400" />
+                        </div>
+                        <h3 className="font-semibold mb-2 text-lg">3. Monitor</h3>
+                        <p className="text-sm text-gray-500 max-w-[250px]">All interactions, including blocked prompts, appear in the "Evaluation" dashboard logs.</p>
                     </div>
                 </CardContent>
             </Card>
