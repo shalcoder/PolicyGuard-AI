@@ -25,7 +25,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 from api.routes import router as api_router
+from api.proxy import router as proxy_router
+
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(proxy_router, prefix="/api/proxy")
 
 # CORS - Allow everything for Hackathon MVP
 app.add_middleware(

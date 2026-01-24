@@ -4,11 +4,12 @@ import { Home, Shield, Activity, Settings, FileText, ChevronRight, BarChart3, Lo
 import { cn } from '@/lib/utils';
 import { useUser } from '@/context/UserContext';
 
+// Navigation Items Configuration - Forced Update
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: Home },
-    { name: 'Policy Manager', href: '/dashboard/policies', icon: FileText },
-    { name: 'Chat Assistant', href: '/dashboard/chat', icon: MessageSquare },
-    { name: 'Evaluation', href: '/dashboard/evaluate', icon: Activity },
+    { name: 'Policies', href: '/dashboard/policies', icon: FileText },
+    { name: 'AI Gatekeeper', href: '/dashboard/proxy', icon: Shield },
+    { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
     { name: 'Monitor', href: '/dashboard/monitor', icon: BarChart3 },
     { name: 'SLA Designer', href: '/dashboard/sla', icon: Zap },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },

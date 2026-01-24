@@ -21,7 +21,8 @@ export default function PoliciesPage() {
 
     const fetchPolicies = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/policies');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/policies`);
             if (res.ok) {
                 const data = await res.json();
                 setPolicies(data);
@@ -41,7 +42,8 @@ export default function PoliciesPage() {
         if (!confirm(`Are you sure you want to delete policy: ${name}?`)) return;
 
         try {
-            const res = await fetch(`http://localhost:8000/api/v1/policies/${id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/policies/${id}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
@@ -56,7 +58,8 @@ export default function PoliciesPage() {
 
     const handleToggle = async (id: string, currentStatus: boolean) => {
         try {
-            const res = await fetch(`http://localhost:8000/api/v1/policies/${id}/toggle`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/policies/${id}/toggle`, {
                 method: 'PATCH',
             });
             if (res.ok) {
