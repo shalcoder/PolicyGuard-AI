@@ -498,12 +498,17 @@ class GeminiService:
         )
         return response.text
 
-    async def remediate_spec_stream(self, original_text: str, violations: list):
+    async def remediate_spec_stream(self, original_text: str, violations: list, doc_type: str = "PRD"):
+        format_instruction = "Output standard MARKDOWN format."
+        if doc_type == "JSON":
+            format_instruction = "Output strictly valid JSON."
+
         prompt = f"""
         You are a Chief Compliance Officer & Technical Writer.
         
         TASK:
-        Rewrite the following SYSTEM SPECIFICATION to purely and explicitly fix the cited policy violations.
+        Rewritten the following SYSTEM SPECIFICATION to purely and explicitly fix the cited policy violations.
+        The output must be a {doc_type}.
         
         VIOLATIONS TO FIX:
         {violations}
@@ -515,6 +520,7 @@ class GeminiService:
         1. Keep the original structure and intent.
         2. Insert specific clauses/controls to address each violation.
         3. Highlight your changes by wrapping them in **bold**.
+        4. {format_instruction}
         
         OUTPUT:
         Stream the rewritten document text immediately.

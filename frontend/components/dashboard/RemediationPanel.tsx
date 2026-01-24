@@ -72,6 +72,7 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
     const [generatedCode, setGeneratedCode] = useState<string | null>(null);
     const [explanation, setExplanation] = useState<any | null>(null);
     const [selectedLanguage, setSelectedLanguage] = useState("Python");
+    const [docType, setDocType] = useState("PRD");
     const [reportData, setReportData] = useState<any>(null); // State for report
 
     const serverUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -96,7 +97,8 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     original_text: originalText || "System Description",
-                    violations: violationStrings
+                    violations: violationStrings,
+                    doc_type: docType
                 })
             });
 
@@ -215,9 +217,8 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                 </TabsList>
 
                 <AnimatePresence mode="wait">
-                    {/* EXPLANATION TAB */}
-                    <TabsContent value="detail" key="detail">
-                        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                    {activeTab === "detail" && (
+                        <motion.div key="detail" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                             <Card className="border-l-4 border-l-yellow-500 shadow-sm">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -271,14 +272,13 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    </TabsContent>
+                    )}
 
-                    {/* GRAPH TAB */}
-                    <TabsContent value="graph" key="graph">
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                    {activeTab === "graph" && (
+                        <motion.div key="graph" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
                             <Card className="border-purple-500/30 shadow-lg bg-black/50 backdrop-blur-md">
                                 <CardHeader>
-                                    <CardTitle>Interactive System Topology</CardTitle>
+                                    <CardTitle> Interactive System Topology</CardTitle>
                                     <CardDescription>Visualizing policy constraints and risk vectors.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-0">
@@ -296,37 +296,80 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    </TabsContent>
+                    )}
 
-                    {/* DOCUMENT TAB */}
-                    <TabsContent value="doc" key="doc">
-                        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                    {activeTab === "doc" && (
+                        <motion.div key="doc" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                             <Card className="border-indigo-100 dark:border-indigo-900/50 shadow-sm overflow-hidden">
-                                <CardHeader className="bg-muted/30 pb-4">
+                                <CardHeader className="bg-muted/30 pb-4 flex flex-row items-center justify-between">
                                     <CardTitle className="text-lg flex items-center gap-2">
                                         <FileText className="w-5 h-5 text-indigo-500" />
-                                        Compliant PRD (Rewritten)
+                                        <span>Rewritten Spec</span>
                                     </CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={docType}
+                                            onChange={(e) => { setDocType(e.target.value); if (remediatedDoc) fixDoc(); }} // Re-trigger if doc exists
+                                            className="h-8 rounded bg-background border border-input px-2 text-xs"
+                                        >
+                                            <option value="PRD">PRD (Markdown)</option>
+                                            <option value="Technical Spec">Technical Spec</option>
+                                            <option value="Compliance Report">Compliance Report</option>
+                                            <option value="JSON">JSON (Raw)</option>
+                                        </select>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 text-xs"
+                                            disabled={!remediatedDoc}
+                                            onClick={() => {
+                                                if (!remediatedDoc) return;
+                                                const blob = new Blob([remediatedDoc], { type: 'text/plain' });
+                                                const url = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `remediated_${docType.replace(" ", "_")}.md`;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                window.URL.revokeObjectURL(url);
+                                                document.body.removeChild(a);
+                                            }}
+                                        >
+                                            Download
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     {isFixing && !remediatedDoc ? (
                                         <div className="flex flex-col items-center justify-center p-12 space-y-4">
                                             <div className="h-4 w-4 bg-indigo-500 rounded-full animate-bounce"></div>
-                                            <p className="text-sm text-muted-foreground animate-pulse">Rewriting document...</p>
+                                            <p className="text-sm text-muted-foreground animate-pulse">Rewriting document as {docType}...</p>
                                         </div>
                                     ) : (
-                                        <div className="bg-muted/10 p-6 min-h-[300px] text-sm overflow-auto max-h-[500px] font-mono leading-relaxed whitespace-pre-wrap">
-                                            {remediatedDoc}
+                                        <div className="bg-muted/10 min-h-[300px] text-sm overflow-auto max-h-[500px]">
+                                            {docType === "JSON" ? (
+                                                <SyntaxHighlighter
+                                                    language="json"
+                                                    style={vscDarkPlus}
+                                                    customStyle={{ margin: 0, padding: '1.5rem', height: '100%', fontSize: '0.9rem', backgroundColor: 'transparent' }}
+                                                    wrapLines={true}
+                                                >
+                                                    {remediatedDoc || "{}"}
+                                                </SyntaxHighlighter>
+                                            ) : (
+                                                <div className="p-6 whitespace-pre-wrap font-mono leading-relaxed">
+                                                    {remediatedDoc}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    </TabsContent>
+                    )}
 
-                    {/* CODE TAB */}
-                    <TabsContent value="code" key="code">
-                        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+                    {activeTab === "code" && (
+                        <motion.div key="code" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                             <Card className="border-indigo-100 dark:border-indigo-900/50 shadow-sm bg-black text-green-400">
                                 <CardHeader className="border-b border-white/10 pb-3 flex flex-row items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -377,7 +420,7 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                                 </CardContent>
                             </Card>
                         </motion.div>
-                    </TabsContent>
+                    )}
                 </AnimatePresence>
             </Tabs>
         </motion.div>
