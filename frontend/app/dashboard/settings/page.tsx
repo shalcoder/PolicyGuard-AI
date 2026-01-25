@@ -29,9 +29,7 @@ import {
     CheckCircle2,
     AlertTriangle,
     Zap,
-    ChevronRight,
-    Sun,
-    Moon
+    ChevronRight
 } from 'lucide-react'
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,8 +39,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog"
-import { useTheme } from "next-themes";
+} from "../../../components/ui/dialog"
 
 // --- Types for Local Settings ---
 interface PolicySettings {
@@ -137,7 +134,6 @@ const sections = [
 
 export default function SettingsPage() {
     const { profile } = useUser();
-    const { theme, setTheme } = useTheme();
     const [settings, setSettings] = useState<PolicySettings>(defaultSettings);
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState('general');
@@ -251,21 +247,17 @@ export default function SettingsPage() {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <button
-                        id="sim-btn"
-                        onClick={handleSimulation}
-                        className="flex items-center gap-2 px-4 py-2 border border-cyan-500/30 text-cyan-500 rounded-lg bg-transparent hover:bg-cyan-500/10 font-semibold transition-all"
-                    >
-                        <Zap className="h-4 w-4 text-cyan-400" />
+                    <Button id="sim-btn" variant="outline" onClick={handleSimulation} className="bg-white hover:bg-gray-50 border-gray-200">
+                        <Zap className="h-4 w-4 mr-2 text-amber-500" />
                         Run Simulation
-                    </button>
+                    </Button>
                     <Button
                         onClick={handleSave}
                         disabled={isSaving || !isDirty}
                         className={cn(
                             "min-w-[120px] shadow-sm transition-all duration-200",
                             isDirty
-                                ? "bg-cyan-600 hover:bg-cyan-500 text-white"
+                                ? "bg-blue-600 hover:bg-blue-700 text-white"
                                 : "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
                         )}
                     >
@@ -322,38 +314,6 @@ export default function SettingsPage() {
                         <div className="max-w-2xl">
                             <GroupHeader title="Environment" description="Configure the lifecycle stage and region." />
                             <SettingsGroup>
-                                <SettingsRow>
-                                    <div className="space-y-0.5">
-                                        <Label className="text-base font-medium">Appearance</Label>
-                                        <p className="text-sm text-muted-foreground">Select your preferred theme.</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setTheme("light")}
-                                            className={cn("gap-2", theme === 'light' && "border-blue-500 bg-blue-50 text-blue-700")}
-                                        >
-                                            <Sun className="h-4 w-4" /> Light
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setTheme("dark")}
-                                            className={cn("gap-2", theme === 'dark' && "border-cyan-500 bg-cyan-950/30 text-cyan-400")}
-                                        >
-                                            <Moon className="h-4 w-4" /> Dark
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setTheme("system")}
-                                            className={cn("gap-2", theme === 'system' && "border-purple-500 bg-purple-50 text-purple-700")}
-                                        >
-                                            <LayoutDashboard className="h-4 w-4" /> System
-                                        </Button>
-                                    </div>
-                                </SettingsRow>
                                 <SettingsRow>
                                     <div className="space-y-0.5">
                                         <Label className="text-base font-medium">Deployment Mode</Label>
@@ -455,7 +415,7 @@ export default function SettingsPage() {
 
                                 <div>
                                     <GroupHeader title="Calibration" />
-                                    <Card className="border-none shadow-sm bg-white dark:bg-zinc-900/50">
+                                    <Card className="border-none shadow-sm bg-white">
                                         <CardContent className="pt-6 space-y-6">
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center">

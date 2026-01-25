@@ -7,10 +7,8 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 try:
-    with open("models.txt", "w") as f:
-        f.write("Listing Gemini models...\n")
-        for m in client.models.list(config={"page_size": 100}):
-            f.write(f"Model ID: {m.name}\n")
-    print("Saved to models.txt")
+    print("Listing models...")
+    for m in client.models.list(config={"page_size": 100}):
+        print(f"Model: {m.name} | Display: {m.display_name}")
 except Exception as e:
     print(f"Error: {e}")

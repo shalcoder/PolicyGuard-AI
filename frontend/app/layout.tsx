@@ -3,13 +3,12 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/hooks/useAuth'
 import { UserProvider } from '@/context/UserContext'
-import { ThemeProvider } from '@/components/theme-provider'
 
 // const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'PolicyGuard: Financial AI Governance',
-    description: 'Enterprise Governance for Autonomous Financial Decision Agents.',
+    title: 'PolicyGuard AI',
+    description: 'Enterprise AI Policy Governance & Guardrails',
 }
 
 export default function RootLayout({
@@ -18,20 +17,13 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en">
             <body className="font-sans antialiased">
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="dark"
-                    enableSystem
-                    disableTransitionOnChange
-                >
-                    <AuthProvider>
-                        <UserProvider>
-                            {children}
-                        </UserProvider>
-                    </AuthProvider>
-                </ThemeProvider>
+                <AuthProvider>
+                    <UserProvider>
+                        {children}
+                    </UserProvider>
+                </AuthProvider>
             </body>
         </html>
     )

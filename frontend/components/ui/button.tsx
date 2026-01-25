@@ -1,13 +1,8 @@
 import * as React from "react"
-// @ts-ignore
 import { Slot } from "@radix-ui/react-slot"
-// @ts-ignore
 import { cva, type VariantProps } from "class-variance-authority"
-// @ts-ignore
 import { clsx, type ClassValue } from "clsx"
-// @ts-ignore
 import { twMerge } from "tailwind-merge"
-// @ts-ignore
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -45,7 +40,7 @@ export interface ButtonProps
     asChild?: boolean
 }
 
-const Button = React.forwardRef<HTMLButtonElement, any>(
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant, size, asChild = false, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
         return (
