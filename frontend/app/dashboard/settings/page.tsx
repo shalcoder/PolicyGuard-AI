@@ -33,6 +33,13 @@ import {
 } from 'lucide-react'
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "../../../components/ui/dialog"
 
 // --- Types for Local Settings ---
 interface PolicySettings {
@@ -130,6 +137,11 @@ export default function SettingsPage() {
     const [settings, setSettings] = useState<PolicySettings>(defaultSettings);
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState('general');
+    const [simResult, setSimResult] = useState<any>(null);
+    const [showSimResult, setShowSimResult] = useState(false);
+    const [saveMessage, setSaveMessage] = useState("");
+    const [initialSettings, setInitialSettings] = useState<PolicySettings>(defaultSettings);
+    const [isDirty, setIsDirty] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -138,6 +150,7 @@ export default function SettingsPage() {
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);
+                    setInitialSettings(data);
                 }
             } catch (error) {
                 console.error("Failed to load settings:", error);
@@ -145,6 +158,10 @@ export default function SettingsPage() {
         };
         fetchSettings();
     }, []);
+
+    useEffect(() => {
+        setIsDirty(JSON.stringify(settings) !== JSON.stringify(initialSettings));
+    }, [settings, initialSettings]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -155,6 +172,9 @@ export default function SettingsPage() {
                 body: JSON.stringify(settings),
             });
             if (!res.ok) throw new Error("Failed to save");
+            setInitialSettings(settings);
+            setSaveMessage("Saved successfully!");
+            setTimeout(() => setSaveMessage(""), 3000);
         } catch (error) {
             console.error("Save failed:", error);
         } finally {
@@ -187,9 +207,10 @@ export default function SettingsPage() {
         try {
             const res = await fetch('http://localhost:8000/api/v1/simulate', { method: 'POST' });
             const data = await res.json();
-            alert(`Simulation Complete!\n\n${data.risks_found} Risks Found:\n` + data.details.join('\n- '));
+            setSimResult(data);
+            setShowSimResult(true);
         } catch (e) {
-            alert("Simulation failed to run.");
+            console.error("Simulation failed", e);
         } finally {
             if (btn) btn.disabled = false;
             if (btn) btn.textContent = "Run Simulation";
@@ -230,8 +251,17 @@ export default function SettingsPage() {
                         <Zap className="h-4 w-4 mr-2 text-amber-500" />
                         Run Simulation
                     </Button>
-                    <Button onClick={handleSave} disabled={isSaving} className="min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
-                        {isSaving ? "Saving..." : "Save Changes"}
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving || !isDirty}
+                        className={cn(
+                            "min-w-[120px] shadow-sm transition-all duration-200",
+                            isDirty
+                                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                        )}
+                    >
+                        {isSaving ? "Saving..." : saveMessage || "Save Changes"}
                     </Button>
                 </div>
             </div>
@@ -595,6 +625,28 @@ export default function SettingsPage() {
                     )}
                 </motion.div>
             </AnimatePresence>
+
+            <Dialog open={showSimResult} onOpenChange={setShowSimResult}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-amber-500" />
+                            Simulation Complete
+                        </DialogTitle>
+                        <DialogDescription>
+                            Found {simResult?.risks_found} potential risks in the current configuration.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-2 space-y-2">
+                        {simResult?.details.map((detail: string, i: number) => (
+                            <div key={i} className="flex items-start gap-2 p-2 bg-red-50 text-red-700 rounded text-sm">
+                                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                                <span>{detail}</span>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }

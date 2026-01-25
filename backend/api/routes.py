@@ -7,6 +7,7 @@ from services.ingest import PolicyIngestor
 from services.gemini import GeminiService
 from services.storage import policy_db
 import json
+import asyncio
 from pydantic import BaseModel
 
 
@@ -157,6 +158,15 @@ async def toggle_policy(policy_id: str):
 
 # --- DASHBOARD & MONITORING ---
 
+@router.get("/settings", response_model=PolicySettings)
+async def get_settings():
+    return policy_db.get_settings()
+
+@router.post("/settings")
+async def save_settings(settings: PolicySettings):
+    policy_db.save_settings(settings)
+    return {"status": "saved"}
+
 @router.get("/dashboard/stats")
 async def get_dashboard_stats():
     return policy_db.get_dashboard_stats()
@@ -166,3 +176,26 @@ async def get_traces():
     data = policy_db.get_monitor_data()
     return data["traces"]
 
+@router.post("/simulate")
+async def run_simulation():
+    # Mock Simulation Logic
+    import random
+    
+    # Simulate processing time
+    await asyncio.sleep(2)
+    
+    risks_found = random.randint(1, 5)
+    risk_types = [
+        "Data Sovereignty Violation: US data found in EU storage",
+        "PII Exposure: Unmasked email in prompt logs",
+        "Guardrail Bypass: Jailbreak attempt detected",
+        "Latency Spike: Response time > 2000ms",
+        "Model Hallucination: Fact-check failed"
+    ]
+    
+    details = random.sample(risk_types, risks_found)
+    
+    return {
+        "risks_found": risks_found,
+        "details": details
+    }
