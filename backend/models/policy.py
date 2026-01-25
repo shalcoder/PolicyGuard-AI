@@ -7,13 +7,10 @@ class PolicyDocument(BaseModel):
     name: str
     content: str
     summary: Optional[str] = None
-<<<<<<< HEAD
     status: str = "Active" # "Active" | "Draft" | "Pending Review"
     version: str = "1.0.0"
     last_updated: str = "" # ISO date string
-=======
     is_active: bool = True
->>>>>>> main
 
 class WorkflowDefinition(BaseModel):
     name: str
@@ -115,13 +112,10 @@ class BusinessImpact(BaseModel):
     estimated_cost: str # "$50k - $200k"
 
 class ComplianceReport(BaseModel):
-<<<<<<< HEAD
     report_id: str 
     timestamp: str # ISO date string
     forensic_digest: ForensicDigest # Tamper-evident state snapshot
-=======
     workflow_name: Optional[str] = None # Preserved from input
->>>>>>> main
     system_spec: AISystemSpec
     data_map: DataInteractionMap
     policy_matrix: List[PolicyAlignment]

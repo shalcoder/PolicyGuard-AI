@@ -99,20 +99,6 @@ interface ReadinessScorecardProps {
 export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardProps) {
     const reportRef = useRef<HTMLDivElement>(null);
 
-<<<<<<< HEAD
-    const handleDownloadPDF = async () => {
-        if (!reportRef.current) return;
-        const canvas = await html2canvas(reportRef.current, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Compliance_Forensics_${report.report_id}.pdf`);
-    };
-
-=======
->>>>>>> main
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Compliant': return 'text-green-600 bg-green-50 border-green-200';
@@ -184,19 +170,12 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
             </div>
 
             <div className="flex justify-end">
-<<<<<<< HEAD
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Forensic Audit Log
-                </Button>
-=======
                 {onDownload && (
                     <Button onClick={onDownload} variant="outline" size="sm">
                         <Download className="w-4 h-4 mr-2" />
                         Download Certificate (PDF)
                     </Button>
                 )}
->>>>>>> main
             </div>
 
             <div ref={reportRef} className="space-y-6 bg-white dark:bg-zinc-950 p-6 rounded-xl border shadow-sm">

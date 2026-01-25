@@ -6,11 +6,14 @@ import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScor
 import { RemediationPanel } from '@/components/dashboard/RemediationPanel';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity, Target as TargetIcon } from 'lucide-react';
+import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity, Target as TargetIcon, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Lock, Terminal, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Lock, Terminal, ShieldAlert, Shield } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
@@ -224,9 +227,27 @@ export default function EvaluatePage() {
         }
     };
 
-    const handleExportPDF = () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        window.open(`${apiUrl}/api/v1/evaluate/export/latest`, '_blank');
+    const handleExportPDF = async () => {
+        const scorecard = document.getElementById('readiness-scorecard');
+        if (!scorecard) return;
+
+        try {
+            const canvas = await html2canvas(scorecard, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`PolicyGuard-Certificate-${new Date().getTime()}.pdf`);
+        } catch (error) {
+            console.error("PDF Export Failed:", error);
+            alert("Failed to generate PDF. Please try again.");
+        }
     };
 
     return (
@@ -449,7 +470,7 @@ export default function EvaluatePage() {
                                 </Button>
                             </div>
                             <div id="readiness-scorecard">
-                                <ReadinessScorecard report={complianceReport} />
+                                <ReadinessScorecard report={complianceReport} onDownload={handleExportPDF} />
                             </div>
 
                             {/* Auto Remediation Interaction */}

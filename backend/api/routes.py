@@ -16,49 +16,16 @@ from typing import List, Optional
 
 router = APIRouter()
 gemini = GeminiService()
-<<<<<<< HEAD
-import datetime
-=======
 ingestor = PolicyIngestor()
->>>>>>> main
 
 # --- Telemetry In-Memory Store for Demo ---
 telemetry_data = [] # List of {service_id, timestamp, error_rate, latency_ms, risk_score}
 
-<<<<<<< HEAD
-    # Analyze with Gemini (Immediate Feedback)
-    try:
-        print(f"Summarizing policy: {file.filename}")
-        summary = await gemini.summarize_policy(cleaned_text)
-    except Exception as e:
-        print(f"Gemini Error during summary: {e}")
-        # import traceback
-        # traceback.print_exc()
-        summary = "Summary unavailable (AI Error)"
-    
-    import uuid
-    policy_id = str(uuid.uuid4())
-    
-    policy = PolicyDocument(
-        id=policy_id,
-        name=file.filename,
-        content=cleaned_text,
-        summary=summary,
-        status="Pending Review", # Require human confirmation
-        last_updated=datetime.datetime.utcnow().isoformat()
-    )
-    
-    # Save to In-Memory DB
-    policy_db.add_policy(policy)
-    
-    return policy
-=======
 # --- Models ---
 class RemediationRequest(BaseModel):
     original_text: str
     violations: list[str]
     doc_type: str = "PRD"
->>>>>>> main
 
 class CodeGenRequest(BaseModel):
     policy_summary: str
@@ -80,27 +47,8 @@ class WorkflowRequest(BaseModel):
 async def get_policies():
     return policy_db.get_all_policies()
 
-<<<<<<< HEAD
-@router.delete("/policies/{policy_id}")
-async def delete_policy(policy_id: str):
-    success = policy_db.delete_policy(policy_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Policy not found")
-    return {"status": "deleted", "id": policy_id}
-
-@router.put("/policies/{policy_id}/status")
-async def update_policy_status(policy_id: str, status: str):
-    success = policy_db.update_policy_status(policy_id, status)
-    if not success:
-        raise HTTPException(status_code=404, detail="Policy not found")
-    return {"status": "updated", "id": policy_id, "new_status": status}
-
-@router.post("/evaluate", response_model=ComplianceReport)
-async def evaluate_workflow(workflow: WorkflowDefinition):
-=======
 @router.post("/policies/upload")
 async def upload_policy(file: UploadFile = File(...)):
->>>>>>> main
     try:
         content = await file.read()
         text = content.decode('utf-8')
@@ -128,56 +76,7 @@ async def upload_policy(file: UploadFile = File(...)):
             
         policy_db.add_policy_vectors(pid, chunks, vectors)
         
-<<<<<<< HEAD
-        # Clean JSON string (remove markdown fences if present - though handled by SDK mostly)
-        # Robust cleaning using regex
-        import re
-        # Find the first JSON object or array
-        match = re.search(r'(\{.*\}|\[.*\])', analysis_json_str, re.DOTALL)
-        if match:
-            clean_json = match.group(1)
-        else:
-            clean_json = analysis_json_str.strip()
-            
-        print(f"Cleaned JSON Preview: {clean_json[:100]}...")
-        
-        try:
-            result_data = json.loads(clean_json)
-            
-            # --- Forensic Segment Generation ---
-            import hashlib
-            p_hash = hashlib.sha256(policy_context.encode()).hexdigest()[:12]
-            w_hash = hashlib.sha256(workflow.description.encode()).hexdigest()[:12]
-            t_hash = hashlib.sha256(gemini.get_prompt_template().encode()).hexdigest()[:12]
-            m_ver = gemini.model_name
-            
-            # Combined for tamper-evidence
-            combined_raw = f"{p_hash}|{w_hash}|{t_hash}|{m_ver}"
-            c_digest = hashlib.sha256(combined_raw.encode()).hexdigest()
-            
-            result_data["forensic_digest"] = {
-                "policy_hash": p_hash,
-                "workflow_hash": w_hash,
-                "model_version": m_ver,
-                "prompt_hash": t_hash,
-                "combined_digest": c_digest
-            }
-            
-            # Direct Pydantic validation
-            report = ComplianceReport(**result_data)
-            return report
-            
-        except json.JSONDecodeError as e:
-            print(f"JSON Decode Error: {e}")
-            print(f"Bad JSON: {analysis_json_str}")
-            raise HTTPException(status_code=500, detail="AI returned invalid JSON format")
-        except Exception as e:
-            print(f"Validation Error: {e}")
-            raise HTTPException(status_code=500, detail=f"Report Validation Failed: {str(e)}")
-
-=======
         return policy
->>>>>>> main
     except Exception as e:
         import traceback
         traceback.print_exc()
