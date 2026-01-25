@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { HackathonTour } from '@/components/onboarding/HackathonTour';
+import { ChatWidget } from '@/components/dashboard/ChatWidget';
 
 export default function DashboardLayout({
     children,
@@ -43,6 +44,7 @@ export default function DashboardLayout({
                     {children}
                 </div>
             </main>
+            <ChatWidget />
         </div>
     );
 }
