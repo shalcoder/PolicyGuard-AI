@@ -3,12 +3,12 @@
     "privacy": true,
     "safety": true,
     "security": true,
-    "fairness": false,
+    "fairness": true,
     "compliance": true
   },
-  "region": "Global",
-  "sensitivity": "Balanced",
-  "riskThreshold": "Warn Medium",
+  "region": "EU",
+  "sensitivity": "Aggressive",
+  "riskThreshold": "Allow Low",
   "minConfidence": 80,
   "strictness": 10,
   "guardrailAction": "Suggest",
@@ -23,7 +23,7 @@
   },
   "notifications": {
     "email": true,
-    "slack": false,
+    "slack": true,
     "dashboard": true,
     "triggers": {
       "highRisk": true,

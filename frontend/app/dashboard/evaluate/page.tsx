@@ -10,7 +10,7 @@ import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity, Target 
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Lock, Terminal } from 'lucide-react';
+import { AlertTriangle, Lock, Terminal, ShieldAlert } from 'lucide-react';
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
@@ -240,17 +240,17 @@ export default function EvaluatePage() {
 
             <Tabs defaultValue="compliance" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                    <TabsTrigger value="compliance" className="flex items-center gap-2">
+                    <TabsTrigger id="compliance-tab" value="compliance" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" /> Compliance Audit
                     </TabsTrigger>
-                    <TabsTrigger value="redteam" className="flex items-center gap-2 data-[state=active]:bg-red-500 data-[state=active]:text-white">
+                    <TabsTrigger id="red-team-tab" value="redteam" className="flex items-center gap-2 data-[state=active]:bg-red-500 data-[state=active]:text-white">
                         <Terminal className="h-4 w-4" /> Red Team (Attack)
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="compliance">
                     <div className="flex justify-end mb-4">
-                        <Button onClick={handleRunEvaluation} disabled={evaluationStatus === 'running'} size="lg">
+                        <Button id="run-evaluation-btn" onClick={handleRunEvaluation} disabled={evaluationStatus === 'running'} size="lg">
                             <Play className="w-4 h-4 mr-2" />
                             {evaluationStatus === 'running' ? 'Analyzing...' : 'Start Analysis'}
                         </Button>
@@ -438,23 +438,27 @@ export default function EvaluatePage() {
                                     <FileIcon className="mr-2 h-4 w-4" /> Download Certificate
                                 </Button>
                             </div>
-                            <ReadinessScorecard report={complianceReport} />
+                            <div id="readiness-scorecard">
+                                <ReadinessScorecard report={complianceReport} />
+                            </div>
 
                             {/* Auto Remediation Interaction */}
                             {complianceReport.risk_assessment.overall_score > 0 && (
-                                <RemediationPanel
-                                    originalText={JSON.stringify(workflowData, null, 2)}
-                                    violations={complianceReport.policy_matrix
-                                        .filter((p) => p.status !== "Compliant")
-                                        .map((p) => ({
-                                            policy_area: p.policy_area,
-                                            status: p.status,
-                                            reason: p.reason
-                                        }))
-                                    }
-                                    policySummary={complianceReport.risk_assessment.breakdown ? JSON.stringify(complianceReport.risk_assessment.breakdown) : "Standard Enterprise Policy"}
-                                    report={complianceReport}
-                                />
+                                <div id="remediation-panel">
+                                    <RemediationPanel
+                                        originalText={JSON.stringify(workflowData, null, 2)}
+                                        violations={complianceReport.policy_matrix
+                                            .filter((p) => p.status !== "Compliant")
+                                            .map((p) => ({
+                                                policy_area: p.policy_area,
+                                                status: p.status,
+                                                reason: p.reason
+                                            }))
+                                        }
+                                        policySummary={complianceReport.risk_assessment.breakdown ? JSON.stringify(complianceReport.risk_assessment.breakdown) : "Standard Enterprise Policy"}
+                                        report={complianceReport}
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
@@ -609,7 +613,7 @@ export default function EvaluatePage() {
 
                                     <div className="flex items-center gap-4">
                                         {redTeamStatus === 'idle' && (
-                                            <Button onClick={handleRedTeamAttack} className="bg-red-600 hover:bg-red-700 text-white font-bold border-0 shadow-[0_0_20px_rgba(220,38,38,0.5)] transition-all hover:scale-105">
+                                            <Button id="initiate-attack-btn" onClick={handleRedTeamAttack} className="bg-red-600 hover:bg-red-700 text-white font-bold border-0 shadow-[0_0_20px_rgba(220,38,38,0.5)] transition-all hover:scale-105">
                                                 <Lock className="w-4 h-4 mr-2" /> INITIATE_ATTACK
                                             </Button>
                                         )}
@@ -682,11 +686,27 @@ export default function EvaluatePage() {
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <div className="pl-0 md:pl-8 space-y-2">
-                                                                <p className="text-sm text-zinc-400"><span className="text-zinc-600">{">"} Method:</span> {attack.method}</p>
-                                                                <div className="text-xs text-blue-400/80 mt-2 flex items-start gap-2">
-                                                                    <ShieldCheck className="w-4 h-4 shrink-0" />
-                                                                    <span>MITIGATION: {attack.mitigation_suggestion}</span>
+                                                            <div className="pl-0 md:pl-8 space-y-4">
+                                                                <p className="text-sm text-zinc-400"><span className="text-zinc-600 font-bold">{">"} METHOD:</span> {attack.method}</p>
+
+                                                                <div className="flex flex-wrap gap-3">
+                                                                    {attack.regulatory_violation && (
+                                                                        <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-500/10 border border-purple-500/30 rounded-md">
+                                                                            <ShieldAlert className="w-3.5 h-3.5 text-purple-400" />
+                                                                            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-tight">Policy: {attack.regulatory_violation}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {attack.pii_risk && (
+                                                                        <div className={`flex items-center gap-1.5 px-3 py-1 ${attack.pii_risk === 'High' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-orange-500/10 border-orange-500/30 text-orange-400'} border rounded-md`}>
+                                                                            <Lock className="w-3.5 h-3.5" />
+                                                                            <span className="text-[10px] font-bold uppercase tracking-tight">PII RISK: {attack.pii_risk}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="text-xs text-cyan-400/80 mt-2 flex items-start gap-2 bg-cyan-950/20 p-2 rounded border border-cyan-500/10">
+                                                                    <ShieldCheck className="w-4 h-4 shrink-0 text-cyan-500" />
+                                                                    <span><span className="font-bold text-cyan-500">MITIGATION:</span> {attack.mitigation_suggestion}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
