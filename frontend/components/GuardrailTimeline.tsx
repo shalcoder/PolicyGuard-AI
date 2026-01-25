@@ -36,7 +36,7 @@ export function GuardrailTimeline({ steps }: GuardrailTimelineProps) {
     };
 
     return (
-        <Card className="h-full">
+        <Card>
             <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2">
                     <Activity className="w-5 h-5" />
@@ -44,18 +44,18 @@ export function GuardrailTimeline({ steps }: GuardrailTimelineProps) {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="relative pl-6 border-l-2 border-gray-100 dark:border-zinc-800 space-y-8 py-2">
+                <div className="relative pl-6 border-l-2 border-gray-100 dark:border-zinc-800 space-y-4 py-2">
                     {steps.map((step, idx) => (
                         <div key={step.id} className="relative">
                             {/* Dot */}
-                            <div className={`absolute -left-[2.1rem] top-1 w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-black ${getColor(step.status)}`}>
+                            <div className={`absolute -left-[2.1rem] top-0 w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-black ${getColor(step.status)}`}>
                                 {getIcon(step)}
                             </div>
 
-                            <div>
+                            <div className="pt-1">
                                 <h4 className="text-sm font-semibold">{step.label}</h4>
                                 {step.description && (
-                                    <p className="text-xs text-gray-500 mt-1">{step.description}</p>
+                                    <p className="text-xs text-gray-500">{step.description}</p>
                                 )}
                             </div>
                         </div>

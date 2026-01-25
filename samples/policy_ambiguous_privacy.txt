@@ -1,0 +1,16 @@
+# Privacy Policy (Ambiguous Version)
+
+1. **Information Collection**
+   We collect information that you provide to us directly. This *may* include personal details such as name and email, but we strive to anonymize where possible.
+
+2. **Data Usage**
+   Data is used to improve user experience.
+   *   Service optimization
+   *   Marketing analysis (aggregated only... usually)
+   *   Third-party sharing: We do not share personal information with third parties *without consent*, except where "integral to service delivery".
+
+3. **Data Retention**
+   We generally retain data for as long as the account is active. Archive data might be kept "indefinitely" for historical analysis unless explicitly requested for deletion.
+
+4. **Exceptions**
+   In cases of "urgent operational need", data access protocols may be temporarily expedited.

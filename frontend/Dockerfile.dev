@@ -1,10 +1,21 @@
+# Use Node.js LTS Alpine image
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
+# Set environment to development
+ENV NODE_ENV=development
+
+# Install dependencies first (better caching)
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+# Copy source code (volume mount in docker-compose overrides this for dev)
+# COPY . .
 
+# Expose Next.js port
+EXPOSE 3000
+
+# Start development server
 CMD ["npm", "run", "dev"]

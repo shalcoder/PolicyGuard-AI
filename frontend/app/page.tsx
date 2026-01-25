@@ -1,239 +1,295 @@
 "use client"
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { InfiniteMovingCards } from '@/components/ui/infinite-cards';
-import { Shield, CheckCircle2, Zap, Lock, ArrowRight, Play, Activity, Globe } from 'lucide-react';
+import { Shield, CheckCircle2, ArrowRight, Play, Globe, Terminal, Cpu, Check, AlertTriangle, Code, LayoutDashboard, Lock, Zap, MessageSquare, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import dynamic from 'next/dynamic';
+import { MobileNav } from '@/components/layout/MobileNav';
+
+const ForceGraph3D = dynamic(() => import('react-force-graph-3d'), { ssr: false });
 
 export default function LandingPage() {
-    return (
-        <div className="min-h-screen bg-white dark:bg-zinc-950 text-slate-900 dark:text-slate-50 selection:bg-blue-500/30">
+    const { loginAsGuest } = useAuth() as any;
+    const [scrolled, setScrolled] = useState(false);
 
-            {/* Navbar */}
-            <nav className="fixed top-0 w-full z-50 border-b border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                        <Shield className="w-6 h-6 text-blue-600" />
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Mock Data for Graph
+    const gData = {
+        nodes: [
+            { id: 'Agent Core', group: 1 },
+            { id: 'Billing API', group: 2 },
+            { id: 'User DB', group: 2 },
+            { id: 'Email Svc', group: 2 },
+            { id: 'LLM Gateway', group: 3 },
+            { id: 'Policy: HIPAA', group: 4 },
+            { id: 'Policy: RBAC', group: 4 },
+        ],
+        links: [
+            { source: 'Agent Core', target: 'Billing API' },
+            { source: 'Agent Core', target: 'User DB' },
+            { source: 'Agent Core', target: 'LLM Gateway' },
+            { source: 'Billing API', target: 'Email Svc' },
+            { source: 'Policy: HIPAA', target: 'User DB' },
+            { source: 'Policy: RBAC', target: 'Agent Core' },
+        ]
+    };
+
+    return (
+        <div className="min-h-screen bg-[#0B0F19] text-slate-200 selection:bg-cyan-500/30 font-sans relative">
+            {/* Cyber Grid Overlay */}
+            <div className="absolute inset-0 bg-grid-cyber pointer-events-none opacity-20 z-0"></div>
+
+            <MobileNav />
+
+            {/* Desktop Navbar */}
+            <nav className={`hidden lg:flex fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'bg-[#0B0F19]/90 backdrop-blur-md border-b border-cyan-900/30' : 'bg-transparent'}`}>
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-white">
+                        <Shield className="w-6 h-6 text-cyan-400" />
                         <span>PolicyGuard AI</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Link href="/login">
-                            <Button variant="ghost" className="font-medium">Sign In</Button>
+
+                    <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-400">
+                        <Link href="/" className="hover:text-cyan-400 transition-colors">Home</Link>
+                        <Link href="/how-it-works" className="hover:text-cyan-400 transition-colors">How It Works</Link>
+                        <Link href="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
+                        <Link href="/team" className="hover:text-cyan-400 transition-colors">Team</Link>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <Link href="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                            Login
                         </Link>
                         <Link href="/signup">
-                            <Button className="font-medium bg-blue-600 hover:bg-blue-700 text-white">Get Started</Button>
+                            <Button className="bg-cyan-600 hover:bg-cyan-500 text-white rounded px-6 border border-cyan-400/20 shadow-[0_0_20px_rgba(8,145,178,0.3)] transition-all hover:scale-105 font-semibold tracking-wide">
+                                Get Started
+                            </Button>
                         </Link>
                     </div>
                 </div>
             </nav>
 
             {/* Hero Section */}
-            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <section className="relative pt-40 pb-20 lg:pt-52 lg:pb-32 overflow-hidden z-10">
+                {/* Background Glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] -z-10"></div>
+
+                <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="space-y-8 relative z-10"
+                        transition={{ duration: 0.8 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-950/30 text-cyan-400 text-xs font-bold uppercase tracking-widest border border-cyan-500/20 mb-8 hover:bg-cyan-900/40 transition-colors cursor-pointer backdrop-blur-sm">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                             </span>
-                            Now with Gemini 3 Pro Reasoning
+                            PolicyGuard V2: Full Lifecycle Governance
                         </div>
 
-                        <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]">
-                            Deploy AI with <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                                Zero Risk.
-                            </span>
+                        <h1 className="text-5xl lg:text-8xl font-extrabold tracking-tight leading-[1.1] mb-8 text-white">
+                            Secure AI Agents <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Pre & Post Deployment.</span>
                         </h1>
 
-                        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-lg leading-relaxed">
-                            The executive control plane for AI governance. We validate your AI agents using
-                            <span className="font-semibold text-gray-900 dark:text-gray-200"> simulated post-deployment traces </span>
-                            to ensure continuous compliance.
+                        <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-12">
+                            The complete trust layer for Autonomous Systems. Red Team your agents before launch, then protect them with real-time guardrails in production.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <Link href="/signup">
-                                <Button size="lg" className="h-14 px-8 text-lg rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
-                                    Start Free Audit <ArrowRight className="ml-2 w-5 h-5" />
+                                <Button size="lg" className="w-full sm:w-auto h-14 px-10 text-lg rounded bg-cyan-600 hover:bg-cyan-500 shadow-[0_0_30px_rgba(8,145,178,0.4)] transition-all hover:scale-105 text-white font-bold">
+                                    Start Security Audit <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full border-2">
-                                <Play className="mr-2 w-5 h-5" /> Watch Demo
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="w-full sm:w-auto h-14 px-10 text-lg rounded border-cyan-500/30 text-cyan-100 hover:bg-cyan-950/30 bg-cyan-950/10 backdrop-blur-sm"
+                                onClick={() => loginAsGuest()}
+                            >
+                                <Play className="mr-2 w-5 h-5 fill-cyan-400 text-cyan-400" /> Live Demo
                             </Button>
                         </div>
-
-                        <div className="flex items-center gap-6 pt-4 text-sm text-gray-500 font-medium">
-                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> SOC2 Compliant</span>
-                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> No Latency Impact</span>
-                        </div>
-                    </motion.div>
-
-                    {/* Hero Interactive Visual - Placeholder for "Lively" Video/Image */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="relative lg:h-[600px] w-full"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-3xl blur-3xl"></div>
-
-                        {/* Main Dashboard Preview Card */}
-                        <div className="relative h-full w-full bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden group">
-                            {/* Use Next.js Image for optimization, assuming the generated image will be placed at /public/dashboard-mockup.png */}
-                            {/* Replacing this with the actual generated artifact path later, for now using a placeholder div structure that looks like UI */}
-                            <div className="absolute inset-0 bg-zinc-950">
-                                <div className="absolute top-4 left-4 right-4 h-8 bg-zinc-900 rounded-lg flex items-center px-4 gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                </div>
-                                {/* Mock UI Elements animating */}
-                                <div className="absolute top-16 left-4 right-4 bottom-4 grid grid-cols-3 gap-4">
-                                    <div className="col-span-2 bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
-                                        <div className="h-8 w-1/3 bg-zinc-800 rounded mb-4 animate-pulse"></div>
-                                        <div className="space-y-3">
-                                            <div className="h-20 w-full bg-blue-500/10 border border-blue-500/20 rounded-lg"></div>
-                                            <div className="h-20 w-full bg-zinc-800/50 rounded-lg"></div>
-                                            <div className="h-20 w-full bg-zinc-800/50 rounded-lg"></div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6 flex flex-col items-center justify-center">
-                                        <div className="w-32 h-32 rounded-full border-8 border-green-500/20 border-t-green-500 flex items-center justify-center">
-                                            <span className="text-3xl font-bold text-white">98%</span>
-                                        </div>
-                                        <p className="mt-4 text-gray-400">Readiness Score</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Overlay for "Lively" effect */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-60"></div>
-                            <Image
-                                src="/dashboard_hero_mockup.png"
-                                alt="PolicyGuard Dashboard"
-                                fill
-                                className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
-                            />
-                        </div>
-
-                        {/* Floating Cards */}
-                        <motion.div
-                            animate={{ y: [0, -10, 0] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -left-12 bottom-20 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 flex items-center gap-4 max-w-xs z-20"
-                        >
-                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                                <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm">PII Leak Prevented</p>
-                                <p className="text-xs text-gray-500">Just now • Customer Support Agent</p>
-                            </div>
-                        </motion.div>
-                        <motion.div
-                            animate={{ y: [0, 10, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                            className="absolute -right-8 top-40 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 flex items-center gap-4 max-w-xs z-20"
-                        >
-                            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                                <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm">Policy Validated</p>
-                                <p className="text-xs text-gray-500">HIPAA Compliance Check Passed</p>
-                            </div>
-                        </motion.div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Infinite Scroll - User Flow */}
-            <section className="py-2 overflow-hidden bg-white dark:bg-zinc-950">
-                <div className="mb-8 text-center">
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">End-to-End Governance Flow</h3>
-                </div>
-                <InfiniteMovingCards
-                    items={[
-                        { title: "1. Policy Ingestion", image: "/mock_upload_ui.png" },
-                        { title: "2. Intent Reasoning", image: "/mock_graph_ui.png" },
-                        { title: "3. Deployment Verdict", image: "/mock_verdict_ui.png" },
-                        { title: "4. Continuous Audit", image: "/mock_audit_ui.png" },
-                    ]}
-                    direction="left"
-                    speed="slow"
-                />
-            </section>
+            {/* Lifecycle Stages Section */}
+            <section className="py-24 bg-[#080C14] border-y border-white/5">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl lg:text-5xl font-bold mb-4">Complete Lifecycle Protection</h2>
+                        <p className="text-gray-400">From the first line of code to millions of interactions.</p>
+                    </div>
 
-            {/* Trust Section */}
-            <section className="py-12 border-y border-gray-100 dark:border-zinc-900 bg-gray-50 dark:bg-zinc-900/50">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-8">Trusted by Compliance Leaders at</p>
-                    <div className="flex flex-wrap justify-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['Acme Corp', 'GlobalBank', 'HealthPlus', 'TechFlow', 'SecureNet'].map((brand) => (
-                            <span key={brand} className="text-xl font-bold font-serif text-gray-400 dark:text-gray-500">{brand}</span>
-                        ))}
+                    <div className="grid lg:grid-cols-2 gap-12">
+                        {/* Pre-Deployment */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-blue-900/10 rounded-3xl blur-xl -z-10 group-hover:bg-blue-800/20 transition-all"></div>
+                            <div className="bg-[#0f141f] border border-blue-500/20 rounded-3xl p-8 h-full">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400">
+                                        <Code className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-blue-100">Pre-Deployment</h3>
+                                    <span className="px-2 py-1 rounded bg-blue-500/10 text-xs font-mono text-blue-400 border border-blue-500/20">BUILD PHASE</span>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {[
+                                        { title: "Adversarial Red Teaming", desc: "Simulate OWASP Top 10 attacks (Injection, Jailbreaks) to find holes.", icon: Terminal },
+                                        { title: "Auto-Remediation", desc: "Generate secure Python/TS guardrail code automatically.", icon: Zap },
+                                        { title: "AI Policy Assistant", desc: "Chat with your governance docs. Ask 'Is this HIPAA compliant?' to get citations.", icon: MessageSquare },
+                                    ].map((feat, i) => (
+                                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+                                            <feat.icon className="w-6 h-6 text-gray-400 mt-1" />
+                                            <div>
+                                                <h4 className="font-bold text-white">{feat.title}</h4>
+                                                <p className="text-sm text-gray-400 mt-1">{feat.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Post-Deployment */}
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-purple-900/10 rounded-3xl blur-xl -z-10 group-hover:bg-purple-800/20 transition-all"></div>
+                            <div className="bg-[#0f141f] border border-purple-500/20 rounded-3xl p-8 h-full">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400">
+                                        <Globe className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-purple-100">Post-Deployment</h3>
+                                    <span className="px-2 py-1 rounded bg-purple-500/10 text-xs font-mono text-purple-400 border border-purple-500/20">RUN PHASE</span>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {[
+                                        { title: "SLA & Latency Intelligence", desc: "Enforce strict latency budgets (<100ms) and predict cost overruns.", icon: Activity },
+                                        { title: "Shadow AI Detection", desc: "Identify unauthorized agent activity and API endpoints.", icon: AlertTriangle },
+                                        { title: "3D Visual Monitoring", desc: "Interactive map of all data flows and policy violations.", icon: LayoutDashboard },
+                                    ].map((feat, i) => (
+                                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+                                            <feat.icon className="w-6 h-6 text-gray-400 mt-1" />
+                                            <div>
+                                                <h4 className="font-bold text-white">{feat.title}</h4>
+                                                <p className="text-sm text-gray-400 mt-1">{feat.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Features Grid */}
-            <section className="py-24 max-w-7xl mx-auto px-6">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-3xl font-bold tracking-tight mb-4">Continuous Compliance Layer</h2>
-                    <p className="text-gray-500 text-lg">Simulate post-deployment traces to catch policy drifts before they happen.</p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-8">
-                    {[
-                        { icon: Brain, title: "Simulated Traces", desc: "We generate synthetic user traffic to stress-test your agents against new policies." },
-                        { icon: Lock, title: "Pre-Deployment Gates", desc: "Block unsafe workflows with executive-grade guardrails." },
-                        { icon: Globe, title: "Continuous Monitoring", desc: "Real-time auditing of every decision trace, ensuring 24/7 compliance." }
-                    ].map((feature, i) => (
-                        <div key={i} className="p-8 rounded-2xl bg-gray-50 dark:bg-zinc-900/50 hover:bg-white dark:hover:bg-zinc-900 border border-transparent hover:border-gray-200 dark:hover:border-zinc-800 transition-all duration-300 shadow-sm hover:shadow-xl">
-                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
-                                <feature.icon className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                            <p className="text-gray-500 leading-relaxed">
-                                {feature.desc}
-                            </p>
+            {/* Visual Compliance Mapping (Graph) */}
+            <section className="py-32 bg-[#080C14] border-y border-white/5 relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-widest border border-blue-500/20 mb-6">
+                            Graph Viz
                         </div>
-                    ))}
+                        <h2 className="text-4xl lg:text-5xl font-bold mb-6">Visual Compliance Mapping</h2>
+                        <p className="text-lg text-gray-400 mb-8 leading-relaxed">
+                            See your agent's brain. We map every API call, database query, and external interaction to your compliance policies in a 3D interactive graph.
+                        </p>
+                        <ul className="space-y-4 mb-8">
+                            {[
+                                "Real-time Data Flow Analysis",
+                                "Policy Violation Highlighting",
+                                "Infrastructure Dependency Mapping"
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-center gap-3 text-gray-300">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                        <Check className="w-3 h-3" />
+                                    </div>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8">
+                            Explore Graph View
+                        </Button>
+                    </div>
+
+                    {/* Graph Container */}
+                    <div className="relative h-[500px] w-full bg-black/50 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+                        <div className="absolute top-4 left-4 z-10 bg-black/60 backdrop-blur px-3 py-1 rounded text-xs font-mono text-blue-400 border border-blue-500/30">
+                            LIVE_MONITORING: ACTIVE
+                        </div>
+                        <ForceGraph3D
+                            graphData={gData}
+                            backgroundColor="#000000"
+                            nodeColor={node => {
+                                // @ts-ignore
+                                return node.group === 1 ? '#ef4444' : node.group === 4 ? '#3b82f6' : '#ffffff'
+                            }}
+                            linkColor={() => '#ffffff33'}
+                            nodeLabel="id"
+                        />
+                    </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="py-12 border-t border-gray-100 dark:border-zinc-900 text-center text-gray-500 text-sm">
-                <p>&copy; 2024 PolicyGuard AI. All rights reserved.</p>
+            <footer className="py-16 border-t border-white/5 bg-[#080C14]">
+                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 mb-12">
+                    <div className="col-span-2">
+                        <div className="flex items-center gap-2 font-bold text-xl tracking-tight mb-6">
+                            <Shield className="w-6 h-6 text-blue-500" />
+                            <span>PolicyGuard AI</span>
+                        </div>
+                        <p className="text-gray-500 max-w-sm mb-8 text-sm leading-relaxed">
+                            The comprehensive governance platform for the next generation of autonomous AI agents. Secure, monitor, and deploy with absolute confidence.
+                        </p>
+                        <div className="flex gap-4">
+                            {[1, 2, 3, 4].map((_, i) => (
+                                <div key={i} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer">
+                                    <Globe className="w-4 h-4" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-white mb-6">Product</h4>
+                        <ul className="space-y-4 text-sm text-gray-500">
+                            <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Enterprise</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Changelog</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-white mb-6">Legal</h4>
+                        <ul className="space-y-4 text-sm text-gray-500">
+                            <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
+                            <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="max-w-7xl mx-auto px-6 border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">
+                    <p>&copy; 2026 PolicyGuard AI. All rights reserved.</p>
+                    <p>Designed for the Future of AI.</p>
+                </div>
             </footer>
         </div>
     );
-}
-
-function Brain(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
-        </svg>
-    )
 }

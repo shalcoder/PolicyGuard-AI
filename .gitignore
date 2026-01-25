@@ -28,3 +28,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+serviceAccountKey.json
+policy_store.json
+vector_store.json
+evaluations.json

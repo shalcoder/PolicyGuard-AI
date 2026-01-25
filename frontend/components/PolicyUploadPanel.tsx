@@ -43,6 +43,9 @@ export function PolicyUploadPanel({ onUpload }: PolicyUploadPanelProps) {
             const data = await res.json();
             setUploadedPolicies(prev => [...prev, { id: data.id, name: data.name, summary: data.summary, status: data.status }]);
 
+            // Trigger parent refresh immediately after success
+            if (onUpload) onUpload([file]);
+
         } catch (error: any) {
             console.error(error);
             alert(error.message || "Failed to upload policy");
@@ -71,7 +74,6 @@ export function PolicyUploadPanel({ onUpload }: PolicyUploadPanelProps) {
             const droppedFiles = Array.from(e.dataTransfer.files);
             setFiles((prev) => [...prev, ...droppedFiles]);
             uploadFile(droppedFiles[0]);
-            if (onUpload) onUpload(droppedFiles);
         }
     };
 
@@ -80,7 +82,6 @@ export function PolicyUploadPanel({ onUpload }: PolicyUploadPanelProps) {
             const selectedFiles = Array.from(e.target.files);
             setFiles((prev) => [...prev, ...selectedFiles]);
             uploadFile(selectedFiles[0]);
-            if (onUpload) onUpload(selectedFiles);
         }
     };
 

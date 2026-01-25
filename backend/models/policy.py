@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional, Dict
 from enum import Enum
 
@@ -7,9 +7,13 @@ class PolicyDocument(BaseModel):
     name: str
     content: str
     summary: Optional[str] = None
+<<<<<<< HEAD
     status: str = "Active" # "Active" | "Draft" | "Pending Review"
     version: str = "1.0.0"
     last_updated: str = "" # ISO date string
+=======
+    is_active: bool = True
+>>>>>>> main
 
 class WorkflowDefinition(BaseModel):
     name: str
@@ -18,6 +22,7 @@ class WorkflowDefinition(BaseModel):
 # --- New Report Structure Models ---
 
 class AISystemSpec(BaseModel):
+    agent_name: str # e.g. "MortgageBot", "PaymentAssistant"
     summary: str
     primary_purpose: str
     decision_authority: str
@@ -37,6 +42,7 @@ class PolicyStatus(str, Enum):
     RISK = "At Risk"
     NON_COMPLIANT = "Non-Compliant"
     CANNOT_ASSESS = "Cannot Be Assessed"
+    NOT_APPLICABLE = "Not Applicable"
 
 class PolicyAlignment(BaseModel):
     policy_area: str
@@ -61,7 +67,13 @@ class EvidenceTrace(BaseModel):
     workflow_component: str # "Data Storage Layer"
     issue_description: str # "Architecture allows US-based processing..."
     severity: str # "High", "Medium", "Low"
-    snippet: str # Exact quote
+    snippet: str | List[str] # Validates both, normalizes to str via validator
+
+    @validator("snippet", pre=True)
+    def normalize_snippet(cls, v):
+        if isinstance(v, list):
+            return " ".join(v)
+        return v
 
 class RecommendationType(str, Enum):
     BLOCKING = "Blocking"
@@ -96,14 +108,25 @@ class ForensicDigest(BaseModel):
     prompt_hash: str
     combined_digest: str # SHA-256 over all segments for tamper-evidence
 
+class BusinessImpact(BaseModel):
+    financial_exposure: str # "High", "Medium", "Low"
+    regulatory_penalty: str # "GDPR Fine up to 20M"
+    brand_reputation: str # "Severe Trust Loss"
+    estimated_cost: str # "$50k - $200k"
+
 class ComplianceReport(BaseModel):
+<<<<<<< HEAD
     report_id: str 
     timestamp: str # ISO date string
     forensic_digest: ForensicDigest # Tamper-evident state snapshot
+=======
+    workflow_name: Optional[str] = None # Preserved from input
+>>>>>>> main
     system_spec: AISystemSpec
     data_map: DataInteractionMap
     policy_matrix: List[PolicyAlignment]
     risk_assessment: RiskScore
+    business_impact: Optional[BusinessImpact] = None
     evidence: List[EvidenceTrace]
     risk_simulations: List[RiskSimulation] # Plausible counterfactual failure modes
     recommendations: List[Recommendation]

@@ -15,13 +15,32 @@ class PolicyIngestor:
         cleaned = re.sub(r'\s+', ' ', content).strip()
         return cleaned
 
-    async def chunk_policy(self, text: str, chunk_size: int = 1000) -> List[str]:
+    async def chunk_policy(self, text: str, chunk_size: int = 1500) -> List[str]:
         """
-        Semantic chunking (Rule-based for MVP, later LLM-based)
+        Semantic chunking: Split by paragraphs/headers first, then merge or split to fit window.
         """
-        # Naive splitting by paragraphs or size
-        # Better: split by headers "1.1", "Article 5", etc.
+        # 1. Split by double newlines (paragraphs)
+        paragraphs = re.split(r'\n\s*\n', text)
+        
         chunks = []
-        for i in range(0, len(text), chunk_size):
-            chunks.append(text[i:i + chunk_size])
+        current_chunk = ""
+        
+        for p in paragraphs:
+            p = p.strip()
+            if not p:
+                continue
+                
+            # If adding this paragraph exceeds target size, save current chunk and start new
+            if len(current_chunk) + len(p) > chunk_size and current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = p
+            else:
+                if current_chunk:
+                    current_chunk += "\n\n" + p
+                else:
+                    current_chunk = p
+        
+        if current_chunk:
+            chunks.append(current_chunk)
+            
         return chunks

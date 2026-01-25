@@ -4,8 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertTriangle, FileText, Download, Shield, Activity, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 // --- Interfaces matching Backend Models ---
 
@@ -25,7 +23,7 @@ interface DataInteractionMap {
     cross_border_transfer: string;
 }
 
-interface PolicyAlignment {
+export interface PolicyAlignment {
     policy_area: string;
     status: 'Compliant' | 'Partial Compliance' | 'At Risk' | 'Non-Compliant' | 'Cannot Be Assessed';
     reason: string;
@@ -95,11 +93,13 @@ export interface ComplianceReport {
 
 interface ReadinessScorecardProps {
     report: ComplianceReport;
+    onDownload?: () => void;
 }
 
-export function ReadinessScorecard({ report }: ReadinessScorecardProps) {
+export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardProps) {
     const reportRef = useRef<HTMLDivElement>(null);
 
+<<<<<<< HEAD
     const handleDownloadPDF = async () => {
         if (!reportRef.current) return;
         const canvas = await html2canvas(reportRef.current, { scale: 2 });
@@ -111,6 +111,8 @@ export function ReadinessScorecard({ report }: ReadinessScorecardProps) {
         pdf.save(`Compliance_Forensics_${report.report_id}.pdf`);
     };
 
+=======
+>>>>>>> main
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Compliant': return 'text-green-600 bg-green-50 border-green-200';
@@ -182,10 +184,19 @@ export function ReadinessScorecard({ report }: ReadinessScorecardProps) {
             </div>
 
             <div className="flex justify-end">
+<<<<<<< HEAD
                 <Button onClick={handleDownloadPDF} variant="outline" size="sm">
                     <Download className="w-4 h-4 mr-2" />
                     Export Forensic Audit Log
                 </Button>
+=======
+                {onDownload && (
+                    <Button onClick={onDownload} variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Certificate (PDF)
+                    </Button>
+                )}
+>>>>>>> main
             </div>
 
             <div ref={reportRef} className="space-y-6 bg-white dark:bg-zinc-950 p-6 rounded-xl border shadow-sm">
