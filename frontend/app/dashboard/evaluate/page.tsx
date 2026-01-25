@@ -43,7 +43,8 @@ export default function EvaluatePage() {
                     const policies = await res.json();
                     setTimelineSteps(prev => {
                         const newSteps = [...prev];
-                        newSteps[0].description = `Ready with ${policies.length} active policies`;
+                        const activeCount = policies.filter((p: any) => p.is_active).length;
+                        newSteps[0].description = `Ready with ${activeCount} active policies`;
                         return newSteps;
                     });
                 }
@@ -120,7 +121,8 @@ export default function EvaluatePage() {
             // Dynamic Policy Count Update
             setTimelineSteps(prev => {
                 const newSteps = [...prev];
-                newSteps[0].description = `Loading ${policies.length} active policies`;
+                const activeCount = policies.filter((p: any) => p.is_active).length;
+                newSteps[0].description = `Loading ${activeCount} active policies`;
                 return newSteps;
             });
 
