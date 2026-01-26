@@ -35,13 +35,13 @@ export default function OverviewPage() {
     const [stats, setStats] = useState<DashboardStats>({
         traces_analyzed: 0,
         violations: 0,
-        active_policies: 1, // Start with 1 to avoid /0 visual glitches if loading
+        active_policies: 0,
         system_health: 100,
         recent_evaluations: [],
         risk_distribution: [
             { name: "High", value: 0 },
             { name: "Medium", value: 0 },
-            { name: "Low", value: 1 }
+            { name: "Low", value: 0 }
         ],
         compliance_trend: []
     });
@@ -57,8 +57,16 @@ export default function OverviewPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-                const res = await fetch(`${apiUrl}/api/v1/dashboard/stats`);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                const res = await fetch(`${apiUrl}/api/v1/dashboard/stats`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
                 if (res.ok) {
                     const data = await res.json();
                     setStats(data);

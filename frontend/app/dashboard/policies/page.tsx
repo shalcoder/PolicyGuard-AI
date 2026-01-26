@@ -21,14 +21,24 @@ export default function PoliciesPage() {
 
     const fetchPolicies = async () => {
         try {
+            setLoading(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const res = await fetch(`${apiUrl}/api/v1/policies`);
+
+            // Abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+            const res = await fetch(`${apiUrl}/api/v1/policies`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             if (res.ok) {
                 const data = await res.json();
                 setPolicies(data);
             }
         } catch (error) {
-            console.error("Failed to fetch policies");
+            console.error("Failed to fetch policies", error);
         } finally {
             setLoading(false);
         }

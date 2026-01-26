@@ -12,6 +12,9 @@ class PolicyStorage:
         self._policies: List[PolicyDocument] = []
         self._evaluations: List[dict] = []
         self.db = None
+        self._initialized = False
+        import threading
+        self._lock = threading.Lock()
         
         # Init Firebase Mandatory
         try:
@@ -65,16 +68,18 @@ class PolicyStorage:
                     print(f"⚠️ Failed to parse policy {doc.id}: {e}")
             
             print(f"✅ Loaded {count} policies from Firebase")
-            self._initialized = True
-
             # Load Evaluations (Limit 100 for startup performance)
             eval_ref = self.db.collection('evaluations').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(100)
             self._evaluations = []
+            eval_count = 0
             for doc in eval_ref.stream():
                 try:
                     self._evaluations.append(doc.to_dict())
+                    eval_count += 1
                 except: pass
             self._evaluations.reverse() 
+            print(f"✅ Loaded {eval_count} evaluations from Firebase")
+            self._initialized = True
                 
         except Exception as e:
             print(f"Error loading from Firebase: {e}")
@@ -161,8 +166,10 @@ class PolicyStorage:
         return [s[1] for s in scores[:top_k]]
 
     def get_all_policies(self) -> List[PolicyDocument]:
-        if not hasattr(self, '_initialized') or not self._initialized:
-            self._load_from_firebase()
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    self._load_from_firebase()
         return self._policies
 
     def delete_policy(self, policy_id: str) -> bool:
@@ -214,9 +221,11 @@ class PolicyStorage:
             except Exception as e: print(f"Firebase Add Error: {e}")
 
     def get_dashboard_stats(self):
-        if not hasattr(self, '_initialized') or not self._initialized:
-            self._load_from_firebase()
-            self._load_vectors()
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    self._load_from_firebase()
+                    self._load_vectors()
             
         active_policies = len([p for p in self._policies if p.is_active])
         total_evaluations = len(self._evaluations)

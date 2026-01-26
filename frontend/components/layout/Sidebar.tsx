@@ -72,7 +72,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 space-y-3">
                 <Link href="/dashboard/profile" onClick={onNavigate} className="flex items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg p-2.5 transition-all">
                     <div className="h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 overflow-hidden flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-cyan-500/20">
-                        {profile.name.charAt(0)}
+                        {profile?.name?.charAt(0) || 'U'}
                     </div>
                     <div className="ml-3 flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{profile.name}</p>
