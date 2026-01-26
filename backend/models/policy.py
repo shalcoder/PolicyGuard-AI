@@ -7,10 +7,10 @@ class PolicyDocument(BaseModel):
     name: str
     content: str
     summary: Optional[str] = None
+    is_active: bool = True
     status: str = "Active" # "Active" | "Draft" | "Pending Review"
     version: str = "1.0.0"
     last_updated: str = "" # ISO date string
-    is_active: bool = True
 
 class WorkflowDefinition(BaseModel):
     name: str

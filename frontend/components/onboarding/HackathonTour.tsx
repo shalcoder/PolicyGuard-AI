@@ -31,7 +31,7 @@ const TOUR_STEPS: TourStep[] = [
         id: 1,
         title: "Step 1: The Policy Engine",
         description: "See that PDF? That's the 'Global AI Usage Policy'. \n\n👉 ACTION: Click 'View' to see how Gemini extracted the rules. \n\nWe parse this unstructured text into a structured Policy Matrix that acts as the 'Law' for all agents.",
-        path: "/dashboard/policy",
+        path: "/dashboard/policies",
         actionLabel: "Next: See Red Team",
         icon: Shield,
         position: "bottom-right"
@@ -56,7 +56,7 @@ export function HackathonTour() {
 
     useEffect(() => {
         // Init state from local storage or default
-        if (user?.isAnonymous) {
+        if (user) {
             const savedStep = localStorage.getItem('hackathonTourStep');
             const stepNum = savedStep ? parseInt(savedStep) : 0;
 

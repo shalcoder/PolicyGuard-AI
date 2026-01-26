@@ -49,8 +49,7 @@ export default function MonitorPage() {
     useEffect(() => {
         const fetchMonitor = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-                const res = await fetch(`${apiUrl}/api/v1/dashboard/monitor`);
+                const res = await fetch('http://localhost:8000/api/v1/dashboard/monitor');
                 if (res.ok) setData(await res.json());
             } catch (err) { console.error(err); }
         };
@@ -73,16 +72,15 @@ export default function MonitorPage() {
                 request_count: Math.floor(Math.random() * 50)
             };
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-            await fetch(`${apiUrl}/api/v1/telemetry/ingest`, {
+            await fetch('http://localhost:8000/api/v1/telemetry/ingest', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
 
-            const res = await fetch(`${apiUrl}/api/v1/telemetry/risk/${SIM_SERVICE_ID}`);
+            const res = await fetch(`http://localhost:8000/api/v1/telemetry/risk/${SIM_SERVICE_ID}`);
             if (res.ok) setRisk(await res.json());
 
             // Fetch History for Graph
-            const histRes = await fetch(`${apiUrl}/api/v1/telemetry/history/${SIM_SERVICE_ID}`);
+            const histRes = await fetch(`http://localhost:8000/api/v1/telemetry/history/${SIM_SERVICE_ID}`);
             if (histRes.ok) {
                 const histData = await histRes.json();
                 // Format for Recharts
@@ -121,11 +119,11 @@ export default function MonitorPage() {
 
             <Tabs defaultValue="audit" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
-                    <TabsTrigger value="audit">Audit Log Stream</TabsTrigger>
-                    <TabsTrigger value="topology" className="flex items-center gap-2">
+                    <TabsTrigger id="audit-tab" value="audit">Audit Log Stream</TabsTrigger>
+                    <TabsTrigger id="topology-tab" value="topology" className="flex items-center gap-2">
                         <Globe className="w-3 h-3" /> Topology 3D
                     </TabsTrigger>
-                    <TabsTrigger value="sla" className="flex items-center gap-2">
+                    <TabsTrigger id="sla-tab" value="sla" className="flex items-center gap-2">
                         <Zap className="w-3 h-3" /> SLA Guard
                     </TabsTrigger>
                 </TabsList>
@@ -149,7 +147,7 @@ export default function MonitorPage() {
                             <CardContent><div className="text-2xl font-bold text-blue-500">{data.active_policies}</div></CardContent>
                         </Card>
                     </div>
-                    <Card>
+                    <Card id="audit-log-table">
                         <CardHeader><CardTitle>Audit Log Stream</CardTitle></CardHeader>
                         <CardContent>
                             <div className="relative overflow-x-auto">
@@ -191,14 +189,23 @@ export default function MonitorPage() {
                         <CardHeader>
                             <CardTitle className="text-xl font-bold flex items-center gap-2">
                                 <Globe className="w-5 h-5 text-cyan-500" />
-                                Interactive Neural Topology
+                                System Topology
                             </CardTitle>
                             <CardDescription className="text-slate-400">
                                 Real-time 3D mapping of service infrastructure, policy envelopes, and detected vulnerabilities.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0 border-t border-slate-800">
+                        <CardContent id="compliance-graph-container" className="p-0 border-t border-slate-800">
                             <ComplianceGraph report={{
+                                report_id: "RPT-MONITOR-001",
+                                timestamp: new Date().toISOString(),
+                                forensic_digest: {
+                                    policy_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                    workflow_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+                                    model_version: "v1.2.4-stable",
+                                    prompt_hash: "a43c1b0aa53a0b9231647f17b355d9d9555c2d92167",
+                                    combined_digest: "f5b6c7d8e9f0a1b2c3d4e5f67890a1b2c3d4e5f6"
+                                },
                                 workflow_name: serviceName,
                                 system_spec: {
                                     agent_name: serviceName,
@@ -230,6 +237,26 @@ export default function MonitorPage() {
                                 evidence: [
                                     { policy_section: "SLA-001", issue_description: "Response time > 500ms", severity: "Medium", workflow_component: "API Layer", source_doc: "CloudWatch", snippet: "LATENCY_THRESHOLD_EXCEEDED" },
                                     { policy_section: "OWASP-01", issue_description: "Malicious prompt pattern detected", severity: "High", workflow_component: "Prompt Engine", source_doc: "WAF Logs", snippet: "PROMPT_INJECTION_MATCH" }
+                                ],
+                                business_impact: {
+                                    financial_exposure: "Medium",
+                                    regulatory_penalty: "Potential SOC2 non-compliance fines",
+                                    brand_reputation: "Risk of trust erosion",
+                                    estimated_cost: "$10k - $25k"
+                                },
+                                risk_simulations: [
+                                    {
+                                        scenario_title: "Prompt Injection Attack",
+                                        failure_mode: "Model bypasses restrictions",
+                                        description: "Simulated user inputs designed to override safety guidelines.",
+                                        plausibility_grounding: "High",
+                                        severity: "Critical",
+                                        violated_clause: "Safety-001",
+                                        confidence_level: "95%"
+                                    }
+                                ],
+                                recommendations: [
+                                    { title: "Optimize Gateway Latency", type: "Advisory", description: "Scale up pod resources.", related_policy: "SLA-001" }
                                 ],
                                 verdict: { approved: true, status_label: "Stable", approval_conditions: [] }
                             }} />

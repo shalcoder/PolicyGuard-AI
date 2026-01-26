@@ -21,7 +21,7 @@ export default function PoliciesPage() {
 
     const fetchPolicies = async () => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const res = await fetch(`${apiUrl}/api/v1/policies`);
             if (res.ok) {
                 const data = await res.json();
@@ -42,7 +42,7 @@ export default function PoliciesPage() {
         if (!confirm(`Are you sure you want to delete policy: ${name}?`)) return;
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const res = await fetch(`${apiUrl}/api/v1/policies/${id}`, {
                 method: 'DELETE',
             });
@@ -58,7 +58,7 @@ export default function PoliciesPage() {
 
     const handleToggle = async (id: string, currentStatus: boolean) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const res = await fetch(`${apiUrl}/api/v1/policies/${id}/toggle`, {
                 method: 'PATCH',
             });
@@ -77,12 +77,14 @@ export default function PoliciesPage() {
                 <p className="text-gray-500 dark:text-gray-400">Upload and manage organization guardrails.</p>
             </div>
 
-            <PolicyUploadPanel onUpload={(files) => {
-                // Wait small delay for processing then refresh
-                setTimeout(fetchPolicies, 1000);
-            }} />
+            <div id="policy-upload-panel">
+                <PolicyUploadPanel onUpload={(files) => {
+                    // Wait small delay for processing then refresh
+                    setTimeout(fetchPolicies, 1000);
+                }} />
+            </div>
 
-            <div className="space-y-4">
+            <div id="active-policies-list" className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                     Active Policies
                     <Badge variant="secondary" className="rounded-full">{policies.filter(p => p.is_active).length}</Badge>

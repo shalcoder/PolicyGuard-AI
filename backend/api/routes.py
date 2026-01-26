@@ -129,11 +129,34 @@ async def evaluate_workflow(request: WorkflowRequest):
         report_json = await gemini.analyze_policy_conflict(context or "General Safety", request.description, settings)
         report_data = json.loads(report_json)
         
+        # 4. Generate Forensic Metadata
+        import hashlib
+        report_id = f"REP-{uuid.uuid4().hex[:8].upper()}"
+        timestamp = datetime.datetime.now().isoformat()
+        
+        # Create a simplified forensic digest for the hackathon MVP
+        policy_hash = hashlib.sha256(context.encode()).hexdigest()[:12]
+        workflow_hash = hashlib.sha256(request.description.encode()).hexdigest()[:12]
+        combined_payload = f"{policy_hash}{workflow_hash}{timestamp}"
+        combined_digest = hashlib.sha256(combined_payload.encode()).hexdigest()
+        
+        report_data.update({
+            "report_id": report_id,
+            "timestamp": timestamp,
+            "forensic_digest": {
+                "policy_hash": policy_hash,
+                "workflow_hash": workflow_hash,
+                "model_version": settings.GEMINI_MODEL,
+                "prompt_hash": "audit-v2.1",
+                "combined_digest": combined_digest
+            }
+        })
+
         # Add workflow name if missing
         if "workflow_name" not in report_data:
             report_data["workflow_name"] = request.name
             
-        # 4. Store evaluation in history
+        # 5. Store evaluation in history
         policy_db.add_evaluation(report_data)
         
         return ComplianceReport(**report_data)

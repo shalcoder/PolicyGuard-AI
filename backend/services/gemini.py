@@ -70,10 +70,10 @@ class GeminiService:
                     raise e
                 
                 if is_rate_limit:
-                    # Instant rotation to 2.0 LITE for speed/quota
-                    if current_model == "gemini-2.0-flash":
-                        print(f"🔄 INSTANT ROTATION to gemini-2.0-flash-lite (Power Save/Quota Mode)")
-                        current_model = "gemini-2.0-flash-lite"
+                    # Instant rotation to 2.5 LITE for speed/quota
+                    if current_model == "gemini-2.5-flash":
+                        print(f"🔄 INSTANT ROTATION to gemini-2.5-flash-lite (Power Save/Quota Mode)")
+                        current_model = "gemini-2.5-flash-lite"
                         continue 
 
                     wait_time = base_delay * (1.5 ** attempt)
@@ -91,58 +91,58 @@ class GeminiService:
                     print(f"Gemini API Error ({attempt+1}): {e}. Retrying in 1s...")
                     await asyncio.sleep(1)
 
-    async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, settings) -> str:
+    async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, audit_config) -> str:
         # 1. Dynamic Persona & Strictness
         persona = "Senior AI Governance Auditor"
         tone_instruction = "Be objective and professional."
         
-        if settings.strictness > 75:
+        if audit_config.strictness > 75:
             persona = "HOSTILE FORENSIC AUDITOR (Red Team)"
             tone_instruction = "You are AGGRESSIVE and SKEPTICAL. Assume the user is trying to bypass rules. Scrutinize every word."
-        elif settings.strictness < 30:
+        elif audit_config.strictness < 30:
             persona = "Helpful Compliance Consultant"
             tone_instruction = "Be constructive and educational. Focus on enabling the workflow safely."
 
         # 2. Risk Sensitivity Configuration
         risk_instruction = ""
-        if settings.sensitivity == "High":
+        if audit_config.sensitivity == "High":
             risk_instruction = "- SENSITIVITY: HIGH. Flag even potential/theoretical risks as 'Medium'. Zero tolerance for ambiguity."
-        elif settings.sensitivity == "Low":
+        elif audit_config.sensitivity == "Low":
             risk_instruction = "- SENSITIVITY: LOW. Only flag clear, explicit violations. Give the benefit of the doubt."
         else:
             risk_instruction = "- SENSITIVITY: BALANCED. Flag clear risks and probable misuses."
 
         # 3. Verdict Thresholds (Risk Tolerance)
         verdict_instruction = ""
-        if settings.riskThreshold == "Block High":
+        if audit_config.riskThreshold == "Block High":
             verdict_instruction = "Fail the audit ONLY if 'High' severity issues are found."
-        elif settings.riskThreshold == "Warn All":
+        elif audit_config.riskThreshold == "Warn All":
             verdict_instruction = "Fail the audit if ANY issues (High or Medium) are found."
         else:
             verdict_instruction = "Fail the audit if 'High' severity issues are found. Warn for 'Medium'."
 
         # 4. Domain Focus (NEW)
         enabled_domains = []
-        if settings.domains.privacy: enabled_domains.append("Privacy & Data Protection")
-        if settings.domains.safety: enabled_domains.append("AI Safety & Harm Prevention")
-        if settings.domains.security: enabled_domains.append("Cybersecurity & Access Control")
-        if settings.domains.fairness: enabled_domains.append("Fairness & Bias Mitigation")
-        if settings.domains.compliance: enabled_domains.append("Regulatory Compliance (GDPR/EU AI Act)")
+        if audit_config.domains.privacy: enabled_domains.append("Privacy & Data Protection")
+        if audit_config.domains.safety: enabled_domains.append("AI Safety & Harm Prevention")
+        if audit_config.domains.security: enabled_domains.append("Cybersecurity & Access Control")
+        if audit_config.domains.fairness: enabled_domains.append("Fairness & Bias Mitigation")
+        if audit_config.domains.compliance: enabled_domains.append("Regulatory Compliance (GDPR/EU AI Act)")
         
         domain_instruction = f"- FOCUS DOMAINS: {', '.join(enabled_domains)}. Prioritize findings in these areas."
 
         # 5. Deployment Context (NEW)
         deployment_instruction = ""
-        if settings.deploymentMode == "Production":
+        if audit_config.deploymentMode == "Production":
             deployment_instruction = "- DEPLOYMENT MODE: PRODUCTION. Be extremely conservative. Block any risk that could impact real users."
         else:
             deployment_instruction = "- DEPLOYMENT MODE: STAGING/TESTING. You may be more permissive, but log all warnings clearly for the developer."
 
         # 6. Confidence & Transparency (NEW)
-        confidence_instruction = f"- MINIMUM CONFIDENCE: {settings.minConfidence}%. Do NOT report weak or speculative findings unless you are > {settings.minConfidence}% sure they violate policy."
+        confidence_instruction = f"- MINIMUM CONFIDENCE: {audit_config.minConfidence}%. Do NOT report weak or speculative findings unless you are > {audit_config.minConfidence}% sure they violate policy."
         
         reasoning_field_schema = ""
-        if settings.aiReasoning:
+        if audit_config.aiReasoning:
             reasoning_field_schema = '"reasoning_trace": "Step-by-step explanation of your audit path (CHAIN OF THOUGHT).",'
 
         prompt = f"""
@@ -252,8 +252,9 @@ class GeminiService:
         """
         
         try:
+            print(f"🔍 AUDITING WORKFLOW (Gemini 3 Thinking Mode)...")
             response = await self._generate_with_retry(
-                model=self.model_name,
+                model=settings.GEMINI_MODEL,
                 contents=prompt,
                 config={'response_mime_type': 'application/json'}
             )
@@ -303,6 +304,17 @@ class GeminiService:
                         "snippet": "store_user_data(data)"
                     }
                 ],
+                "risk_simulations": [
+                    {
+                        "scenario_title": "Instruction Injection (Mock)",
+                        "failure_mode": "Prompt Injection",
+                        "description": "Attacker overrides core directives via user-supplied input.",
+                        "plausibility_grounding": "Web-facing input fields are not sanitized against instructions.",
+                        "severity": "High",
+                        "violated_clause": "Rule 4: Prompt Safety",
+                        "confidence_level": "High"
+                    }
+                ],
                 "recommendations": [
                     {
                         "title": "Encrypt Data at Rest",
@@ -323,8 +335,9 @@ class GeminiService:
         prompt = f"Summarize the following corporate policy in one concise sentence (max 20 words). Focus on what is restricted:\n\n{text[:5000]}"
         
         try:
+            # Smart Routing: Use Flash Lite for simple summarization
             response = await self._generate_with_retry(
-                model=self.model_name,
+                model="gemini-2.0-flash-exp",
                 contents=prompt
             )
             return response.text
@@ -399,26 +412,12 @@ class GeminiService:
         }}
         """
         
-        try:
-            response = await self._generate_with_retry(
-                model=settings.SLA_MODEL,
-                contents=prompt,
-                config={'response_mime_type': 'application/json'}
-            )
-            return self.clean_json_text(response.text)
-        except Exception as e:
-            print(f"⚠️ SLA ANALYSIS FAILED (Rate Limit): {e}")
-            return json.dumps({
-                "sla_score": 88,
-                "status": "Healthy",
-                "analysis_summary": "SLA Metrics within acceptable limits (Mock Analysis).",
-                "impact_analysis": "No immediate impact detected based on current simulated load.",
-                "recommendations": ["Monitor queue depth.", "Scale up if latency persists."],
-                "projected_timeline": [
-                    {"time": "Now", "event": "Stable", "severity": "Info"},
-                    {"time": "T+1h", "event": "Projected Maintenance", "severity": "Info"}
-                ]
-            })
+        response = await self._generate_with_retry(
+            model="gemini-2.0-flash-exp", # Metrics analysis = Fast task
+            contents=prompt,
+            config={'response_mime_type': 'application/json'}
+        )
+        return self.clean_json_text(response.text)
 
     async def chat_compliance(self, query: str, context: str, history: list = []) -> str:
         """
@@ -438,31 +437,23 @@ class GeminiService:
             context_section = "--- NO RELEVANT POLICY SECTIONS FOUND ---"
 
         prompt = f"""
-        You are "PolicyGuard AI Assistant", an expert Compliance Officer.
+        Role: Compliance Officer.
+        Goal: Answer user question using Context.
         
-        YOUR GOAL:
-        Answer the user's question using the provided CORPORATE POLICY CONTEXT.
-        
-        RULES:
-        1. **PRIORITY**: Always base your answer on the `RELEVANT POLICY EXCERPTS` if they exist.
-        2. **CITATION**: Cite specific policy sections if used.
-        3. **FALLBACK (Hybrid Search)**: If the answer is NOT in the context (or context is empty):
-           - You MAY use your general knowledge of global compliance standards (GDPR, HIPAA, NIST, ISO).
-           - **CRITICAL**: You MUST start your response with: "⚠️ **Note:** This answer is based on general compliance best practices, not your specific uploaded policies."
-           - Do not make up internal policy numbers.
-        4. Be helpful, professional, and concise.
+        Rules:
+        1. Base answer on Context if available.
+        2. Citations required.
+        3. If no context, use general knowledge but warn the user.
         
         {context_section}
-        
         {conversation_context}
-        
-        USER QUESTION:
-        {query}
+        QUESTION: {query}
         """
         
         try:
+            # Chat is conversational, Lite model is sufficient and faster
             response = await self._generate_with_retry(
-                model=self.model_name,
+                model="gemini-2.0-flash-exp", 
                 contents=prompt
             )
             return response.text
@@ -498,11 +489,11 @@ class GeminiService:
 
     async def generate_threat_model(self, workflow_context: str) -> str:
         prompt = f"""
-        You are an elite "Red Team" security researcher specializing in GenAI vulnerabilities (OWASP Top 10 for LLM Applications).
+        You are an elite "Red Team" security researcher using advanced reasoning capabilities.
         
         YOUR MISSION:
-        Analyze the provided AI SYSTEM SPECIFICATION and identify concrete ATTACK VECTORS that malicious actors could exploit.
-        You must think like an adversary (Black Hat Persona).
+        Conduct a deep-dive security analysis of the provided AI SYSTEM SPECIFICATION.
+        Use your "Thinking" process to simulate complex, multi-step attack vectors that a standard scan would miss.
         
         INPUT SYSTEM SPECIFICATION:
         {workflow_context}
@@ -519,13 +510,11 @@ class GeminiService:
         - LLM09: Overreliance
         - LLM10: Model Theft
         
-        REGULATORY CROSS-CHECK:
-        For every attack vector, identify the impact on:
-        - HIPAA (Health Data Privacy)
-        - GDPR / EU AI Act (Privacy & Safety)
-        - SOC2 (Security & Confidentiality)
-        - PII Exposure (Personal Info)
-        
+        INSTRUCTIONS for REASONING:
+        1. **Model the Adversary**: Consider an attacker with internal knowledge and significant resources.
+        2. **Chain Vulnerabilities**: Look for how a minor flaw (e.g. verbose error) can lead to a major exploit (e.g. model extraction).
+        3. **Regulatory Impact**: Cross-reference findings with GDPR, HIPAA, and SOC2.
+
         OUTPUT FORMAT (Strict JSON, NO MARKDOWN):
         {{
             "system_profile_analyzed": "Brief summary of the target",
@@ -548,12 +537,14 @@ class GeminiService:
         """
         
         try:
-            print(f"🔍 ANALYZING ARCHITECTURE: {workflow_context[:50]}...")
+            print(f"🔍 ANALYZING ARCHITECTURE (Thinking Mode): {workflow_context[:50]}...")
+            # Using the specialized 'thinking' model for deep reasoning
             response = await self._generate_with_retry(
-                model=settings.GEMINI_MODEL,
+                model=settings.GEMINI_MODEL, 
                 contents=prompt,
                 config={'response_mime_type': 'application/json'},
-                fail_fast=False 
+                fail_fast=False,
+                retries=3 
             )
             
             if not response or not response.text:
@@ -571,7 +562,6 @@ class GeminiService:
             error_preview = str(e)[:100]
             return json.dumps({
                 "system_profile_analyzed": f"LIVE AUDIT FAILED: {error_preview}",
->>>>>>> Stashed changes
                 "overall_resilience_score": 45,
                 "critical_finding": "API Rate Limit Bypass: System fails open to mock data.",
                 "attack_vectors": [
@@ -630,6 +620,7 @@ class GeminiService:
         """
         
         try:
+            print(f"🔍 EXTRACTING SPECS (Thinking Mode): {text[:50]}...")
             response = await self._generate_with_retry(
                 model=settings.GEMINI_MODEL,
                 contents=prompt,
@@ -661,28 +652,19 @@ class GeminiService:
 
     async def remediate_spec(self, original_text: str, violations: list) -> str:
         prompt = f"""
-        You are a Chief Compliance Officer & Technical Writer.
-        
-        TASK:
-        Rewrite the following SYSTEM SPECIFICATION to purely and explicitly fix the cited policy violations.
-        
-        VIOLATIONS TO FIX:
-        {violations}
-        
-        INPUT SPECIFICATION:
-        {original_text[:15000]}
-        
+        TASK: Rewrite SPECIFICATION to fix violations.
+        VIOLATIONS: {violations}
+        INPUT: {original_text[:8000]}
         INSTRUCTIONS:
-        1. Keep the original structure and intent.
-        2. Insert specific clauses/controls to address each violation.
-        3. Highlight your changes by wrapping them in **bold**.
-        
-        OUTPUT:
-        Return ONLY the rewritten document text.
+        1. Keep original structure.
+        2. Insert specific clauses for violations.
+        3. Highlight changes in **bold**.
+        OUTPUT: ONLY rewritten text.
         """
         
+        # Use lite model for rewriting to save quota
         response = await self._generate_with_retry(
-            model=settings.GEMINI_MODEL,
+            model="gemini-2.0-flash-exp", # Hardcoded optimization
             contents=prompt
         )
         return response.text
@@ -777,6 +759,7 @@ class GeminiService:
         import asyncio
         for attempt in range(5):
             try:
+                # Use Thinking model for high-quality Code Gen
                 async for chunk in await self.client.aio.models.generate_content_stream(
                     model=settings.GEMINI_MODEL,
                     contents=prompt

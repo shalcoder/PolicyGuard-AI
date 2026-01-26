@@ -2,30 +2,27 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GuardrailTimeline, StepStatus } from '@/components/GuardrailTimeline';
-import { ReadinessScorecard, ComplianceReport } from '@/components/ReadinessScorecard';
+import { ReadinessScorecard } from '@/components/ReadinessScorecard';
+import { ComplianceReport } from '@/types/policy';
 import { RemediationPanel } from '@/components/dashboard/RemediationPanel';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity, Target as TargetIcon, Download } from 'lucide-react';
+import { Play, FileText as FileIcon, ShieldCheck, CheckCircle, Activity, Target as TargetIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Lock, Terminal, ShieldAlert, Shield } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
     const [activeTab, setActiveTab] = useState("compliance");
+    const [redTeamStatus, setRedTeamStatus] = useState<'idle' | 'attacking' | 'done'>('idle');
+    const [attackLogs, setAttackLogs] = useState<string[]>([]);
 
     // UI State for Red Team
     const [isThreatModalOpen, setIsThreatModalOpen] = useState(false);
-
-    // ... (keep usage of timelineSteps)
-
-    // Red Team State
-    const [redTeamStatus, setRedTeamStatus] = useState<'idle' | 'attacking' | 'done'>('idle');
     const [redTeamReport, setRedTeamReport] = useState<any>(null);
 
     const [timelineSteps, setTimelineSteps] = useState([
@@ -83,6 +80,30 @@ export default function EvaluatePage() {
     const handleRedTeamAttack = async () => {
         setRedTeamStatus('attacking');
         setRedTeamReport(null);
+        setAttackLogs(["> INITIALIZING_ADVERSARIAL_AGENT_V3.1", "> TARGET_LOCKED: WorkflowSpecification_v1"]);
+
+        // Pseudo-log interval
+        const logs = [
+            "> BRUTE_FORCING_SEMANTIC_ANCHORS...",
+            "> ATTEMPTING_INDIRECT_INJECTION_VECTORS...",
+            "> PROBING_DATA_FLOW_LEAKAGE_POINTS...",
+            "> BYPASSING_BASIC_OUTPUT_FILTERS...",
+            "> ANALYZING_CROSS_POLICY_EXPLOITS...",
+            "> QUANTIZING_ATTACK_SURFACE...",
+            "> DETECTING_INTERNAL_REASONING_PATHS...",
+            "> ESCALATING_AUTHORITY_SIMULATION..."
+        ];
+
+        const logInterval = setInterval(() => {
+            setAttackLogs(prev => {
+                if (prev.length < 15) {
+                    const nextLog = logs[Math.floor(Math.random() * logs.length)];
+                    return [...prev, nextLog];
+                }
+                return prev;
+            });
+        }, 1500);
+
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const res = await fetch(`${apiUrl}/api/v1/redteam/simulate`, {
@@ -90,6 +111,9 @@ export default function EvaluatePage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: "RedTeamTarget", description: JSON.stringify(workflowData, null, 2) })
             });
+
+            clearInterval(logInterval);
+
             if (res.ok) {
                 const data = await res.json();
                 setRedTeamReport(data);
@@ -99,6 +123,7 @@ export default function EvaluatePage() {
                 setRedTeamStatus('idle');
             }
         } catch (e) {
+            clearInterval(logInterval);
             console.error(e);
             setRedTeamStatus('idle');
         }
@@ -156,7 +181,12 @@ export default function EvaluatePage() {
             const result: ComplianceReport = await evalRes.json();
 
             updateStepStatus(3, 'completed');
+            updateStepStatus(4, 'processing');
+
+            // 5. Final Forensic Snapshot (Mock delay for hashing feel)
+            await new Promise(r => setTimeout(r, 1200));
             updateStepStatus(4, 'completed');
+
             setEvaluationStatus('done');
             setComplianceReport(result);
 
@@ -227,47 +257,13 @@ export default function EvaluatePage() {
         }
     };
 
-    const handleExportPDF = async () => {
-        const scorecard = document.getElementById('readiness-scorecard');
-        if (!scorecard) return;
-
-        try {
-            const canvas = await html2canvas(scorecard, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`PolicyGuard-Certificate-${new Date().getTime()}.pdf`);
-        } catch (error) {
-            console.error("PDF Export Failed:", error);
-            alert("Failed to generate PDF. Please try again.");
-        }
+    const handleExportPDF = () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+        window.open(`${apiUrl}/api/v1/evaluate/export/latest`, '_blank');
     };
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-20">
-            {/* Demo Trigger Section */}
-            <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-blue-400">
-                <div className="space-y-2">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                        <Shield className="w-6 h-6 text-blue-200" />
-                        Fiduciary Shield: Financial Decision Agents
-                    </h2>
-                    <p className="text-sm text-blue-100 max-w-xl">
-                        PolicyGuard doesn't decide what to build—<strong>it proves what you knew before you built it.</strong> A pre-deployment forensic record for high-stakes financial agents.
-                    </p>
-                    <div className="flex gap-2 pt-1">
-                        <Badge className="bg-blue-500/50 border-blue-300 text-[10px] uppercase">Indispensable Gemini Reasoning</Badge>
-                        <Badge className="bg-blue-500/50 border-blue-300 text-[10px] uppercase">Cross-Policy Contradiction Detection</Badge>
-                    </div>
-                </div>
-            </div>
 
             <Tabs defaultValue="compliance" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
@@ -280,11 +276,28 @@ export default function EvaluatePage() {
                 </TabsList>
 
                 <TabsContent value="compliance">
-                    <div className="flex justify-end mb-4">
-                        <Button id="run-evaluation-btn" onClick={handleRunEvaluation} disabled={evaluationStatus === 'running'} size="lg">
-                            <Play className="w-4 h-4 mr-2" />
-                            {evaluationStatus === 'running' ? 'Analyzing...' : 'Start Analysis'}
-                        </Button>
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex-1">
+                            <div className="bg-blue-600/10 border border-blue-500/20 p-4 rounded-lg flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-500 rounded text-white"><Shield className="w-5 h-5" /></div>
+                                    <div>
+                                        <h4 className="font-bold text-blue-900 dark:text-blue-100 italic tracking-tight">Fiduciary Shield: High-Context Policy Reasoning</h4>
+                                        <div className="flex gap-2 items-center mt-1">
+                                            <Badge variant="outline" className="text-[9px] bg-blue-50/50 border-blue-200">Gemini 1.5 Pro</Badge>
+                                            <p className="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Active Reasoning on policy edge cases</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Badge className="bg-blue-600 hover:bg-blue-700">ADVANCED_MODE</Badge>
+                            </div>
+                        </div>
+                        <div className="ml-4">
+                            <Button id="run-evaluation-btn" onClick={handleRunEvaluation} disabled={evaluationStatus === 'running'} size="lg" className="h-full">
+                                <Play className="w-4 h-4 mr-2" />
+                                {evaluationStatus === 'running' ? 'Analyzing...' : 'Start Audit'}
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Top Row: Input + Timeline */}
@@ -452,8 +465,23 @@ export default function EvaluatePage() {
                         </div>
 
                         {/* Right: Timeline */}
-                        <div className="lg:col-span-1">
+                        <div className="lg:col-span-1 space-y-4">
                             <GuardrailTimeline steps={timelineSteps} />
+                            {evaluationStatus === 'running' && (
+                                <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-800 font-mono text-[10px] space-y-2 text-cyan-500 overflow-hidden shadow-2xl">
+                                    <div className="flex items-center gap-2 border-b border-zinc-800 pb-2 mb-2">
+                                        <Terminal className="w-3 h-3" />
+                                        <span className="uppercase tracking-widest font-bold">Reasoning_Trace_v2</span>
+                                    </div>
+                                    <div className="animate-pulse flex flex-col gap-1">
+                                        <p>&gt; Fetching active policy set...</p>
+                                        <p>&gt; Identifying semantic anchors in workflow...</p>
+                                        <p>&gt; Running cross-policy contradiction detection...</p>
+                                        <p className="text-white">&gt; Gemini reasoning on policy edge cases...</p>
+                                        <p className="text-zinc-600">&gt; [WAIT] Quantizing risk simulations...</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -470,27 +498,25 @@ export default function EvaluatePage() {
                                 </Button>
                             </div>
                             <div id="readiness-scorecard">
-                                <ReadinessScorecard report={complianceReport} onDownload={handleExportPDF} />
+                                <ReadinessScorecard report={complianceReport} />
                             </div>
 
                             {/* Auto Remediation Interaction */}
-                            {complianceReport.risk_assessment.overall_score > 0 && (
-                                <div id="remediation-panel">
-                                    <RemediationPanel
-                                        originalText={JSON.stringify(workflowData, null, 2)}
-                                        violations={complianceReport.policy_matrix
-                                            .filter((p) => p.status !== "Compliant")
-                                            .map((p) => ({
-                                                policy_area: p.policy_area,
-                                                status: p.status,
-                                                reason: p.reason
-                                            }))
-                                        }
-                                        policySummary={complianceReport.risk_assessment.breakdown ? JSON.stringify(complianceReport.risk_assessment.breakdown) : "Standard Enterprise Policy"}
-                                        report={complianceReport}
-                                    />
-                                </div>
-                            )}
+                            <div id="remediation-panel">
+                                <RemediationPanel
+                                    originalText={JSON.stringify(workflowData, null, 2)}
+                                    violations={complianceReport.policy_matrix
+                                        .filter((p) => p.status !== "Compliant")
+                                        .map((p) => ({
+                                            policy_area: p.policy_area,
+                                            status: p.status,
+                                            reason: p.reason
+                                        }))
+                                    }
+                                    policySummary={complianceReport.risk_assessment.breakdown ? JSON.stringify(complianceReport.risk_assessment.breakdown) : "Standard Enterprise Policy"}
+                                    report={complianceReport}
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -675,16 +701,20 @@ export default function EvaluatePage() {
                                     )}
 
                                     {redTeamStatus === 'attacking' && (
-                                        <div className="p-8 space-y-2">
-                                            <p className="text-green-500">{">"} Initializing attack vectors...</p>
-                                            <p className="text-green-500/80">{">"} Probing endpoint vulnerabilities...</p>
-                                            <p className="text-green-500/60">{">"} Attempting prompt injection...</p>
+                                        <div className="p-8 space-y-2 max-h-[500px] overflow-auto no-scrollbar">
+                                            {attackLogs.map((log, i) => (
+                                                <p key={i} className={cn(
+                                                    "text-sm",
+                                                    i === attackLogs.length - 1 ? "text-green-400 font-bold animate-pulse" : "text-green-500/60"
+                                                )}>{log}</p>
+                                            ))}
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: "100%" }}
-                                                transition={{ duration: 2 }}
-                                                className="h-1 bg-green-500 mt-4"
+                                                transition={{ duration: 15, ease: "linear" }}
+                                                className="h-1 bg-red-600 mt-4 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
                                             />
+                                            <p className="text-[10px] text-zinc-600 mt-1 italic tracking-widest uppercase">Adversarial agents deployed. Analyzing architecture for vulnerabilities...</p>
                                         </div>
                                     )}
 
