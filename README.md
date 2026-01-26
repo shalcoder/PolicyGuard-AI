@@ -98,4 +98,4 @@ npm run dev
 
 ---
 
-Built with ❤️ by **Tharun Venkatesh** for the **Google Gemini Hackathon**.
+Built with ❤️ by **Tharun Venkatesh and Vishal M** for the **Google Gemini Hackathon**.
