@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Body
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Body
+import asyncio
 from config import settings
 from fastapi.responses import StreamingResponse, FileResponse
 from models.policy import PolicyDocument, WorkflowDefinition, ComplianceReport, DataInteractionMap, AISystemSpec, RiskScore, DeploymentVerdict, EvidenceTrace, Recommendation
@@ -57,8 +58,18 @@ async def upload_policy(file: UploadFile = File(...)):
         content = await file.read()
         text = content.decode('utf-8')
         
-        # 1. Summarize
-        summary = await gemini.summarize_policy(text)
+        # 1. Summarize with timeout to prevent hanging
+        try:
+            summary = await asyncio.wait_for(
+                gemini.summarize_policy(text),
+                timeout=10.0  # 10 second timeout
+            )
+        except asyncio.TimeoutError:
+            print("[WARN] Summarization timed out after 10s")
+            summary = "Summary unavailable (timeout)"
+        except Exception as e:
+            print(f"[WARN] Summarization failed: {e}")
+            summary = f"Summary unavailable: {str(e)[:50]}"
         
         # 2. Store Policy
         pid = str(uuid.uuid4())
@@ -69,7 +80,7 @@ async def upload_policy(file: UploadFile = File(...)):
             summary=summary,
             is_active=True
         )
-        await policy_db.add_policy(policy)
+        policy_db.add_policy(policy)
         
         # 3. Create Chunks & Vectors for RAG
         chunks = await ingestor.chunk_policy(text)
@@ -78,7 +89,7 @@ async def upload_policy(file: UploadFile = File(...)):
             vec = await gemini.create_embedding(chunk)
             vectors.append(vec)
             
-        await policy_db.add_policy_vectors(pid, chunks, vectors)
+        policy_db.add_policy_vectors(pid, chunks, vectors)
         
         return policy
     except Exception as e:

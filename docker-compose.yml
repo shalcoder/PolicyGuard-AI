@@ -4,15 +4,23 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    dns:
-      - 8.8.8.8
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
     environment:
+      # Application Settings
       - PYTHONUNBUFFERED=1
-    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
+      # Google API Key (Loaded from backend/.env if present, or passed from host)
+      # GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload" ]
     deploy:
       resources:
         limits:

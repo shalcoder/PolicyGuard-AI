@@ -86,6 +86,13 @@ class GeminiService:
                     print(f"[WAIT] Waiting {wait_time}s for {current_model}...")
                     await asyncio.sleep(wait_time)
                 else:
+                    # Check if it's a DNS error - fail fast
+                    is_dns_error = "[Errno -3]" in error_str or "name resolution" in error_str.lower() or "DNS" in error_str
+                    
+                    if is_dns_error and attempt >= 2:  # Fail after 3 attempts for DNS
+                        print(f"DNS resolution failed after {attempt+1} attempts. Giving up.")
+                        raise e
+                    
                     print(f"Gemini API Error ({attempt+1}): {e}. Retrying in 1s...")
                     await asyncio.sleep(1)
 
