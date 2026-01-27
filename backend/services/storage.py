@@ -36,9 +36,11 @@ class PolicyStorage:
             self.db = firestore.client()
             print("✅ Connected to Firebase Firestore (Production Mode)")
             
-            # Lazy load on first use instead of blocking startup
-            # self._load_from_firebase()
-            # self._load_vectors()
+            # Load data in background thread to avoid blocking requests
+            import threading
+            loading_thread = threading.Thread(target=self._load_from_firebase_background, daemon=True)
+            loading_thread.start()
+            print("🔄 Loading Firebase data in background...")
             
         except Exception as e:
             print(f"❌ CRITICAL FIREBASE ERROR: {e}")
@@ -83,6 +85,11 @@ class PolicyStorage:
                 
         except Exception as e:
             print(f"Error loading from Firebase: {e}")
+    
+    def _load_from_firebase_background(self):
+        """Load Firebase data in background thread without blocking requests"""
+        with self._lock:
+            self._load_from_firebase()
 
     # --- CRUD Operations ---
     def add_policy(self, policy: PolicyDocument):
@@ -166,10 +173,8 @@ class PolicyStorage:
         return [s[1] for s in scores[:top_k]]
 
     def get_all_policies(self) -> List[PolicyDocument]:
-        if not self._initialized:
-            with self._lock:
-                if not self._initialized:
-                    self._load_from_firebase()
+        # Return immediately - Firebase loading happens in background
+        # Policies will be populated as they load
         return self._policies
 
     def delete_policy(self, policy_id: str) -> bool:
