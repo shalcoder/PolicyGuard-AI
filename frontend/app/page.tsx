@@ -16,13 +16,22 @@ export default function LandingPage() {
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50);
+        let ticking = false;
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setScrolled(window.scrollY > 50);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     // Mock Data for Graph
-    const gData = {
+    const gData = React.useMemo(() => ({
         nodes: [
             { id: 'Agent Core', group: 1 },
             { id: 'Billing API', group: 2 },
@@ -40,7 +49,7 @@ export default function LandingPage() {
             { source: 'Policy: HIPAA', target: 'User DB' },
             { source: 'Policy: RBAC', target: 'Agent Core' },
         ]
-    };
+    }), []);
 
     return (
         <div className="min-h-screen bg-[#0B0F19] text-slate-200 selection:bg-cyan-500/30 font-sans relative">

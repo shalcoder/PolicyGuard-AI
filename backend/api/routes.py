@@ -172,9 +172,13 @@ async def get_monitor_data():
 @router.post("/evaluate", response_model=ComplianceReport)
 async def evaluate_workflow(request: WorkflowRequest):
     try:
-        # 1. RAG: Search relevant policies
+        # 1. RAG: Search relevant policies (CPU Bound - Run in Thread)
         query_vec = await gemini.create_embedding(request.description)
-        relevant_chunks = policy_db.search_relevant_policies(query_vec, top_k=10)
+        relevant_chunks = await asyncio.to_thread(
+            policy_db.search_relevant_policies, 
+            query_vec, 
+            top_k=10
+        )
         
         # 2. Context Construction
         context = "\n\n".join([c['chunk_text'] for c in relevant_chunks])
@@ -297,7 +301,11 @@ async def chat_compliance(request: ChatRequest):
     try:
         # 1. RAG Context
         query_vec = await gemini.create_embedding(request.message)
-        relevant_chunks = policy_db.search_relevant_policies(query_vec, top_k=5)
+        relevant_chunks = await asyncio.to_thread(
+            policy_db.search_relevant_policies,
+            query_vec,
+            top_k=5
+        )
         context = "\n\n".join([c['chunk_text'] for c in relevant_chunks])
         
         # 2. Call Gemini
