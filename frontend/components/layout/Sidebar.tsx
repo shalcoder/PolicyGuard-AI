@@ -12,7 +12,7 @@ const navItems = [
     { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
     { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
     { name: 'Monitor', href: '/dashboard/monitor', icon: BarChart3 },
-    { name: 'SLA Designer', href: '/dashboard/sla', icon: Zap },
+    { name: 'SLA Monitor', href: '/dashboard/sla', icon: Activity },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
