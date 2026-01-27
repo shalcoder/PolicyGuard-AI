@@ -1,11 +1,60 @@
 import re
 from typing import List
-# Placeholder for PDF/Docx parsers - we'll implement raw text for MVP first or basic helpers
-# import pdfplumber 
+import io
+
+# Try-import to prevent crash if optional deps are missing
+try:
+    import pypdf
+    HAS_PYPDF = True
+except ImportError:
+    HAS_PYPDF = False
+
+try:
+    import docx
+    HAS_DOCX = True
+except ImportError:
+    HAS_DOCX = False
 
 class PolicyIngestor:
     def __init__(self):
         pass
+
+    async def extract_text(self, file_content: bytes, filename: str) -> str:
+        """
+        Extract text based on file extension.
+        """
+        ext = filename.lower().split('.')[-1]
+        
+        if ext == 'pdf':
+            if not HAS_PYPDF:
+                raise ValueError("PDF support not installed. Run 'pip install pypdf'")
+            try:
+                reader = pypdf.PdfReader(io.BytesIO(file_content))
+                text = ""
+                for page in reader.pages:
+                    text += page.extract_text() + "\n"
+                return text
+            except Exception as e:
+                raise ValueError(f"Failed to parse PDF: {e}")
+
+        elif ext in ['docx', 'doc']:
+            if not HAS_DOCX:
+                raise ValueError("DOCX support not installed. Run 'pip install python-docx'")
+            try:
+                doc = docx.Document(io.BytesIO(file_content))
+                text = "\n".join([p.text for p in doc.paragraphs])
+                return text
+            except Exception as e:
+                raise ValueError(f"Failed to parse DOCX: {e}")
+        
+        else:
+            # Default to text/markdown
+            try:
+                return file_content.decode('utf-8')
+            except UnicodeDecodeError:
+                # Fallback for latin-1
+                return file_content.decode('latin-1')
+
 
     async def ingest_text(self, filename: str, content: str) -> str:
         """

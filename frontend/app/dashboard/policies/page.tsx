@@ -60,26 +60,41 @@ export default function PoliciesPage() {
                 method: 'DELETE',
             });
             if (res.ok) {
-                fetchPolicies(); // Refresh
+                setPolicies(prev => prev.filter(p => p.id !== id));
             } else {
                 alert("Failed to delete policy");
             }
         } catch (error) {
             console.error("Delete failed", error);
+            alert("Delete failed due to network error");
         }
     }
 
     const handleToggle = async (id: string, currentStatus: boolean) => {
+        // Optimistic update for instant feedback
+        setPolicies(prev => prev.map(p =>
+            p.id === id ? { ...p, is_active: !currentStatus } : p
+        ));
+
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const res = await fetch(`${apiUrl}/api/v1/policies/${id}/toggle`, {
                 method: 'PATCH',
             });
-            if (res.ok) {
-                fetchPolicies();
+            if (!res.ok) {
+                // Revert on failure
+                setPolicies(prev => prev.map(p =>
+                    p.id === id ? { ...p, is_active: currentStatus } : p
+                ));
+                alert("Failed to toggle policy status");
             }
         } catch (error) {
             console.error("Toggle failed", error);
+            // Revert on failure
+            setPolicies(prev => prev.map(p =>
+                p.id === id ? { ...p, is_active: currentStatus } : p
+            ));
+            alert("Toggle failed due to network error");
         }
     }
 
@@ -91,10 +106,15 @@ export default function PoliciesPage() {
             </div>
 
             <div id="policy-upload-panel">
-                <PolicyUploadPanel onUpload={(files) => {
-                    // Wait small delay for processing then refresh
-                    setTimeout(fetchPolicies, 1000);
-                }} />
+                <PolicyUploadPanel
+                    onPolicyCreated={(newPolicy) => {
+                        setPolicies(prev => [...prev, newPolicy]);
+                    }}
+                    onUpload={(files) => {
+                        // Optional fallback refresh
+                        console.log("Files uploaded, state updated via callback.");
+                    }}
+                />
             </div>
 
             <div id="active-policies-list" className="space-y-4">

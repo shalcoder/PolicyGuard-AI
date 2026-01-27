@@ -16,24 +16,37 @@ interface ComplianceGraphProps {
 const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
     const fgRef = useRef<any>();
     const graphData = useMemo(() => transformReportToGraph(report), [report]);
+    const [isMounted, setIsMounted] = React.useState(false);
 
     useEffect(() => {
-        if (fgRef.current) {
-            // Force Setup for 3D Spacing
-            const linkForce = fgRef.current.d3Force('link');
-            if (linkForce) linkForce.distance(150).strength(0.5);
+        setIsMounted(true);
+        // Small delay to ensure container is ready for canvas
+        const timer = setTimeout(() => {
+            if (fgRef.current) {
+                // Force Setup for 3D Spacing
+                if (!fgRef.current) return;
+                const linkForce = fgRef.current.d3Force('link');
+                if (linkForce) linkForce.distance(150).strength(0.5);
 
-            fgRef.current.d3Force('charge').strength(-500);
+                fgRef.current.d3Force('charge').strength(-500);
 
-            // Warm up engine
-            fgRef.current.numDimensions(3);
-        }
+                // Warm up engine
+                fgRef.current.numDimensions(3);
+            }
+        }, 100);
+        return () => clearTimeout(timer);
     }, [graphData]);
+
+    if (!isMounted || !graphData || graphData.nodes.length === 0) return (
+        <div className="h-[700px] w-full border border-slate-800 rounded-3xl flex items-center justify-center bg-[#020617] text-slate-500">
+            Initializing Neural Topology...
+        </div>
+    );
 
     return (
         <div className="h-[700px] w-full border border-slate-800 rounded-3xl overflow-hidden relative bg-[#020617] group shadow-2xl">
             {/* Legend / Overlay - HUD Style */}
-            <div className="absolute top-6 left-6 z-10 bg-slate-950/60 p-4 rounded-2xl text-white text-xs border border-cyan-500/20 backdrop-blur-xl shadow-2xl">
+            <div className="absolute top-6 left-6 z-10 bg-slate-950/60 p-4 rounded-2xl text-white text-xs border border-cyan-500/20 backdrop-blur-xl shadow-2xl pointer-events-none select-none">
                 <h3 className="font-bold text-xl mb-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-mono tracking-tighter uppercase italic">
                     Neural Topology (3D)
                 </h3>
@@ -66,14 +79,14 @@ const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
                             fgRef.current.zoomToFit(800, 100);
                         }
                     }}
-                    className="px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-cyan-500/20 backdrop-blur-sm transition-all shadow-lg active:scale-95"
+                    className="px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-cyan-500/20 backdrop-blur-sm transition-all shadow-lg active:scale-95 cursor-pointer"
                 >
                     Recenter Matrix
                 </button>
             </div>
 
             <ForceGraph3D
-                ref={fgRef as any}
+                ref={fgRef}
                 graphData={graphData}
                 backgroundColor="#020617"
 
@@ -138,6 +151,9 @@ const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
                 // Scene Lighting
                 enableNodeDrag={true}
                 showNavInfo={false}
+                // Fix for the crash: dispose controls when unmounting
+                onEngineStop={() => { }}
+                cooldownTicks={100}
             />
         </div>
     );

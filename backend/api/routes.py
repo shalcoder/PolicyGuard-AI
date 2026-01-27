@@ -10,15 +10,19 @@ from services.ingest import PolicyIngestor
 from services.gemini import GeminiService
 from services.storage import policy_db
 import json
-import asyncio
 import uuid
 import datetime
 from pydantic import BaseModel
 from typing import List, Optional
+from utils.cache import SimpleTTLCache
 
 router = APIRouter()
 gemini = GeminiService()
 ingestor = PolicyIngestor()
+
+# --- Cache (Replaces global dict) ---
+# 500 items max, 1 hour TTL for simulations
+simulation_cache = SimpleTTLCache(max_size=500, default_ttl=3600)
 
 # --- Telemetry In-Memory Store for Demo ---
 telemetry_data = [] # List of {service_id, timestamp, error_rate, latency_ms, risk_score}
@@ -39,9 +43,9 @@ class TelemetryPayload(BaseModel):
     latency_ms: int
     request_count: int
 
+
 # --- Evaluation & Red Team ---
 
-sim_cache = {}
 class WorkflowRequest(BaseModel):
     name: str
     description: str
@@ -56,16 +60,21 @@ async def get_policies():
 async def upload_policy(file: UploadFile = File(...)):
     try:
         content = await file.read()
-        text = content.decode('utf-8')
+        try:
+            text = await ingestor.extract_text(content, file.filename)
+        except ValueError as ve:
+             raise HTTPException(status_code=400, detail=str(ve))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Could not read file. Ensure it is a valid text, markdown, PDF, or DOCX file.")
         
         # 1. Summarize with timeout to prevent hanging
         try:
             summary = await asyncio.wait_for(
                 gemini.summarize_policy(text),
-                timeout=10.0  # 10 second timeout
+                timeout=30.0  # Increased to 30s
             )
         except asyncio.TimeoutError:
-            print("[WARN] Summarization timed out after 10s")
+            print("[WARN] Summarization timed out after 30s")
             summary = "Summary unavailable (timeout)"
         except Exception as e:
             print(f"[WARN] Summarization failed: {e}")
@@ -83,7 +92,7 @@ async def upload_policy(file: UploadFile = File(...)):
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(policy_db.add_policy, policy),
-                timeout=10.0
+                timeout=20.0 # Increased to 20s
             )
         except asyncio.TimeoutError:
             print("[WARN] Policy save to Firebase timed out, but policy added to memory")
@@ -94,7 +103,7 @@ async def upload_policy(file: UploadFile = File(...)):
         try:
             chunks = await asyncio.wait_for(
                 ingestor.chunk_policy(text),
-                timeout=5.0
+                timeout=10.0
             )
             
             vectors = []
@@ -102,7 +111,7 @@ async def upload_policy(file: UploadFile = File(...)):
                 try:
                     vec = await asyncio.wait_for(
                         gemini.create_embedding(chunk),
-                        timeout=5.0
+                        timeout=10.0
                     )
                     vectors.append(vec)
                 except asyncio.TimeoutError:
@@ -117,7 +126,7 @@ async def upload_policy(file: UploadFile = File(...)):
                     # Use asyncio.to_thread for sync Firebase call with timeout
                     await asyncio.wait_for(
                         asyncio.to_thread(policy_db.add_policy_vectors, pid, chunks[:len(vectors)], vectors),
-                        timeout=10.0
+                        timeout=20.0
                     )
                 except asyncio.TimeoutError:
                     print("[WARN] Vector storage timed out")
@@ -206,7 +215,7 @@ async def evaluate_workflow(request: WorkflowRequest):
             report_data["workflow_name"] = request.name
             
         # 5. Store evaluation in history
-        await policy_db.add_evaluation(report_data)
+        await asyncio.to_thread(policy_db.add_evaluation, report_data)
         
         return ComplianceReport(**report_data)
     except Exception as e:
@@ -217,10 +226,12 @@ async def evaluate_workflow(request: WorkflowRequest):
 @router.post("/redteam/simulate", response_model=ThreatReport)
 async def simulate_threat(request: WorkflowRequest):
     # Check cache
-    req_hash = hash(request.description)
-    if req_hash in sim_cache:
+    req_hash = str(hash(request.description))
+    cached_report = simulation_cache.get(req_hash)
+    
+    if cached_report:
         print(f"CACHE HIT: Returning cached simulation for {req_hash}")
-        return ThreatReport(**sim_cache[req_hash])
+        return ThreatReport(**cached_report)
 
     try:
         threat_json = await gemini.generate_threat_model(request.description)
@@ -236,7 +247,7 @@ async def simulate_threat(request: WorkflowRequest):
              threat_data["critical_finding"] = "DEMO: Overly optimistic assessment detected."
              threat_data["overall_resilience_score"] = 75
         
-        sim_cache[req_hash] = threat_data # Cache it
+        simulation_cache.set(req_hash, threat_data) # Cache it
         return ThreatReport(**threat_data)
     except Exception as e:
         import traceback
@@ -247,24 +258,22 @@ async def simulate_threat(request: WorkflowRequest):
 async def analyze_workflow_doc(file: UploadFile = File(...)):
     try:
         content = await file.read()
-        text = content.decode('utf-8', errors='ignore')
+        try:
+            text = await ingestor.extract_text(content, file.filename)
+        except ValueError as ve:
+             raise HTTPException(status_code=400, detail=str(ve))
+        except Exception:
+            raise HTTPException(status_code=400, detail="Only Text, Markdown, PDF, and DOCX files are supported.")
+            
         analysis_json = await gemini.analyze_workflow_document_text(text)
         return json.loads(analysis_json)
+    except HTTPException as he:
+        raise he
     except Exception as e:
+        print(f"Workflow Analysis Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/analyze-workflow-doc")
-async def analyze_workflow_doc(file: UploadFile = File(...)):
-    try:
-        content = await file.read()
-        text = content.decode('utf-8', errors='ignore')
-        # Call the existing service method
-        analysis_json = await gemini.analyze_workflow_document_text(text)
-        return json.loads(analysis_json)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/evaluate/export/latest")
 async def export_latest_report():

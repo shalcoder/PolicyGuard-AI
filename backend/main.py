@@ -30,10 +30,15 @@ from api.proxy import router as proxy_router
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(proxy_router, prefix="/api/proxy")
 
-# CORS - Allow everything for Hackathon MVP
+# CORS - Restricted for Security
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

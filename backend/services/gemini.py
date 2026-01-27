@@ -272,16 +272,26 @@ class GeminiService:
     async def summarize_policy(self, text: str) -> str:
         prompt = f"Summarize the following corporate policy in one concise sentence (max 20 words). Focus on what is restricted:\n\n{text[:5000]}"
         
+        # 1. Throttling
+        await asyncio.sleep(1.0) 
+
+        # 2. Try Primary (Flash) with retries
         try:
-            # Smart Routing: Use Flash Lite for simple summarization
-            response = await self._generate_with_retry(
-                model="gemini-1.5-flash",
-                contents=prompt
-            )
-            return response.text
+             # Using Retry helper
+             response = await self._generate_with_retry(
+                model="gemini-1.5-flash", 
+                contents=prompt,
+                retries=3
+             )
+             return response.text
         except Exception as e:
-            print(f"[WARN] SUMMARIZATION FAILED (Rate Limit): {e}")
-            return "Policy summary unavailable due to high traffic. Proceeding with raw text."
+            print(f"[WARN] Primary Summarization Failed: {e}")
+            
+            # 3. Last Resort Fallback: Local Heuristic
+            # If API fails completely, just show the start of the text so the UI isn't empty/ugly
+            fallback_text = text[:150].replace('\n', ' ').strip() + "..."
+            print(f"[INFO] Using local fallback summary: {fallback_text}")
+            return fallback_text
 
     async def create_embedding(self, text: str) -> list[float]:
         """Generates a vector embedding for the given text."""
@@ -392,38 +402,39 @@ class GeminiService:
             # Chat is conversational, Lite model is sufficient and faster
             response = await self._generate_with_retry(
                 model="gemini-1.5-flash", 
-                contents=prompt
+                contents=prompt,
+                retries=3
             )
             return response.text
         except Exception as e:
             print(f"Gemini Chat CRITICAL FAILURE: {e}")
             
-            error_str = str(e)
-            is_rate_limit = "429" in error_str or "RESOURCE_EXHAUSTED" in error_str
+            # Intelligent Fallback Mode (Offline)
+            q_lower = query.lower()
             
-            if is_rate_limit:
-                 print("[WARN] Rate Limit Hit in Chat Widget. Fallback Mode Active.")
-                 
-                 q_lower = query.lower()
-                 if "hi" in q_lower or "hello" in q_lower:
-                     return "Hello! I am currently handling high traffic, but I'm here to help. \n\nAre you looking for specific compliance rules regarding **HIPAA**, **GDPR**, or **SOC2**?"
-                 
-                 # Intelligent Fallbacks for Keywords
-                 if "hipaa" in q_lower:
-                     return "[CHECK] **HIPAA Policy Summary (Offline Mode)**:\n1. **Encryption**: All PHI must be encrypted at rest (AES-256) and in transit (TLS 1.2+).\n2. **Access Control**: STRICT Role-Based Access Control (RBAC) required.\n3. **Audit**: All access to PHI must be logged and retained for 6 years.\n4. **Business Associate Agreement (BAA)**: Required for all third-party AI processors."
-                 
-                 if "gdpr" in q_lower:
-                     return "[CHECK] **GDPR Policy Summary (Offline Mode)**:\n1. **Consent**: Explicit, opt-in consent required for data processing (Art. 6).\n2. **Data Minimization**: Collect only what is strictly necessary.\n3. **Right to be Forgotten**: Users must be able to delete their data (Art. 17).\n4. **Data Residency**: EU user data should ideally remain within the EU."
-                 
-                 if "soc2" in q_lower or "soc 2" in q_lower:
-                     return "[CHECK] **SOC 2 Policy Summary (Offline Mode)**:\n1. **Security**: Multi-Factor Authentication (MFA) and Intrusion Detection required.\n2. **Availability**: System uptime must meet SLA (99.9%).\n3. **Confidentiality**: Data leakage prevention (DLP) controls must be active."
-
-                 return "[WARN] **High Traffic Alert**: My reasoning engine is currently at capacity. \n\n**Standard Guidance:**\nPlease review your 'Active Policies' tab for specific rules. If you are asking about PII, ensure all data is encrypted at rest (AES-256). \n\n*(Please retry in 60 seconds)*"
-
-            if hasattr(e, 'status_code'):
-                print(f"Status Code: {e.status_code}")
+            # 1. Greetings
+            if "hi" in q_lower or "hello" in q_lower:
+                return "Hello! I am your Policy Guard AI. I'm currently operating in offline mode due to high traffic, but I can still help you find active policies."
             
-            return f"[WARN] **System Notification**: Service temporarily unavailable. Please try again later."
+            # 2. Keyword matching for common topics
+            if "gdpr" in q_lower:
+                return "**[OFFLINE MODE] GDPR Policy Summary:**\n\n1. **Consent**: Explicit, opt-in consent is required.\n2. **Right to Erasure**: Users can request data deletion.\n3. **Data Residency**: Store data within EU/EEA where possible.\n4. **Breach Notification**: Must notify within 72 hours."
+            
+            if "hipaa" in q_lower:
+                return "**[OFFLINE MODE] HIPAA Policy Summary:**\n\n1. **Encryption**: AES-256 for data at rest, TLS 1.2+ for transit.\n2. **Access**: Minimum necessary access principle.\n3. **BAA**: Business Associate Agreements required for vendors."
+            
+            if "soc2" in q_lower or "soc 2" in q_lower:
+                return "**[OFFLINE MODE] SOC 2 Controls:**\n\n1. **Security**: MFA, Firewalls, Intrusion Detection.\n2. **Availability**: Performance monitoring and disaster recovery.\n3. **Confidentiality**: Data classification and access reviews."
+            
+            if "password" in q_lower or "encrypt" in q_lower:
+                return "**[OFFLINE MODE] Security Best Practices:**\n\n- Use strong, unique passwords.\n- Enabled Multi-Factor Authentication (MFA).\n- Encrypt all sensitive data at rest and in transit."
+
+            # 3. Contextual Fallback (if RAG context exists)
+            if context and len(context) > 20:
+                snippet = context[:200].replace('\n', ' ')
+                return f"**[OFFLINE MODE]** I couldn't process your specific question due to high traffic, but here is a relevant policy excerpt I found:\n\n> *{snippet}...*\n\nPlease try asking again in a few moments."
+
+            return "I apologize, but I am currently experiencing very high traffic. Please try asking your question again in about 30 seconds."
 
     async def generate_threat_model(self, workflow_context: str) -> str:
         prompt = f"""

@@ -7,9 +7,10 @@ import { Upload, FileText, CheckCircle2 } from 'lucide-react';
 
 interface PolicyUploadPanelProps {
     onUpload?: (files: File[]) => void;
+    onPolicyCreated?: (policy: any) => void;
 }
 
-export function PolicyUploadPanel({ onUpload }: PolicyUploadPanelProps) {
+export function PolicyUploadPanel({ onUpload, onPolicyCreated }: PolicyUploadPanelProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
 
@@ -50,6 +51,9 @@ export function PolicyUploadPanel({ onUpload }: PolicyUploadPanelProps) {
             setUploadedPolicies(prev => [...prev, { name: data.name, summary: data.summary }]);
 
             // Trigger parent refresh immediately after success
+            if (onPolicyCreated) {
+                onPolicyCreated(data);
+            }
             if (onUpload) onUpload([file]);
 
         } catch (error: any) {

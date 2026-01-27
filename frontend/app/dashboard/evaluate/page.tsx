@@ -14,12 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Lock, Terminal, ShieldAlert, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/toast-context';
 
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
     const [activeTab, setActiveTab] = useState("compliance");
     const [redTeamStatus, setRedTeamStatus] = useState<'idle' | 'attacking' | 'done'>('idle');
     const [attackLogs, setAttackLogs] = useState<string[]>([]);
+    const toast = useToast();
 
     // UI State for Red Team
     const [isThreatModalOpen, setIsThreatModalOpen] = useState(false);
@@ -130,8 +132,9 @@ export default function EvaluatePage() {
                 const data = await res.json();
                 setRedTeamReport(data);
                 setRedTeamStatus('done');
+                toast.success("Red Team Attack Simulation Complete");
             } else {
-                alert("Attack Simulation Failed");
+                toast.error("Attack Simulation Failed");
                 setRedTeamStatus('idle');
             }
         } catch (e) {
@@ -203,7 +206,7 @@ export default function EvaluatePage() {
         } catch (error: any) {
             console.error(error);
             setEvaluationStatus('idle'); // Reset on error
-            alert(error.message || "Evaluation Failed: Possible Backend Connection Error");
+            toast.error(error.message || "Evaluation Failed: Possible Backend Connection Error");
         }
     };
 
@@ -257,11 +260,12 @@ export default function EvaluatePage() {
                 });
             } else {
                 console.error("Analysis failed");
-                alert("Failed to analyze document. Please try again.");
+                const errorData = await res.json().catch(() => ({}));
+                toast.error(errorData.detail || "Failed to analyze document. Please check the file format.");
             }
         } catch (error) {
             console.error("Error analyzing doc:", error);
-            alert("Error uploading document.");
+            toast.error("Error uploading document.");
         } finally {
             setIsAnalyzingDoc(false);
         }

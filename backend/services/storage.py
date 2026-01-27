@@ -13,6 +13,7 @@ class PolicyStorage:
         self._evaluations: List[dict] = []
         self.db = None
         self._initialized = False
+        self._local_vector_path = "vectors.json"
         import threading
         self._lock = threading.Lock()
         
@@ -128,6 +129,34 @@ class PolicyStorage:
                 batch.commit()
             except Exception as e:
                 print(f"Firebase Vector Save Error: {e}")
+        
+        # Local Persistence Fallback (Background)
+        try:
+            import threading
+            threading.Thread(target=self._save_vectors_to_disk, daemon=True).start()
+        except Exception as e:
+            print(f"Local Vector Save Error: {e}")
+
+    def _save_vectors_to_disk(self):
+        """Save vectors to local JSON for persistence across restarts"""
+        try:
+            with open(self._local_vector_path, 'w') as f:
+                json.dump(self._vector_store, f)
+            print(f"💾 Saved {len(self._vector_store)} vectors to local disk")
+        except Exception as e:
+            print(f"❌ Failed to save local vectors: {e}")
+
+    def _load_vectors_from_disk(self):
+        """Load vectors from local JSON"""
+        if os.path.exists(self._local_vector_path):
+            try:
+                with open(self._local_vector_path, 'r') as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        self._vector_store = data
+                        print(f"📂 Loaded {len(self._vector_store)} vectors from local disk")
+            except Exception as e:
+                print(f"❌ Failed to load local vectors: {e}")
 
     def _load_vectors(self):
         self._vector_store = []
@@ -141,6 +170,10 @@ class PolicyStorage:
                 print(f"✅ Loaded {len(self._vector_store)} policy vector chunks from Firebase")
             except Exception as e:
                 print(f"Firebase Vector Load Error: {e}")
+        
+        # If Firebase didn't yield results (or isn't connected), try disk
+        if not self._vector_store:
+            self._load_vectors_from_disk()
 
     def search_relevant_policies(self, query_vec: List[float], top_k: int = 5) -> List[dict]:
         if not hasattr(self, '_vector_store') or not self._vector_store:
