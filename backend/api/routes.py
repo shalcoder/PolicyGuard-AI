@@ -12,6 +12,7 @@ from services.storage import policy_db
 import json
 import uuid
 import datetime
+import time
 from pydantic import BaseModel
 from typing import List, Optional
 from utils.cache import SimpleTTLCache
@@ -61,7 +62,13 @@ async def upload_policy(file: UploadFile = File(...)):
     try:
         content = await file.read()
         try:
-            text = await ingestor.extract_text(content, file.filename)
+            # Run CPU-bound extraction in thread to avoid blocking loop
+            text = await asyncio.wait_for(
+                asyncio.to_thread(ingestor.extract_text, content, file.filename),
+                timeout=20.0
+            )
+        except asyncio.TimeoutError:
+             raise HTTPException(status_code=408, detail="File processing timed out (20s). Try a smaller file.")
         except ValueError as ve:
              raise HTTPException(status_code=400, detail=str(ve))
         except Exception as e:
@@ -102,12 +109,17 @@ async def upload_policy(file: UploadFile = File(...)):
         # 3. Create Chunks & Vectors for RAG with timeout
         try:
             chunks = await asyncio.wait_for(
-                ingestor.chunk_policy(text),
+                asyncio.to_thread(ingestor.chunk_policy, text),
                 timeout=10.0
-            )
+            ) 
             
             vectors = []
+            chunk_start_time = time.time()
             for chunk in chunks:
+                if time.time() - chunk_start_time > 45: # Max 45s for embeddings
+                     print("[WARN] Embedding generation time limit reached (45s)")
+                     break
+                     
                 try:
                     vec = await asyncio.wait_for(
                         gemini.create_embedding(chunk),
@@ -266,11 +278,16 @@ async def analyze_workflow_doc(file: UploadFile = File(...)):
     try:
         content = await file.read()
         try:
-            text = await ingestor.extract_text(content, file.filename)
+            # Run CPU-bound extraction in thread
+            text = await asyncio.wait_for(
+                asyncio.to_thread(ingestor.extract_text, content, file.filename),
+                timeout=20.0
+            ) 
         except ValueError as ve:
              raise HTTPException(status_code=400, detail=str(ve))
-        except Exception:
-            raise HTTPException(status_code=400, detail="Only Text, Markdown, PDF, and DOCX files are supported.")
+        except Exception as e:
+            print(f"Extraction Error: {e}") 
+            raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
             
         analysis_json = await gemini.analyze_workflow_document_text(text)
         return json.loads(analysis_json)
@@ -351,24 +368,11 @@ async def explain_remediation(request: RemediationRequest):
 # --- SLA ---
 
 @router.post("/sla/analyze")
-async def analyze_sla_metrics(metrics: dict = Body(...)):
-    try:
-        sla_json = await gemini.analyze_sla(metrics)
-        return json.loads(sla_json)
-    except Exception as e:
-        print(f"SLA ANALYSIS FAILED: {e}")
-        # Mock Fallback for Rate Limits
-        return {
-            "sla_score": 88,
-            "status": "Healthy",
-            "analysis_summary": "SLA Metrics within acceptable limits (Mock Analysis due to high load).",
-            "impact_analysis": "No immediate impact detected, system resilience is holding.",
-            "recommendations": ["Continue monitoring current queue depth.", "Scale up worker nodes if latency persists."],
-            "projected_timeline": [
-                {"time": "Now", "event": "Stable", "severity": "Info"},
-                {"time": "T+1h", "event": "Projected Cleanup", "severity": "Info"}
-            ]
-        }
+async def analyze_sla():
+    """Get Gemini-powered SLA risk analysis and recommendations"""
+    from services.sla_analyzer import sla_analyzer
+    analysis = await sla_analyzer.analyze_sla_risk()
+    return analysis
 
 # --- Telemetry & Simulation ---
 
@@ -444,3 +448,26 @@ async def run_simulation():
         "risks_found": risks_found,
         "details": details
     }
+
+
+# --- SLA Monitoring Endpoints ---
+
+from services.metrics import metrics_store
+
+@router.post("/sla/metrics")
+async def get_sla_metrics():
+    """Get current SLA metrics snapshot"""
+    return metrics_store.get_current_metrics()
+
+@router.post("/sla/history")
+async def get_sla_history(hours: int = Body(24, embed=True)):
+    """Get historical SLA metrics"""
+    return {
+        "period_hours": hours,
+        "data_points": metrics_store.get_history(hours=hours)
+    }
+
+@router.post("/sla/uptime")
+async def get_uptime_stats():
+    """Get detailed uptime statistics"""
+    return metrics_store.get_uptime_stats()

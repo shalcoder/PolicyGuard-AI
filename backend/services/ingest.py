@@ -19,7 +19,7 @@ class PolicyIngestor:
     def __init__(self):
         pass
 
-    async def extract_text(self, file_content: bytes, filename: str) -> str:
+    def extract_text(self, file_content: bytes, filename: str) -> str:
         """
         Extract text based on file extension.
         """
@@ -64,7 +64,7 @@ class PolicyIngestor:
         cleaned = re.sub(r'\s+', ' ', content).strip()
         return cleaned
 
-    async def chunk_policy(self, text: str, chunk_size: int = 1500) -> List[str]:
+    def chunk_policy(self, text: str, chunk_size: int = 1500) -> List[str]:
         """
         Semantic chunking: Split by paragraphs/headers first, then merge or split to fit window.
         """
