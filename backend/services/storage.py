@@ -240,7 +240,10 @@ class PolicyStorage:
                 self._policies[index] = new_policy
                 
                 if self.db:
-                    self.db.collection('policies').document(policy_id).update(updates)
+                    try:
+                        self.db.collection('policies').document(policy_id).update(updates)
+                    except Exception as e:
+                        print(f"Firebase Update Error: {e}")
                 return new_policy
         return None
 

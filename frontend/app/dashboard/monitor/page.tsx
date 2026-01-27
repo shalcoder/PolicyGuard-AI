@@ -86,15 +86,15 @@ export default function MonitorPage() {
                 request_count: Math.floor(Math.random() * 50)
             };
 
-            await fetch('http://localhost:8000/api/v1/telemetry/ingest', {
+            await fetch(`${apiUrl}/api/v1/telemetry/ingest`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
 
-            const res = await fetch(`http://localhost:8000/api/v1/telemetry/risk/${SIM_SERVICE_ID}`);
+            const res = await fetch(`${apiUrl}/api/v1/telemetry/risk/${SIM_SERVICE_ID}`);
             if (res.ok) setRisk(await res.json());
 
             // Fetch History for Graph
-            const histRes = await fetch(`http://localhost:8000/api/v1/telemetry/history/${SIM_SERVICE_ID}`);
+            const histRes = await fetch(`${apiUrl}/api/v1/telemetry/history/${SIM_SERVICE_ID}`);
             if (histRes.ok) {
                 const histData = await histRes.json();
                 // Format for Recharts

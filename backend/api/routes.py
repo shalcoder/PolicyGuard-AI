@@ -54,7 +54,7 @@ class WorkflowRequest(BaseModel):
 
 @router.get("/policies", response_model=List[PolicyDocument])
 async def get_policies():
-    return policy_db.get_all_policies()
+    return await asyncio.to_thread(policy_db.get_all_policies)
 
 @router.post("/policies/upload")
 async def upload_policy(file: UploadFile = File(...)):
@@ -145,18 +145,21 @@ async def upload_policy(file: UploadFile = File(...)):
 
 @router.delete("/policies/{policy_id}")
 async def delete_policy(policy_id: str):
-    if await policy_db.delete_policy(policy_id):
+    # Use to_thread for sync DB operations
+    success = await asyncio.to_thread(policy_db.delete_policy, policy_id)
+    if success:
         return {"status": "deleted"}
     raise HTTPException(status_code=404, detail="Policy not found")
 
-@router.patch("/policies/{policy_id}/toggle")
+@router.post("/policies/{policy_id}/toggle")
 async def toggle_policy(policy_id: str):
     policies = policy_db.get_all_policies()
     policy = next((p for p in policies if p.id == policy_id), None)
     if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
     
-    updated = await policy_db.update_policy(policy_id, {"is_active": not policy.is_active})
+    # Use to_thread for sync DB operations
+    updated = await asyncio.to_thread(policy_db.update_policy, policy_id, {"is_active": not policy.is_active})
     return updated
 
 # --- Dashboard & Monitoring ---
@@ -287,7 +290,7 @@ async def export_latest_report():
 
 @router.get("/settings", response_model=PolicySettings)
 async def get_settings():
-    return policy_db.get_settings()
+    return await asyncio.to_thread(policy_db.get_settings)
 
 @router.post("/settings")
 async def update_settings(settings: PolicySettings):

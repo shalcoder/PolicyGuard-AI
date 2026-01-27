@@ -145,11 +145,12 @@ export default function SettingsPage() {
     const [saveMessage, setSaveMessage] = useState("");
     const [initialSettings, setInitialSettings] = useState<PolicySettings>(defaultSettings);
     const [isDirty, setIsDirty] = useState(false);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('http://localhost:8000/api/v1/settings');
+                const res = await fetch(`${apiUrl}/api/v1/settings`);
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);
@@ -169,7 +170,7 @@ export default function SettingsPage() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/settings', {
+            const res = await fetch(`${apiUrl}/api/v1/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings),
@@ -208,7 +209,7 @@ export default function SettingsPage() {
         if (btn) btn.textContent = "Running...";
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/simulate', { method: 'POST' });
+            const res = await fetch(`${apiUrl}/api/v1/simulate`, { method: 'POST' });
             const data = await res.json();
             setSimResult(data);
             setShowSimResult(true);

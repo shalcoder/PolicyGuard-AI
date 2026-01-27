@@ -76,17 +76,19 @@ export default function PoliciesPage() {
             p.id === id ? { ...p, is_active: !currentStatus } : p
         ));
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const res = await fetch(`${apiUrl}/api/v1/policies/${id}/toggle`, {
-                method: 'PATCH',
+            const url = `${apiUrl}/api/v1/policies/${id}/toggle`;
+            const res = await fetch(url, {
+                method: 'POST',
             });
             if (!res.ok) {
                 // Revert on failure
                 setPolicies(prev => prev.map(p =>
                     p.id === id ? { ...p, is_active: currentStatus } : p
                 ));
-                alert("Failed to toggle policy status");
+                const txt = await res.text();
+                alert(`Toggle failed: ${txt || res.statusText}`);
             }
         } catch (error) {
             console.error("Toggle failed", error);
@@ -94,7 +96,7 @@ export default function PoliciesPage() {
             setPolicies(prev => prev.map(p =>
                 p.id === id ? { ...p, is_active: currentStatus } : p
             ));
-            alert("Toggle failed due to network error");
+            alert(`Network Error calling ${apiUrl}: ${(error as Error).message}`);
         }
     }
 

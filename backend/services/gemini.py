@@ -80,7 +80,8 @@ class GeminiService:
                         server_delay = float(match.group(1))
                         wait_time = max(wait_time, server_delay + 0.5)
                     
-                    if fail_fast and wait_time > 30:
+                    if fail_fast and wait_time > 10:
+                        print(f"[FAIL FAST] Rate limit wait {wait_time}s > 10s. Aborting retry.")
                         raise e
 
                     print(f"[WAIT] Waiting {wait_time}s for {current_model}...")
@@ -277,15 +278,15 @@ class GeminiService:
 
         # 2. Try Primary (Flash) with retries
         try:
-             # Using Retry helper
+             # Using Retry helper with REDUCED retries to save quota
              response = await self._generate_with_retry(
                 model="gemini-1.5-flash", 
                 contents=prompt,
-                retries=3
+                retries=1 # Only try once, then failover to save tokens
              )
              return response.text
         except Exception as e:
-            print(f"[WARN] Primary Summarization Failed: {e}")
+            print(f"[WARN] Primary Summarization Failed (Likely Quota): {e}")
             
             # 3. Last Resort Fallback: Local Heuristic
             # If API fails completely, just show the start of the text so the UI isn't empty/ugly
@@ -361,7 +362,7 @@ class GeminiService:
         """
         
         response = await self._generate_with_retry(
-            model="gemini-1.5-flash", # Metrics analysis = Fast task
+            model=settings.GEMINI_MODEL, # Metrics analysis = Fast task
             contents=prompt,
             config={'response_mime_type': 'application/json'}
         )
@@ -401,7 +402,7 @@ class GeminiService:
         try:
             # Chat is conversational, Lite model is sufficient and faster
             response = await self._generate_with_retry(
-                model="gemini-1.5-flash", 
+                model=settings.GEMINI_MODEL, 
                 contents=prompt,
                 retries=3
             )
@@ -596,7 +597,7 @@ class GeminiService:
         
         # Use lite model for rewriting to save quota
         response = await self._generate_with_retry(
-            model="gemini-1.5-flash", # Hardcoded optimization
+            model=settings.GEMINI_MODEL, # Use configured model
             contents=prompt
         )
         return response.text

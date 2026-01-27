@@ -75,7 +75,7 @@ export default function SLAAnalyticsPage() {
     const handleAnalyze = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:8000/api/v1/sla/analyze', {
+            const response = await fetch(`${apiUrl}/api/v1/sla/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(metrics)

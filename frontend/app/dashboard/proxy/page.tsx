@@ -11,7 +11,8 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function ProxyPage() {
     const [selectedLang, setSelectedLang] = useState('python');
-    const proxyUrl = "http://localhost:8000/api/proxy/v1";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const proxyUrl = `${apiUrl}/api/proxy/v1`;
 
     const snippets = {
         python: `import openai
