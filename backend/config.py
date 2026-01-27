@@ -9,7 +9,7 @@ class Settings(BaseModel):
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     # Using 'thinking' model as the daily driver to meet "Gemini 3 Hackathon" requirements for reasoning
-    GEMINI_MODEL: str = "gemini-flash-latest"
+    GEMINI_MODEL: str = "gemini-2.0-flash-lite"
     EMBEDDING_MODEL: str = "text-embedding-004"
     
     # DB Config
@@ -22,5 +22,6 @@ class Settings(BaseModel):
     # Firestore Config
     # Can be a path to JSON or the raw JSON string itself
     FIREBASE_CREDENTIALS: str = os.getenv("FIREBASE_CREDENTIALS", "serviceAccountKey.json")
+    USE_FIREBASE: bool = os.getenv("USE_FIREBASE", "true").lower() == "true"
 
 settings = Settings()
