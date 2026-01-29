@@ -712,16 +712,11 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                         serviceRisk.score > 30 ? 'text-yellow-500' :
                                                             'text-purple-400'
                                                         }`} />
-                                                    <div className={`text-[10px] text-gray-400 uppercase font-bold tracking-tight mb-1`}>Deployment Verdict</div>
-                                                    <div className={`text-3xl font-black tracking-tighter transition-all duration-300 ${serviceRisk.score > 70 ? 'text-red-600 scale-110' :
+                                                    <div className={`text-2xl font-bold ${serviceRisk.score > 70 ? 'text-red-600' :
                                                         serviceRisk.score > 30 ? 'text-yellow-600' :
-                                                            'text-green-600'
-                                                        }`}>
-                                                        {serviceRisk.score > 70 ? 'BLOCKED' : serviceRisk.score > 30 ? 'CAUTION' : 'PASSED'}
-                                                    </div>
-                                                    <div className="text-[10px] text-gray-400 mt-2 font-medium italic">
-                                                        {serviceRisk.score > 70 ? 'Policy violation detected' : serviceRisk.score > 30 ? 'Risk threshold reached' : 'Compliance threshold met'}
-                                                    </div>
+                                                            ''
+                                                        }`}>{serviceRisk.label}</div>
+                                                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">System Status</div>
                                                 </div>
                                                 <div className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-800">
                                                     <div className="flex justify-between items-center text-xs mb-1">
