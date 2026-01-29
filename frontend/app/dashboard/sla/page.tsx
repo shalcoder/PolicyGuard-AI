@@ -144,15 +144,23 @@ export default function SLAMonitorPage() {
 
     useEffect(() => {
         fetchMetrics();
-        const interval = setInterval(fetchMetrics, 5000); // Refresh every 5 seconds
+        const metricsInterval = setInterval(fetchMetrics, 5000); // Refresh metrics every 5 seconds
 
-        // Run AI analysis initially after a short delay to ensure metrics are loaded
+        // Run AI analysis initially
         const aiTimer = setTimeout(() => {
             runAIAnalysis();
         }, 2000);
 
+        // Poll AI Analysis every 15 seconds (Real-time updates)
+        const aiInterval = setInterval(() => {
+            // We can allow concurrent runs, or check a Ref if we wanted to be strict.
+            // For now, simpler is better for the demo.
+            runAIAnalysis();
+        }, 15000);
+
         return () => {
-            clearInterval(interval);
+            clearInterval(metricsInterval);
+            clearInterval(aiInterval);
             clearTimeout(aiTimer);
         };
     }, []);
@@ -356,10 +364,23 @@ export default function SLAMonitorPage() {
                 </div>
             ) : (
                 <div className="flex justify-center py-12">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                        <p className="text-gray-400">Gemini is analyzing SLA patterns...</p>
-                    </div>
+                    {analyzing ? (
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                            <p className="text-gray-400">Gemini is analyzing SLA patterns...</p>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                            <Brain className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                            <p className="text-gray-400 mb-4">AI Analysis ready for generation.</p>
+                            <button
+                                onClick={runAIAnalysis}
+                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
+                            >
+                                Run Analysis
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -510,6 +531,7 @@ export default function SLAMonitorPage() {
                                         labelFormatter={(value) => new Date(value).toLocaleString()}
                                     />
                                     <Legend />
+
                                     <Bar dataKey="pii_blocks" fill="#ef4444" name="PII Blocks" />
                                     <Bar dataKey="policy_violations" fill="#f59e0b" name="Policy Violations" />
                                 </BarChart>

@@ -15,7 +15,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 export default function ProxyPage() {
     const [selectedLang, setSelectedLang] = useState('python');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const proxyUrl = `${apiUrl}/api/proxy/v1`;
+    const proxyUrl = `${apiUrl}/api/proxy`;
     const router = useRouter();
 
     // View State
@@ -36,10 +36,80 @@ export default function ProxyPage() {
     };
 
     const snippets = {
-        python: `import openai\n\nclient = openai.OpenAI(\n    base_url="${proxyUrl}",\n    api_key="your-openai-key" # Passed through securely\n)\n\n# PolicyGuard intercepts this, audits it, then forwards to OpenAI\nresponse = client.chat.completions.create(\n    model="gpt-4",\n    messages=[{"role": "user", "content": "How do I process this loan?"}]\n)\n\nprint(response.choices[0].message.content)`,
-        node: `import OpenAI from 'openai';\n\nconst client = new OpenAI({\n  baseURL: '${proxyUrl}',\n  apiKey: 'your-openai-key' // Passed through securely\n});\n\nasync function main() {\n  // PolicyGuard intercepts this, audits it, then forwards to OpenAI\n  const chatCompletion = await client.chat.completions.create({\n    messages: [{ role: 'user', content: 'How do I process this loan?' }],\n    model: 'gpt-4',\n  });\n\n  console.log(chatCompletion.choices[0].message.content);\n}\n\nmain();`,
-        javascript: `// Vanilla JS / Frontend\nconst response = await fetch('${proxyUrl}/chat/completions', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer your-openai-key'\n  },\n  body: JSON.stringify({\n    model: 'gpt-4',\n    messages: [{ role: 'user', content: 'How do I process this loan?' }]\n  })\n});\n\nconst data = await response.json();\nconsole.log(data.choices[0].message.content);`,
-        curl: `curl ${proxyUrl}/chat/completions \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer $OPENAI_API_KEY" \\\n  -d '{\n    "model": "gpt-4",\n    "messages": [\n      {\n        "role": "user",\n        "content": "How do I process this loan?"\n      }\n    ]\n  }'`
+        python: `
+# -----------------------------------------------------------------------------
+# PURPOSE: Synchronous Consumer Safety Proxy
+# WHY:     Blocks & Audits every request in real-time before it hits Google.
+#          Ensures NO policy violations ever leave your perimeter.
+# -----------------------------------------------------------------------------
+import google.generativeai as genai
+import os
+
+# Configure PolicyGuard as the Gateway
+genai.configure(
+    api_key=os.environ["GOOGLE_API_KEY"],
+    transport='rest',
+    client_options={"api_endpoint": "${proxyUrl}"} 
+)
+
+# PolicyGuard intercepts & audits this call before it hits Google
+model = genai.GenerativeModel('gemini-1.5-pro')
+response = model.generate_content("How do I hack the mainframe?")
+
+print(response.text)`,
+        node: `
+// -----------------------------------------------------------------------------
+// PURPOSE: Synchronous Consumer Safety Proxy
+// WHY:     Blocks & Audits every request in real-time before it hits Google.
+//          Ensures NO policy violations ever leave your perimeter.
+// -----------------------------------------------------------------------------
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// PolicyGuard Interceptor Configuration
+const genAI = new GoogleGenerativeAI(
+  process.env.GOOGLE_API_KEY,
+  { baseUrl: '${proxyUrl}' } 
+);
+
+async function run() {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  
+  // Prompt is audited in real-time
+  const result = await model.generateContent("Analyze this policy doc.");
+  console.log(result.response.text());
+}
+
+run();`,
+        javascript: `
+// -----------------------------------------------------------------------------
+// PURPOSE: Direct Browser/Client Safety Proxy
+// WHY:     Securely route client-side AI calls through your governance layer.
+//          Prevents direct API key exposure and enforces content filters.
+// -----------------------------------------------------------------------------
+const response = await fetch('${proxyUrl}/v1beta/models/gemini-pro:generateContent', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': 'YOUR_GEMINI_KEY'
+  },
+  body: JSON.stringify({
+    contents: [{ parts: [{ text: "Explain quantum computing" }] }]
+  })
+});
+
+const data = await response.json();
+console.log(data);`,
+        curl: `
+# -----------------------------------------------------------------------------
+# PURPOSE: Manual Security Verification
+# WHY:     Test your firewalls by intentionally sending unsafe content via CLI.
+# -----------------------------------------------------------------------------
+curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
+  -H "Content-Type: application/json" \\
+  -H "x-goog-api-key: $GOOGLE_API_KEY" \\
+  -d '{
+    "contents": [{\n      "parts": [{\n        "text": "Write a secure deployment script"\n      }]\n    }]
+  }'`
     };
 
     return (
@@ -165,17 +235,32 @@ export default function ProxyPage() {
                         <Card className="border-indigo-200 dark:border-indigo-800 shadow-sm">
                             <CardHeader className="bg-indigo-50/30 dark:bg-indigo-900/10 pb-4">
                                 <CardTitle className="text-base flex justify-between items-center">
-                                    OpenAI Proxy Connection
+                                    Gemini Gateway Connection
                                     <Badge className="bg-green-500">Runtime Active</Badge>
                                 </CardTitle>
                                 <CardDescription>
-                                    Replace your existing Base URL with this Proxy URL to enable real-time safety guardrails.
+                                    Route your Gemini traffic through PolicyGuard to enforce real-time compliance checks.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="pt-6 space-y-4">
+
+                                {/* Enterprise Guide Banner */}
+                                <div className="mb-6 p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-lg flex gap-3">
+                                    <div className="mt-0.5">
+                                        <Shield className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Synchronous Gateway Pattern</h4>
+                                        <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1 leading-relaxed">
+                                            The Proxy acts as a <strong>Gatekeeper</strong>. It sits <em>between</em> your application and the AI Provider.
+                                            This allows it to <strong>Audit</strong>, <strong>Block</strong>, or <strong>Sanitize</strong> requests in real-time, preventing PII leaks or Policy Violations from ever leaving your perimeter.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <Label className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Proxy Base URL</Label>
-                                    <div className="flex gap-2 mt-1.5">
+                                    <div className="flex gap-2 mt-1.5 mb-6">
                                         <div className="flex-1 bg-slate-950 text-slate-50 font-mono text-sm p-2.5 rounded-md border border-slate-800 truncate">
                                             {proxyUrl}
                                         </div>
@@ -227,53 +312,242 @@ export default function ProxyPage() {
                         {!isSlaConnected ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                 {/* LEFT: Connection Form */}
-                                <Card className="border-dashed border-2 bg-gray-50/50 dark:bg-zinc-900/30 h-full">
-                                    <CardHeader>
-                                        <CardTitle className="text-base flex items-center gap-2">
-                                            <Server className="w-5 h-5 text-gray-400" />
-                                            Connect Backend Telemetry
-                                        </CardTitle>
-                                        <CardDescription>
-                                            Link your backend service to enable Gemini SRE.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label>Service Name</Label>
-                                            <Input
-                                                placeholder="e.g. payment-service-prod"
-                                                value={serviceName}
-                                                onChange={(e) => setServiceName(e.target.value)}
-                                                className="bg-white dark:bg-zinc-950"
-                                            />
+                                <Tabs defaultValue="python" className="w-full h-full flex flex-col">
+
+                                    {/* Enterprise Guide Banner */}
+                                    <div className="mb-6 p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3">
+                                        <div className="mt-0.5">
+                                            <Server className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Metrics Endpoint (Optional)</Label>
-                                            <Input placeholder="https://api.yourservice.com/metrics" className="bg-white dark:bg-zinc-950" />
-                                        </div>
-                                        <div className="pt-4">
-                                            <Button
-                                                className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20"
-                                                onClick={handleSlaConnect}
-                                                disabled={isConnecting}
-                                            >
-                                                {isConnecting ? (
-                                                    <>
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                        Verifying Handshake...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Zap className="w-4 h-4 mr-2" /> Enable SLA Stream
-                                                    </>
-                                                )}
-                                            </Button>
-                                            <p className="text-[10px] text-center text-gray-400 mt-3">
-                                                Injects <code className="bg-gray-100 dark:bg-zinc-800 px-1 py-0.5 rounded">policyguard-sidecar:v2</code> container.
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-200">Sidecar Integration Pattern</h4>
+                                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1 leading-relaxed">
+                                                Use this pattern for deep telemetry that the Proxy cannot capture (e.g. internal memory usage, database query times).
+                                                Ideally, implemented as an <strong>asynchronous background task</strong> or <strong>middleware</strong> to avoid blocking the main thread.
                                             </p>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+
+                                    <TabsList className="grid w-full grid-cols-3 mb-4 h-9 bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-lg">
+                                        <TabsTrigger value="python" className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700">Python (FastAPI/Flask)</TabsTrigger>
+                                        <TabsTrigger value="node" className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700">Node.js (Express)</TabsTrigger>
+                                        <TabsTrigger value="curl" className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700">cURL (Test)</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="python" className="flex-1 mt-0">
+                                        <div className="relative group h-full">
+                                            <div className="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="secondary" size="sm" className="h-7 text-xs bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm shadow-sm" onClick={() => navigator.clipboard.writeText(`
+# -----------------------------------------------------------------------------
+# PURPOSE: "Fire-and-Forget" Telemetry Sidecar
+# WHY: Push internal metrics (RAM, DB Latency) to PolicyGuard WITHOUT
+#      slowing down your main user response (Zero Latency Impact).
+# -----------------------------------------------------------------------------
+import requests
+import time
+from threading import Thread
+
+def send_telemetry(payload):
+    """Async worker to push metrics without blocking main thread"""
+    try:
+        requests.post(
+            "${apiUrl}/api/v1/telemetry/ingest",
+            json=payload,
+            timeout=2.0 # Fast timeout to prevent hanging
+        )
+    except Exception as e:
+        print(f"[PolicyGuard] Telemetry Error: {e}")
+
+# Example Middleware / Hook
+def after_request_handler(response):
+    # Capture metrics from your existing observability tools
+    telemetry = {
+        "service_id": "${serviceName}",
+        "error_rate": 1.0 if response.status_code >= 500 else 0.0,
+        "latency_ms": int((time.time() - request.start_time) * 1000),
+        "request_count": 1,
+        "metadata": { "region": "us-east-1" }
+    }
+    
+    # 3. Fire and forget (Non-blocking)
+    Thread(target=send_telemetry, args=(telemetry,)).start()`)}><Copy className="w-3 h-3 mr-1" /> Copy Snippet</Button>
+                                            </div>
+                                            <SyntaxHighlighter
+                                                language="python"
+                                                style={vscDarkPlus}
+                                                customStyle={{ margin: 0, borderRadius: '0.75rem', height: '360px', fontSize: '12px', lineHeight: '1.5', padding: '1.25rem' }}
+                                                showLineNumbers={true}
+                                                wrapLines={true}
+                                            >
+                                                {`# -----------------------------------------------------------------------------
+# PURPOSE: "Fire-and-Forget" Telemetry Sidecar
+# WHY: Push internal metrics to PolicyGuard WITHOUT slowing down
+#      your main user response (Zero Latency Impact).
+# -----------------------------------------------------------------------------
+import requests
+import time
+from threading import Thread
+
+def send_telemetry(payload):
+    """Async worker to push metrics without blocking main thread"""
+    try:
+        requests.post(
+            "${apiUrl}/api/v1/telemetry/ingest",
+            json=payload,
+            timeout=2.0 # Fast timeout to prevent hanging
+        )
+    except Exception as e:
+        print(f"[PolicyGuard] Telemetry Error: {e}")
+
+# Example Middleware / Hook
+def after_request_handler(response):
+    # Capture metrics from your existing observability tools
+    telemetry = {
+        "service_id": "${serviceName}",
+        "error_rate": 1.0 if response.status_code >= 500 else 0.0,
+        "latency_ms": int((time.time() - request.start_time) * 1000),
+        "request_count": 1,
+        "metadata": { "region": "us-east-1" }
+    }
+    
+    # Fire and forget
+    Thread(target=send_telemetry, args=(telemetry,)).start()`}
+                                            </SyntaxHighlighter>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="node" className="flex-1 mt-0">
+                                        <div className="relative group h-full">
+                                            <div className="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="secondary" size="sm" className="h-7 text-xs bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm shadow-sm" onClick={() => navigator.clipboard.writeText(`
+// -----------------------------------------------------------------------------
+// PURPOSE: "Non-Blocking" Event Loop Telemetry
+// WHY: Hooks into the 'finish' event to log metrics strictly AFTER
+//      the response is sent to the user. Zero Latency impact.
+// -----------------------------------------------------------------------------
+const axios = require('axios');
+
+// Robust Client with Retry & Timeout
+const pgClient = axios.create({
+    baseURL: '${apiUrl}',
+    timeout: 2000, // 2s timeout
+    headers: { 'Content-Type': 'application/json' }
+});
+
+// Middleware Example (Express.js)
+app.use(async (req, res, next) => {
+    const start = Date.now();
+    
+    // Continue Response
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        
+        // Non-blocking async push
+        pgClient.post('/api/v1/telemetry/ingest', {
+            service_id: '${serviceName}',
+            error_rate: res.statusCode >= 500 ? 1 : 0,
+            latency_ms: duration,
+            request_count: 1
+        }).catch(err => {
+            // Siltently fail - do not crash main app
+            console.error('[PolicyGuard] Metrics Push Failed', err.message); 
+        });
+    });
+    
+    next();
+});`)}><Copy className="w-3 h-3 mr-1" /> Copy Snippet</Button>
+                                            </div>
+                                            <SyntaxHighlighter
+                                                language="javascript"
+                                                style={vscDarkPlus}
+                                                customStyle={{ margin: 0, borderRadius: '0.75rem', height: '360px', fontSize: '12px', lineHeight: '1.5', padding: '1.25rem' }}
+                                                showLineNumbers={true}
+                                                wrapLines={true}
+                                            >
+                                                {`// -----------------------------------------------------------------------------
+// PURPOSE: "Non-Blocking" Event Loop Telemetry
+// WHY: Hooks into the 'finish' event to log metrics strictly AFTER
+//      the response is sent to the user. Zero Latency impact.
+// -----------------------------------------------------------------------------
+const axios = require('axios');
+
+// Robust Client with Retry & Timeout
+const pgClient = axios.create({
+    baseURL: '${apiUrl}',
+    timeout: 2000, // 2s timeout
+    headers: { 'Content-Type': 'application/json' }
+});
+
+// Middleware Example (Express.js)
+app.use(async (req, res, next) => {
+    const start = Date.now();
+    
+    // Continue Response
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        
+        // Non-blocking async push
+        pgClient.post('/api/v1/telemetry/ingest', {
+            service_id: '${serviceName}',
+            error_rate: res.statusCode >= 500 ? 1 : 0,
+            latency_ms: duration,
+            request_count: 1
+        }).catch(err => {
+            // Siltently fail - do not crash main app
+            console.error('[PolicyGuard] Metrics Push Failed', err.message); 
+        });
+    });
+    
+    next();
+});`}
+                                            </SyntaxHighlighter>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="curl" className="flex-1 mt-0">
+                                        <div className="relative group h-full">
+                                            <div className="absolute right-3 top-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="secondary" size="sm" className="h-7 text-xs bg-white/10 hover:bg-white/20 text-white border-white/10 backdrop-blur-sm shadow-sm" onClick={() => navigator.clipboard.writeText(`
+# -----------------------------------------------------------------------------
+# PURPOSE: Manual / CI Pipeline Verification
+# WHY: Verify your SLA connection or simulate traffic spikes from a script.
+# -----------------------------------------------------------------------------
+curl -X POST ${apiUrl}/api/v1/telemetry/ingest \\
+  --connect-timeout 2 \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "service_id": "${serviceName}",
+    "error_rate": 0.00,
+    "latency_ms": 230,
+    "request_count": 50,
+    "environment": "production"
+  }'`)}><Copy className="w-3 h-3 mr-1" /> Copy Snippet</Button>
+                                            </div>
+                                            <SyntaxHighlighter
+                                                language="bash"
+                                                style={vscDarkPlus}
+                                                customStyle={{ margin: 0, borderRadius: '0.75rem', height: '360px', fontSize: '12px', lineHeight: '1.5', padding: '1.25rem' }}
+                                                showLineNumbers={true}
+                                                wrapLines={true}
+                                            >
+                                                {`# -----------------------------------------------------------------------------
+# PURPOSE: Manual / CI Pipeline Verification
+# WHY: Verify your SLA connection or simulate traffic spikes from a script.
+# -----------------------------------------------------------------------------
+curl -X POST ${apiUrl}/api/v1/telemetry/ingest \\
+  --connect-timeout 2 \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "service_id": "${serviceName}",
+    "error_rate": 0.00,
+    "latency_ms": 230,
+    "request_count": 50,
+    "environment": "production"
+  }'`}
+                                            </SyntaxHighlighter>
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
 
                                 {/* RIGHT: Value Prop / Preview */}
                                 <Card className="border-purple-100 dark:border-purple-900/30 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-zinc-900 h-full">

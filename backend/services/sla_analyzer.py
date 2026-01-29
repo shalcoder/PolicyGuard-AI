@@ -82,8 +82,12 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
 }}"""
         
         try:
-            # Call Gemini with JSON mode
-            response = await self.gemini.generate_content(prompt)
+            # Call Gemini with JSON mode and timeout
+            import asyncio
+            response = await asyncio.wait_for(
+                self.gemini.generate_content(prompt),
+                timeout=15.0
+            )
             
             # Clean response (remove markdown code blocks if present)
             response_text = response.strip()
@@ -105,6 +109,9 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
             
             return analysis
             
+        except asyncio.TimeoutError:
+            print("[SLA Analyzer] Gemini Analysis Timed Out (15s)")
+            return self._get_fallback_analysis(current)
         except json.JSONDecodeError as e:
             print(f"[SLA Analyzer] JSON parse error: {e}")
             print(f"[SLA Analyzer] Response: {response_text[:500]}")

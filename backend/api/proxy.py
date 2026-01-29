@@ -10,24 +10,23 @@ from services.metrics import metrics_store
 router = APIRouter()
 gemini = GeminiService()
 
-# --- PROXY CONFIGURATION ---
-OPENAI_API_URL = "https://api.openai.com/v1"
-
 @router.get("/health")
 async def proxy_health():
     return {"status": "Proxy Online", "service": "PolicyGuard Middleware"}
 
-@router.post("/v1/chat/completions")
-async def openai_proxy(request: Request, background_tasks: BackgroundTasks):
+@router.post("/v1beta/models/{model_name}:generateContent")
+async def gemini_proxy(model_name: str, request: Request, background_tasks: BackgroundTasks):
     """
-    Universal Proxy for OpenAI Chat Completions.
-    Intercepts request, audits prompt, forwards to OpenAI (if safe), audits response.
+    Universal Proxy for Google Gemini API.
+    Intercepts request, audits prompt, forwards to Google (if safe), audits response.
     """
     start_time = time.time()
-    pii_detected = False
-    status_code = 200
     
-    print("[PROXY] Incoming Request...", flush=True)
+    # Defaults
+    pii_detected = False
+    policy_violation = False
+    
+    print(f"[PROXY] Incoming Gemini Request for {model_name}...", flush=True)
     
     try:
         # 1. Component Extraction
@@ -37,23 +36,39 @@ async def openai_proxy(request: Request, background_tasks: BackgroundTasks):
             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,
                 status_code=400,
-                pii_detected=False,
-                policy_violation=False
+                endpoint=f"/v1beta/models/{model_name}:generateContent"
             )
             raise HTTPException(status_code=400, detail="Invalid JSON body")
             
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            metrics_store.record_request(
-                duration_ms=(time.time() - start_time) * 1000,
-                status_code=401,
-                pii_detected=False,
-                policy_violation=False
-            )
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        # Get Key from Header (x-goog-api-key) or Query Param (key)
+        api_key = request.headers.get("x-goog-api-key") or request.query_params.get("key")
+        
+        # Fallback to internal key if not provided (for Demo/Test Mode)
+        if not api_key:
+             from config import settings
+             if settings.GEMINI_API_KEY:
+                 api_key = settings.GEMINI_API_KEY
+             else:
+                metrics_store.record_request(
+                    duration_ms=(time.time() - start_time) * 1000,
+                    status_code=401,
+                    endpoint=f"/v1beta/models/{model_name}:generateContent"
+                )
+                raise HTTPException(status_code=401, detail="Missing x-goog-api-key header or key query param")
             
-        messages = body.get("messages", [])
-        last_user_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), None)
+        # Extract Prompt text from Gemini JSON structure for Auditing
+        # Structure: { contents: [ { parts: [ { text: "..." } ] } ] }
+        contents = body.get("contents", [])
+        user_prompt = ""
+        try:
+            for content in contents:
+                for part in content.get("parts", []):
+                    if "text" in part:
+                        user_prompt += part["text"] + "\n"
+        except Exception:
+             pass 
+        
+        print(f"[PROXY DEBUG] Extracted Prompt: '{user_prompt}'") 
         
         # 2. PRE-FLIGHT AUDIT (Security & PII)
         import re
@@ -63,123 +78,93 @@ async def openai_proxy(request: Request, background_tasks: BackgroundTasks):
             "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"
         }
         
-        if last_user_msg:
+        if user_prompt:
+            # Check 1: PII
             for p_type, pattern in pii_patterns.items():
-                if re.search(pattern, last_user_msg):
+                if re.search(pattern, user_prompt):
                     print(f"[PROXY] 🚨 PII DETECTED ({p_type.upper()}). Blocking Request.")
-                    pii_detected = True
                     metrics_store.record_request(
                         duration_ms=(time.time() - start_time) * 1000,
                         status_code=400,
                         pii_detected=True,
-                        policy_violation=False
+                        policy_violation=True,
+                        endpoint=f"/v1beta/models/{model_name}:generateContent"
                     )
                     raise HTTPException(
                         status_code=400, 
                         detail=f"Security Policy Violation: request contains sensitive PII ({p_type}). Please redact before sending."
                     )
-        
-        # Input Validation
-        if last_user_msg and len(last_user_msg) > 20000:
-            metrics_store.record_request(
-                duration_ms=(time.time() - start_time) * 1000,
-                status_code=400,
-                pii_detected=False,
-                policy_violation=False
-            )
-            raise HTTPException(status_code=400, detail="Input too large (DoS prevention).")
-        
-        # 3. FORWARD TO OPENAI
-        client = httpx.AsyncClient()
-        try:
-            upstream_response = await client.post(
-                f"{OPENAI_API_URL}/chat/completions",
-                headers={"Authorization": auth_header, "Content-Type": "application/json"},
-                json=body,
-                timeout=60.0
-            )
-            
-            if upstream_response.status_code != 200:
+
+            # Check 2: Financial Harm / Illegal Advice (NEW)
+            financial_harm_keywords = ["insider trading", "pump and dump", "evade taxes", "money laundering"]
+            if any(keyword in user_prompt.lower() for keyword in financial_harm_keywords):
+                print(f"[PROXY] 🚨 FINANCIAL HARM DETECTED. Blocking Request.")
                 metrics_store.record_request(
                     duration_ms=(time.time() - start_time) * 1000,
-                    status_code=upstream_response.status_code,
-                    pii_detected=pii_detected,
-                    policy_violation=False
+                    status_code=403, # Forbidden
+                    pii_detected=False,
+                    policy_violation=True,
+                    endpoint=f"/v1beta/models/{model_name}:generateContent"
                 )
-                return JSONResponse(status_code=upstream_response.status_code, content=upstream_response.json())
-                 
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Security Policy Violation: Request triggers Financial Harm safety filters."
+                )
+        
+        # 3. FORWARD TO GOOGLE GEMINI
+        client = httpx.AsyncClient()
+        try:
+            # Construct the real Google API URL
+            google_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            
+            # Forward the request
+            upstream_response = await client.post(
+                google_url,
+                headers={"Content-Type": "application/json"},
+                json=body,
+                timeout=60.0 # 60s timeout for GenAI
+            )
+            
+            upstream_status = upstream_response.status_code
             upstream_data = upstream_response.json()
-            model_response_content = upstream_data["choices"][0]["message"]["content"]
             
-            # 4. Background Audit
-            background_tasks.add_task(
-                perform_background_audit,
-                last_user_msg,
-                model_response_content,
-                body.get('model', 'unknown'),
-                auth_header
-            )
+            # 4. POST-FLIGHT AUDIT & METRICS
             
-            # Record successful request
+            # Identify if upstream failed
+            if upstream_status >= 400:
+                print(f"[PROXY] Upstream Error: {upstream_status}")
+            
+            # Record Metrics
             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,
-                status_code=200,
-                pii_detected=pii_detected,
-                policy_violation=False
+                status_code=upstream_status,
+                pii_detected=False,
+                policy_violation=False,
+                endpoint=f"/v1beta/models/{model_name}:generateContent"
             )
-                 
-            return upstream_data
             
-        except Exception as e:
-            metrics_store.record_request(
+            return JSONResponse(content=upstream_data, status_code=upstream_status)
+            
+        except httpx.TimeoutException:
+             print("[PROXY] Upstream Timeout")
+             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,
-                status_code=500,
-                pii_detected=pii_detected,
-                policy_violation=False
+                status_code=504,
+                endpoint=f"/v1beta/models/{model_name}:generateContent"
             )
-            raise HTTPException(status_code=500, detail=str(e))
-        finally:
-            await client.aclose()
-            
-    except HTTPException:
-        raise
+             raise HTTPException(status_code=504, detail="Upstream Gemini API Timeout")
+             
+    except HTTPException as he:
+        # Re-raise HTTP exceptions so FastAPI handles them
+        raise he
     except Exception as e:
+        print(f"[PROXY ERROR] Fatal Error in Proxy: {e}")
+        # Catch-all for other errors
         metrics_store.record_request(
             duration_ms=(time.time() - start_time) * 1000,
             status_code=500,
-            pii_detected=pii_detected,
-            policy_violation=False
+            pii_detected=False,
+            policy_violation=False,
+            endpoint=f"/v1beta/models/{model_name}:generateContent"
         )
         raise HTTPException(status_code=500, detail=str(e))
-
-async def perform_background_audit(user_msg: str, model_msg: str, model_name: str, auth_token: str):
-    """Detailed Semantic Audit running in background."""
-    try:
-        print(f"[BACKGROUND] Starting Deep Audit for {model_name}...")
-        
-        active_policies = [p for p in policy_db.get_all_policies() if p.is_active]
-        policy_context = "\n".join([p.summary for p in active_policies])
-        settings = policy_db.get_settings()
-        
-        interaction_context = f"User Request: {user_msg}\nModel Response: {model_msg}"
-        
-        audit_json = await gemini.analyze_policy_conflict(policy_context or "General Safety", interaction_context, settings)
-        audit_result = json.loads(audit_json)
-        
-        report_entry = {
-            "workflow_name": f"Proxy Request ({model_name})",
-            "timestamp": "Now",
-            "policy_matrix": audit_result.get("policy_matrix", []),
-            "risk_assessment": audit_result.get("risk_assessment", {}),
-            "evidence": audit_result.get("evidence", []),
-            "verdict": audit_result.get("verdict", {})
-        }
-        
-        if audit_result.get("risk_assessment", {}).get("overall_rating") == "High":
-             print(f"[BACKGROUND] 🚨 VIOLATION DETECTED AFTER RELEASE! Triggering Alert.")
-        
-        policy_db.add_evaluation(report_entry)
-        print(f"[BACKGROUND] Audit Complete.", flush=True)
-        
-    except Exception as e:
-        print(f"[BACKGROUND] Audit Failed: {e}", flush=True)
