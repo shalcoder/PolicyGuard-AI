@@ -148,64 +148,50 @@ export default function ProxyPage() {
 
     const stabilitySnippets = {
         python: `
-# -----------------------------------------------------------------------------
-# PURPOSE: "Fire-and-Forget" Telemetry Sidecar
-# WHY: Push internal metrics to PolicyGuard WITHOUT slowing down
-#      your main user response (Zero Latency Impact).
-# -----------------------------------------------------------------------------
+# 1. Configuration
+import os
 import requests
-import time
 from threading import Thread
 
-def send_telemetry(payload):
-    """Async worker to push metrics without blocking main thread"""
+PG_URL = os.getenv("POLICY_GUARD_API", "${apiUrl}")
+
+def send_telemetry(error_rate, latency_ms):
+    """Fire-and-forget worker (Zero Latency Impact)"""
     try:
         requests.post(
-            "${apiUrl}/api/v1/telemetry/ingest",
-            json=payload,
-            timeout=2.0 # Fast timeout to prevent hanging
+            f"{PG_URL}/api/v1/telemetry/ingest",
+            json={
+                "service_id": "${serviceName}",
+                "error_rate": error_rate,
+                "latency_ms": latency_ms,
+                "request_count": 1
+            },
+            timeout=1.0
         )
-    except Exception as e:
-        print(f"[PolicyGuard] Telemetry Error: {e}")
+    except: pass
 
-# Example Integration Hook
-def after_ai_request(latency_ms):
-    telemetry = {
-        "service_id": "${serviceName}",
-        "error_rate": 0.0,
-        "latency_ms": latency_ms,
-        "request_count": 1,
-        "metadata": { "platform": "policyguard-v1" }
-    }
-    
-    # Fire and forget (Non-blocking)
-    Thread(target=send_telemetry, args=(telemetry,)).start()`,
+# 2. Integration Hook
+# Call this after your AI request is finished
+def on_ai_complete(latency):
+    # Non-blocking push
+    Thread(target=send_telemetry, args=(0.0, latency)).start()`,
         node: `
-// -----------------------------------------------------------------------------
-// PURPOSE: "Non-Blocking" Event Loop Telemetry
-// WHY: Hooks into your AI logic to log metrics strictly AFTER
-//      the response is ready. User sees zero latency impact.
-// -----------------------------------------------------------------------------
+// 1. Configuration
 const axios = require('axios');
+const PG_URL = process.env.POLICY_GUARD_API || '${apiUrl}';
 
-const pgClient = axios.create({
-    baseURL: '${apiUrl}',
-    timeout: 2000
-});
-
-async function logStability(latency) {
-    // Non-blocking async push
-    pgClient.post('/api/v1/telemetry/ingest', {
+// 2. Integration Hook
+function logStability(latency) {
+    // Non-blocking async push (Fire-and-forget)
+    axios.post(\`\${PG_URL}/api/v1/telemetry/ingest\`, {
         service_id: '${serviceName}',
         error_rate: 0,
         latency_ms: latency,
         request_count: 1
-    }).catch(err => {
-        console.error('[PolicyGuard] Metrics Failed', err.message); 
-    });
+    }).catch(() => {}); // Silent fail to protect main thread
 }
 
-// Example: Call logStability(ms) after your Gemini generateContent()`,
+// Example: logStability(250);`,
         curl: `
 # -----------------------------------------------------------------------------
 # PURPOSE: Manual / CI Pipeline Verification
