@@ -105,17 +105,21 @@ export default function LandingPage() {
                             PolicyGuard V2: Full Lifecycle Governance
                         </div>
 
-                        <h1 className="text-5xl lg:text-8xl font-extrabold tracking-tight leading-[1.1] mb-8 text-white">
+                        <h1 className="text-4xl lg:text-7xl font-extrabold tracking-tight leading-[1.2] mb-8 text-white px-4">
                             Govern AI Agents <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Before and After Deployment</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                                Before and After Deployment
+                            </span>
                         </h1>
 
-                        <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-4">
-                            A policy-driven control layer that helps teams detect, assess, and mitigate AI risks across the agent lifecycle.
-                        </p>
-                        <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed mb-12 italic">
-                            Red-team agents before launch, then monitor policy drift and operational risk in production.
-                        </p>
+                        <div className="max-w-3xl mx-auto mb-12 space-y-4">
+                            <p className="text-lg lg:text-xl text-slate-400 leading-relaxed">
+                                A policy-driven control layer that helps teams detect, assess, and mitigate AI risks across the agent lifecycle.
+                            </p>
+                            <p className="text-md lg:text-lg text-slate-500 leading-relaxed italic opacity-80">
+                                Red-team agents before launch, then monitor policy drift and operational risk in production.
+                            </p>
+                        </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <Link href="/signup">
