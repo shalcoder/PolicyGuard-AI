@@ -57,7 +57,7 @@ class MetricsStore:
     def record_audit_log(self, event: str, status: str = "INFO", details: Optional[str] = None):
         """Record a real-time audit event"""
         log = AuditLog(
-            timestamp=datetime.now().strftime("%I:%M:%S %p"),
+            timestamp=datetime.now().isoformat(),
             event=event,
             status=status,
             details=details
@@ -102,10 +102,10 @@ class MetricsStore:
         requests_per_minute = len(last_1min)
         requests_per_hour = len(last_1hour)
         
-        # Security metrics
-        pii_blocks = len([r for r in all_requests if r.pii_detected])
-        policy_violations = len([r for r in all_requests if r.policy_violation])
-        
+        # PolicyGuard Specific Metrics
+        pg_blocks = len([r for r in all_requests if r.pii_detected or r.policy_violation])
+        pg_passed = total_requests - pg_blocks
+
         return {
             "timestamp": now.isoformat(),
             "uptime_percentage": round(uptime_percentage, 3),
@@ -113,14 +113,14 @@ class MetricsStore:
             "total_requests": total_requests,
             "successful_requests": successful_requests,
             "failed_requests": failed_requests,
+            "pg_blocks": pg_blocks,
+            "pg_passed": pg_passed,
             "success_rate": round((successful_requests / total_requests * 100) if total_requests > 0 else 100.0, 2),
             "avg_response_time_ms": round(avg_response_time, 2),
             "p95_response_time_ms": round(p95_response_time, 2),
             "p99_response_time_ms": round(p99_response_time, 2),
             "requests_per_minute": requests_per_minute,
             "requests_per_hour": requests_per_hour,
-            "pii_blocks": pii_blocks,
-            "policy_violations": policy_violations,
             "sla_status": self._get_sla_status(uptime_percentage)
         }
     

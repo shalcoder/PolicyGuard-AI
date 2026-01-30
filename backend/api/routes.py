@@ -178,7 +178,20 @@ async def toggle_policy(policy_id: str):
 
 @router.get("/dashboard/stats")
 async def get_dashboard_stats():
-    return policy_db.get_dashboard_stats()
+    base_stats = policy_db.get_dashboard_stats()
+    # Merge proxy metrics to prevent frontend flickering
+    proxy_metrics = metrics_store.get_current_metrics()
+    
+    # Use specifically calculated PolicyGuard blocks to avoid Google failure confusion
+    proxy_violations = proxy_metrics.get("pg_blocks", 0)
+    base_stats["violations"] += proxy_violations
+    base_stats["traces_analyzed"] += proxy_metrics.get("total_requests", 0)
+    
+    # Adjust health if there are live violations
+    if proxy_violations > 0:
+        base_stats["system_health"] = max(45, base_stats["system_health"] - (proxy_violations * 2))
+        
+    return base_stats
 
 @router.get("/dashboard/monitor")
 async def get_monitor_data():

@@ -141,23 +141,15 @@ export default function OverviewPage() {
                     }));
                 }
 
-                // Merge and Sort Logs
-                const allLogs = [...proxyLogs, ...evaluationTraces].slice(0, 50);
+                // Merge and Sort Logs (Newest First)
+                const allLogs = [...proxyLogs, ...evaluationTraces]
+                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 50);
                 setLogs(allLogs);
 
-                // 6. Fetch Global SLA Metrics (for counters)
-                const slaMetricsRes = await fetch(`${apiUrl}/api/v1/sla/metrics`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (slaMetricsRes.ok) {
-                    const slaData = await slaMetricsRes.json();
-                    setStats(prev => ({
-                        ...prev,
-                        violations: (prev.violations || 0) + (slaData.pii_blocks || 0) + (slaData.policy_violations || 0),
-                        traces_analyzed: (prev.traces_analyzed || 0) + (slaData.total_requests || 0)
-                    }));
-                }
+                // 6. Fetch Global SLA Metrics (Optional - for logs or something else, but stats are now handled by /dashboard/stats)
+                // We keep this call if we need it for other parts, but we remove the setStats from here
+                // to prevent flickering.
 
             } catch (error) {
                 console.error("Fetch failed", error);
@@ -341,7 +333,7 @@ export default function OverviewPage() {
                         <Card className={`${theme.card} shadow-sm border-l-4 border-l-green-500`}>
                             <CardContent className="p-5">
                                 <div className={`text-xs font-semibold uppercase tracking-wider ${theme.text.secondary} mb-2`}>Audits Passed</div>
-                                <div className={`text-3xl font-bold ${theme.text.primary}`}>{stats.traces_analyzed - stats.violations}</div>
+                                <div className={`text-3xl font-bold ${theme.text.primary}`}>{stats.pg_passed !== undefined ? stats.pg_passed : (stats.traces_analyzed - stats.violations)}</div>
                             </CardContent>
                         </Card>
                     </div>
