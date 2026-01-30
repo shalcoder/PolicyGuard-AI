@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Shield, AlertTriangle, Terminal, Copy, Activity, Server, Zap, ArrowRight, Eye, Clock, Code2, Cpu, Trash2 } from 'lucide-react';
+import { CheckCircle2, Shield, AlertTriangle, Terminal, Copy, Activity, Server, Zap, ArrowRight, Eye, Clock, Code2, Cpu, Trash2, Settings2 } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -675,7 +675,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                             onClick={() => setIsGatekeeperConnected(false)}
                                             title="Reconfigure Gatekeeper"
                                         >
-                                            <Settings className="w-4 h-4 text-gray-400" />
+                                            <Settings2 className="w-4 h-4 text-gray-400" />
                                         </Button>
                                     </Card>
 
@@ -1010,7 +1010,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                     className="h-6 px-2 text-[10px] ml-2 text-gray-400 hover:text-purple-500"
                                                     onClick={() => setIsSlaConnected(false)}
                                                 >
-                                                    <Settings className="w-3 h-3 mr-1" /> Reconfigure
+                                                    <Settings2 className="w-3 h-3 mr-1" /> Reconfigure
                                                 </Button>
                                             </CardDescription>
                                         </div>
