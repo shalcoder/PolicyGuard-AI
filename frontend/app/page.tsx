@@ -102,7 +102,7 @@ export default function LandingPage() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                             </span>
-                            PolicyGuard V2: Full Lifecycle Governance
+                            PolicyGuard: AI Governance Framework
                         </div>
 
                         <h1 className="text-4xl lg:text-7xl font-extrabold tracking-tight leading-[1.2] mb-8 text-white px-4">
@@ -124,7 +124,7 @@ export default function LandingPage() {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <Link href="/signup">
                                 <Button size="lg" className="w-full sm:w-auto h-14 px-10 text-lg rounded bg-cyan-600 hover:bg-cyan-500 shadow-[0_0_30px_rgba(8,145,178,0.4)] transition-all hover:scale-105 text-white font-bold">
-                                    Start Security Audit <ArrowRight className="ml-2 w-5 h-5" />
+                                    Start Risk Assessment <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
                             <Button
