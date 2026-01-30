@@ -627,7 +627,9 @@ export default function EvaluatePage() {
                     )}
                 </AnimatePresence>
             </div>
-        </div >
+        </div>
     );
 }
+
+// FORCE_RECOMPILE: 2026-01-30
 
