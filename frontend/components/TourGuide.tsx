@@ -4,170 +4,241 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Zap, Globe, X, LayoutDashboard, FileText, Activity, Target as TargetIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+    ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Zap, Globe, X,
+    LayoutDashboard, FileText, Activity, Target as TargetIcon,
+    Shield, Server, Box, Wrench, Lightbulb, Brain, TrendingUp
+} from 'lucide-react';
 
 const TOUR_STEPS = [
     {
         id: 1,
         route: '/dashboard',
         selector: '#dashboard-title',
-        badge: "Mission Control • 1/14",
+        badge: "Mission Control • 1/20",
         title: "Agent Governance Hub",
-        desc: "Welcome, Officer. This is PolicyGuard AI—your unified control plane for autonomous agent governance. We ensure your AI fleet remains safe, ethical, and compliant.",
+        desc: "Welcome to PolicyGuard AI. This is your unified control plane for autonomous agent governance. We ensure your AI fleet remains safe, ethical, and within regulatory boundaries.",
         icon: LayoutDashboard,
+        color: "text-cyan-400",
+        bg: "bg-cyan-500/10"
+    },
+    {
+        id: 2,
+        route: '/dashboard/policies',
+        selector: '#active-policies-list',
+        badge: "Governance • 2/20",
+        title: "Active Guardrails",
+        desc: "Every AI agent is governed by these live policies. This is where your organization's legal and safety requirements are translated into real-time enforcement rules.",
+        icon: Shield,
         color: "text-blue-400",
         bg: "bg-blue-500/10"
     },
     {
-        id: 2,
-        route: '/dashboard',
-        selector: '#compliance-score-card',
-        badge: "Mission Control • 2/14",
-        title: "Compliance Sentinel",
-        desc: "This is your most critical metric. The Compliance Score tracks aggregate risk across your entire organization. A drop here triggers automated intervention protocols.",
-        icon: Activity,
-        color: "text-green-400",
-        bg: "bg-green-500/10"
-    },
-    {
         id: 3,
         route: '/dashboard',
-        selector: '#ciso-view-toggle',
-        badge: "Mission Control • 3/14",
-        title: "Dual Operations Mode",
-        desc: "Switch between CISO View for high-level regulatory risk and SRE View for live infrastructure and reliability telemetry. One platform, two mission-critical perspectives.",
-        icon: LayoutDashboard,
+        selector: '#sre-view-toggle',
+        badge: "Telemetry • 3/20",
+        title: "SRE Reliability Console",
+        desc: "Monitor per-token latency, error rates, and throughput. PolicyGuard tracks the heartbeat of your distributed AI infrastructure to prevent performance degradation.",
+        icon: Activity,
         color: "text-indigo-400",
-        bg: "bg-indigo-500/10"
+        bg: "bg-indigo-500/10",
+        action: '#sre-view-toggle'
     },
     {
         id: 4,
-        route: '/dashboard',
-        selector: '#coverage-map-card',
-        badge: "Mission Control • 4/14",
-        title: "Defense-in-Depth",
-        desc: "The Coverage Map visualizes your active guardrail density across domains like Data Privacy, Ethical AI, and Prompt Security. No blind spots allowed.",
-        icon: Globe,
+        route: '/dashboard/proxy',
+        selector: '#stream-1-selector',
+        badge: "Integration • 4/20",
+        title: "Inline Interceptor (Stream 1)",
+        desc: "Stream 1 provides real-time, synchronous protection. It intercepts prompts and responses, blocking PII leaks and non-compliant content instantly.",
+        icon: Zap,
         color: "text-cyan-400",
         bg: "bg-cyan-500/10",
-        actionBtn: "Define Policies"
+        action: '#stream-1-selector'
     },
     {
         id: 5,
-        route: '/dashboard/policies',
-        selector: '#policy-upload-panel',
-        badge: "Governance • 5/14",
-        title: "Policy Quantization",
-        desc: "I will now simulate a policy upload. Loading 'Global AI Safety Standard (ISO-42001)'... Gemini 3 is parsing the PDF into vector embeddings.",
-        icon: FileText,
-        color: "text-blue-400",
-        bg: "bg-blue-500/10",
-        action: '#use-sample-policy-btn'
+        route: '/dashboard/proxy',
+        selector: '#finalize-gatekeeper-btn',
+        badge: "Integration • 5/20",
+        title: "Zero-Trust Activation",
+        desc: "Activating Stream 1 deploys our sub-10ms latency interceptor. Your agent is now protected by a cryptographic policy handshake for every interaction.",
+        icon: Shield,
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10",
+        action: '#finalize-gatekeeper-btn'
     },
     {
         id: 6,
-        route: '/dashboard/policies',
-        selector: '#active-policies-list',
-        badge: "Governance • 6/14",
-        title: "Active Guardrails",
-        desc: "Done. The document is now a set of 12 executable guardrails. These inspect every token layer-by-layer. Powered by Gemini 3 Flash for sub-10ms latency.",
-        icon: CheckCircle,
-        color: "text-green-400",
-        bg: "bg-green-500/10",
-        actionBtn: "Start Audit"
+        route: '/dashboard/proxy',
+        selector: '#stream-2-selector',
+        badge: "Reliability • 6/20",
+        title: "SLA Stability (Stream 2)",
+        desc: "Stream 2 focuses on long-term reliability. We ingest system heartbeats and model output logs to detect performance drift and ensure SLIs are maintained.",
+        icon: Server,
+        color: "text-purple-400",
+        bg: "bg-purple-500/10",
+        action: '#stream-2-selector'
     },
     {
         id: 7,
         route: '/dashboard/evaluate',
         selector: '#run-evaluation-btn',
-        badge: "Forensics • 7/14",
-        title: "High-Context Audit",
-        desc: "Let's run a Forensic Audit on a 'Medical Claims Agent'. I'm starting the simulation now... Gemini is debating itself to find edge cases.",
+        badge: "Forensics • 7/20",
+        title: "Deep Forensic Audit",
+        desc: "Let's run a Deep Audit. Our Gemini-powered engine debates itself to find edge cases and hidden policy contradictions in your system spec.",
         icon: Zap,
-        color: "text-purple-400",
-        bg: "bg-purple-500/10",
+        color: "text-orange-400",
+        bg: "bg-orange-500/10",
         action: '#run-evaluation-btn'
     },
     {
         id: 8,
         route: '/dashboard/evaluate',
         selector: '#readiness-scorecard',
-        badge: "Forensics • 8/14",
-        title: "Cryptographic Proof",
-        desc: "The verdict is in. We have a cryptographically verifiable proof of safety. This scorecard is the 'Green Light' (or Red Light) for production deployment.",
-        icon: CheckCircle,
+        badge: "Analysis • 8/20",
+        title: "Compliance Readiness Results",
+        desc: "The audit is complete. PolicyGuard has generated a comprehensive scorecard mapping your agent's behavior against corporate policy and legal requirements.",
+        icon: FileText,
         color: "text-green-500",
-        bg: "bg-green-500/10",
-        actionBtn: "Attack Phase"
-    },
-    {
-        id: 9,
-        route: '/dashboard/redteam',
-        selector: '#initiate-attack-btn',
-        badge: "Adversarial • 9/14",
-        title: "Red Team Lab",
-        desc: "Initiating Adversarial Attack Protocol... My Red Team agents (powered by Gemini 3 Pro) are attempting 50+ jailbreak vectors.",
-        icon: TargetIcon,
-        color: "text-red-500",
-        bg: "bg-red-500/10",
-        actionBtn: "Auto-Remediate",
-        action: '#initiate-attack-btn'
-    },
-    {
-        id: 10,
-        route: '/dashboard/remediate',
-        selector: '#remediation-engine',
-        badge: "Resilience • 10/14",
-        title: "Auto-Fix Engine",
-        desc: "Vulnerabilities found? No problem. Generating Python patches now... This code is ready to be merged into your repo.",
-        icon: CheckCircle,
-        color: "text-green-400",
         bg: "bg-green-500/10"
     },
     {
+        id: 9,
+        route: '/dashboard/evaluate',
+        selector: '#tab-executive',
+        badge: "Analysis • 9/20",
+        title: "Executive Summary",
+        desc: "High-level verdict and categorical risk assessment. This tab provides a binary 'Go/No-Go' status for deployment based on legal reasoning.",
+        icon: CheckCircle,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+        action: '#tab-executive'
+    },
+    {
+        id: 10,
+        route: '/dashboard/evaluate',
+        selector: '#section-risk',
+        badge: "Analysis • 10/20",
+        title: "Failure Class Simulation",
+        desc: "We simulate catastrophic scenarios—from prompt injection to data exfiltration—and quantify the financial and reputational exposure for your business.",
+        icon: ShieldAlert,
+        color: "text-red-400",
+        bg: "bg-red-500/10"
+    },
+    {
         id: 11,
-        route: '/dashboard/remediate',
-        selector: '#remediation-tabs',
-        badge: "Resilience • 11/14",
-        title: "Audit-Ready Artifacts",
-        desc: "Download production-ready Python guardrails and rewritten PRDs. We close the loop from detection to implementation in a single click.",
+        route: '/dashboard/evaluate',
+        selector: '#tab-proof',
+        badge: "Analysis • 11/20",
+        title: "Remedy & Evidence Log",
+        desc: "Transparency is key. This tab contains raw trace evidence snippets for every violation, alongside immutable cryptographic hashes for audit-readiness.",
         icon: FileText,
         color: "text-blue-400",
         bg: "bg-blue-500/10",
-        actionBtn: "Live Monitoring"
+        action: '#tab-proof'
     },
     {
         id: 12,
-        route: '/dashboard/monitor',
-        selector: '#audit-log-stream',
-        badge: "Visibility • 12/14",
-        title: "Operational Observability",
-        desc: "Total transparency. Monitor every interaction across your agent fleet. Every block is tracked with sub-10ms latency for zero-impact security.",
-        icon: Activity,
-        color: "text-indigo-400",
-        bg: "bg-indigo-500/10",
-        actionBtn: "Predict Risks"
+        route: '/dashboard/remediate',
+        selector: '#auto-remediate-btn',
+        badge: "Resilience • 12/20",
+        title: "Automated Patching",
+        desc: "Vulnerabilities found? The Remediation Engine generates production-ready library code and rewritten system instructions to patch gaps instantly.",
+        icon: Wrench,
+        color: "text-cyan-500",
+        bg: "bg-cyan-500/10",
+        action: '#auto-remediate-btn'
     },
     {
         id: 13,
+        route: '/dashboard/remediate',
+        selector: '#remediation-tabs',
+        badge: "Resilience • 13/20",
+        title: "Explainable Remediation",
+        desc: "PolicyGuard explains precisely HOW the fix solves the risk. We provide a logic graph and code-level walkthrough for the generated guardrails.",
+        icon: Lightbulb,
+        color: "text-indigo-400",
+        bg: "bg-indigo-500/10"
+    },
+    {
+        id: 14,
+        route: '/dashboard/redteam',
+        selector: '#initiate-attack-btn',
+        badge: "Adversarial • 14/20",
+        title: "Offensive Security Lab",
+        desc: "Now we test. We launch 50+ adversarial attacks—including jailbreaks and prompt-probing—to see if the new guardrails hold under pressure.",
+        icon: TargetIcon,
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+        action: '#initiate-attack-btn'
+    },
+    {
+        id: 15,
+        route: '/dashboard/redteam',
+        selector: '#red-team-logs',
+        badge: "Adversarial • 15/20",
+        title: "Real-time Attack Feed",
+        desc: "Watch the 'Debate Protocol'. Our red-team engine attempts to bypass defenses while the Guardrail Interceptor blocks malicious intent in real-time.",
+        icon: Activity,
+        color: "text-orange-500",
+        bg: "bg-orange-500/10"
+    },
+    {
+        id: 16,
+        route: '/dashboard/monitor',
+        selector: '#audit-log-stream',
+        badge: "Visibility • 16/20",
+        title: "Live Safety Stream",
+        desc: "Final visibility layer. Monitor the production interceptor as it executes PASS/BLOCK decisions on live traffic with 100% auditability.",
+        icon: Activity,
+        color: "text-indigo-500",
+        bg: "bg-indigo-500/10"
+    },
+    {
+        id: 17,
         route: '/dashboard/sla',
         selector: '#gemini-risk-card',
-        badge: "Intelligence • 13/14",
-        title: "Predictive Guard",
-        desc: "Finally, our predictive layer. We use real-time traffic simulations to forecast latency spikes and compliance breaches before they happen. Secure the future, today.",
-        icon: Zap,
+        badge: "Intelligence • 17/20",
+        title: "Predictive SLA Monitoring",
+        desc: "We look ahead. Gemini analyzes historical latency and throughput to forecast risk spikes and breaches before they impact your end-users.",
+        icon: Brain,
         color: "text-purple-400",
         bg: "bg-purple-500/10"
     },
     {
-        id: 14,
+        id: 18,
+        route: '/dashboard/sla',
+        selector: '.bg-card',
+        badge: "Intelligence • 18/20",
+        title: "Risk Factor Analysis",
+        desc: "PolicyGuard identifies the causal drivers for SLA breaches—whether it's model versioning, prompt length, or geographic traffic spikes.",
+        icon: Zap,
+        color: "text-cyan-500",
+        bg: "bg-cyan-500/10"
+    },
+    {
+        id: 19,
+        route: '/dashboard/sla',
+        selector: '.rounded-xl.border.border-border', // Targeting forecast chart/box
+        badge: "Intelligence • 19/20",
+        title: "Future Output Forecast",
+        desc: "Projected latency and success rates for the next hour. This allows for proactive infrastructure scaling and model fallback strategies.",
+        icon: TrendingUp,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10"
+    },
+    {
+        id: 20,
         route: '/dashboard',
         selector: '#dashboard-title',
-        badge: "Certified • 14/14",
-        title: "Mission Accomplished",
-        desc: "You've completed the full Governance Lifecycle. Your AI fleet is now robost, resilient, and ready for global scale. Build with confidence.",
+        badge: "Certified • 20/20",
+        title: "Governance Mastery",
+        desc: "Mission Accomplished. Your AI fleet is now robust, compliant, and ready for scale. You have completed the full PolicyGuard Governance Cycle.",
         icon: CheckCircle,
-        color: "text-green-400",
+        color: "text-green-500",
         bg: "bg-green-500/10",
         actionBtn: "Finish Tour"
     }
@@ -175,11 +246,13 @@ const TOUR_STEPS = [
 
 export function TourGuide() {
     const [stepIndex, setStepIndex] = useState(-1);
+    const [isAutoPilot, setIsAutoPilot] = useState(true);
     const router = useRouter();
     const pathname = usePathname();
     const [isHovered, setIsHovered] = useState(false);
     const [highlightElement, setHighlightElement] = useState<HTMLElement | null>(null);
     const highlightTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const autoAdvanceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const tourActive = localStorage.getItem('pg_tour_active');
@@ -187,6 +260,21 @@ export function TourGuide() {
             setStepIndex(0);
         }
     }, []);
+
+    // Auto-Advance Logic (Auto-Pilot)
+    useEffect(() => {
+        if (stepIndex >= 0 && isAutoPilot && !isHovered) {
+            if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+
+            // Wait 8 seconds before moving to next step
+            autoAdvanceTimerRef.current = setTimeout(() => {
+                nextStep();
+            }, 8000);
+        }
+        return () => {
+            if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+        };
+    }, [stepIndex, isAutoPilot, isHovered]);
 
     // Handle Page Changes, Scrolling, and AUTOMATION
     useEffect(() => {
@@ -306,15 +394,58 @@ export function TourGuide() {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <div className="bg-[#0b101a] border border-blue-500/30 p-1 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] w-[380px] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none z-[9999]" style={{ overflow: 'hidden' }}>
+                    <AnimatePresence>
+                        {highlightElement && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute border-4 border-cyan-500 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.5)] z-[9999]"
+                                style={{
+                                    top: highlightElement.getBoundingClientRect().top + window.scrollY - 8,
+                                    left: highlightElement.getBoundingClientRect().left + window.scrollX - 8,
+                                    width: highlightElement.getBoundingClientRect().width + 16,
+                                    height: highlightElement.getBoundingClientRect().height + 16,
+                                }}
+                            >
+                                <motion.div
+                                    className="absolute -top-3 -right-3 bg-cyan-500 text-white rounded-full p-1 shadow-lg"
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ repeat: Infinity, duration: 2 }}
+                                >
+                                    <Zap className="w-4 h-4" />
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                <div className="bg-[#0b101a] border border-cyan-500/30 p-1 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] w-[380px] overflow-hidden">
                     {/* Header Bar */}
                     <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
-                        <span className={`text-[10px] font-mono uppercase tracking-widest ${currentStep.color} font-black`}>
-                            {currentStep.badge}
-                        </span>
-                        <Button variant="ghost" size="icon" onClick={endTour} className="h-5 w-5 hover:text-white text-gray-500">
-                            <X className="w-3 h-3" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-mono uppercase tracking-widest ${currentStep.color} font-black`}>
+                                {currentStep.badge}
+                            </span>
+                            {isAutoPilot && (
+                                <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-[8px] animate-pulse">Auto-Pilot Active</Badge>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsAutoPilot(!isAutoPilot)}
+                                className={`h-6 w-6 ${isAutoPilot ? 'text-cyan-400' : 'text-gray-500'}`}
+                                title={isAutoPilot ? "Pause Auto-Pilot" : "Resume Auto-Pilot"}
+                            >
+                                <Zap className="w-3 h-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={endTour} className="h-6 w-6 hover:text-white text-gray-500">
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="p-6 relative">
@@ -347,7 +478,7 @@ export function TourGuide() {
                                 <Button
                                     size="sm"
                                     onClick={nextStep}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 px-5 rounded-full font-bold shadow-lg shadow-blue-500/20"
+                                    className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs h-8 px-5 rounded-full font-bold shadow-lg shadow-cyan-500/20"
                                 >
                                     {currentStep.actionBtn || "Next"} <ArrowRight className="w-3 h-3 ml-2" />
                                 </Button>
@@ -358,7 +489,7 @@ export function TourGuide() {
                     {/* Progress Bar */}
                     <div className="h-1 bg-gray-900 w-full mt-0">
                         <motion.div
-                            className="h-full bg-blue-500"
+                            className="h-full bg-cyan-500"
                             initial={{ width: 0 }}
                             animate={{ width: `${((stepIndex + 1) / TOUR_STEPS.length) * 100}%` }}
                         />
@@ -400,21 +531,19 @@ function HighlightBox({ target, color }: { target: HTMLElement, color: string })
                 color.includes('purple') ? 'border-purple-500' :
                     color.includes('orange') ? 'border-orange-500' : 'border-blue-500';
 
-    const glowClass = borderClass.replace('border-', 'shadow-');
-
     return (
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-[95]">
             <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
-                className={`absolute rounded-xl border-2 ${borderClass} shadow-[0_0_30px_rgba(59,130,246,0.3)] bg-transparent`}
+                className={`absolute rounded-xl border-2 ${borderClass} shadow-[0_0_30px_rgba(6,182,212,0.3)] bg-transparent`}
                 style={{
                     top: coords.top - 12,
                     left: coords.left - 12,
                     width: coords.width + 24,
                     height: coords.height + 24,
-                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    transition: 'all 0.3s ease-out'
                 }}
             >
                 {/* Holographic Corners */}
@@ -425,7 +554,7 @@ function HighlightBox({ target, color }: { target: HTMLElement, color: string })
 
                 {/* Scanning Light Effect */}
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/10 to-transparent w-full h-[20%]"
+                    className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/10 to-transparent w-full h-[20%]"
                     animate={{
                         top: ['0%', '100%', '0%'],
                     }}
@@ -435,9 +564,6 @@ function HighlightBox({ target, color }: { target: HTMLElement, color: string })
                         ease: "linear"
                     }}
                 />
-
-                {/* Pulse Ring */}
-                <div className={`absolute inset-0 animate-ping border border-white/20 rounded-xl opacity-50`} />
             </motion.div>
         </div>
     );

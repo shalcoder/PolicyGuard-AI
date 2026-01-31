@@ -194,6 +194,7 @@ export default function RedTeamPage() {
                 </div>
                 {redTeamStatus === 'done' && (
                     <Button
+                        id="view-threat-profile-btn"
                         onClick={() => setIsThreatModalOpen(true)}
                         variant="outline"
                         className="w-full md:w-auto border-red-500/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"

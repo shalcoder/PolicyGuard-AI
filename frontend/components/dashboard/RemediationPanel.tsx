@@ -176,6 +176,7 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
         return (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex justify-center">
                 <Button
+                    id="auto-remediate-btn"
                     size="lg"
                     onClick={handleAutoRemediate}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md transition-all duration-300 transform hover:scale-105"

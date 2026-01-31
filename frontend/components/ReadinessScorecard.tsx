@@ -18,7 +18,7 @@ interface ReadinessScorecardProps {
 
 export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardProps) {
     const reportRef = useRef<HTMLDivElement>(null);
-    const [activeTab, setActiveTab] = useState("summary");
+    const [activeTab, setActiveTab] = useState("executive");
 
     const handleDownloadPDF = async () => {
         if (!reportRef.current) return;
@@ -94,20 +94,17 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
 
                 {/* TABS NAVIGATION */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 h-auto mb-6 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
-                        <TabsTrigger value="summary" className="text-xs">Verdict</TabsTrigger>
-                        <TabsTrigger value="risk" className="text-xs">Scenarios</TabsTrigger>
-                        <TabsTrigger value="spec" className="text-xs">Spec</TabsTrigger>
-                        <TabsTrigger value="impact" className="text-xs">Impact</TabsTrigger>
-                        <TabsTrigger value="data" className="text-xs">Data Map</TabsTrigger>
-                        <TabsTrigger value="policy" className="text-xs">Alignment</TabsTrigger>
-                        <TabsTrigger value="remediation" className="text-xs">Fixes</TabsTrigger>
-                        <TabsTrigger value="evidence" className="text-xs">Forensics</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-4 h-auto mb-6 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
+                        <TabsTrigger id="tab-executive" value="executive" className="text-xs">Executive Summary</TabsTrigger>
+                        <TabsTrigger id="tab-system" value="system" className="text-xs">System Strategy</TabsTrigger>
+                        <TabsTrigger id="tab-safety" value="safety" className="text-xs">Safety & Policy</TabsTrigger>
+                        <TabsTrigger id="tab-proof" value="proof" className="text-xs">Remedy & Evidence</TabsTrigger>
                     </TabsList>
 
-                    {/* 1. EXECUTIVE VERDICT */}
-                    <TabsContent value="summary" className="space-y-6 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className={cn(
+                    {/* 1. EXECUTIVE & RISK */}
+                    <TabsContent value="executive" className="space-y-8 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* 1.1 VERDICT */}
+                        <div id="section-verdict" className={cn(
                             "p-8 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm",
                             report.verdict.approved
                                 ? "bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50"
@@ -142,61 +139,62 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                                 : <XCircle className="w-32 h-32 text-red-500 opacity-20" />
                             }
                         </div>
-                    </TabsContent>
 
-                    {/* 2. RISK SCENARIOS */}
-                    <TabsContent value="risk" className="space-y-6 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                <AlertTriangle className="w-6 h-6 text-amber-600" />
-                                Relational Risk Modeling (Analogy-Based)
-                            </h3>
-                            <Badge variant="outline" className="h-7 text-sm">Confidence: {report.risk_assessment.confidence_score}</Badge>
-                        </div>
+                        {/* 1.2 RISK SCENARIOS */}
+                        <div id="section-risk" className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    <AlertTriangle className="w-6 h-6 text-amber-600" />
+                                    Relational Risk Modeling (Analogy-Based)
+                                </h3>
+                                <Badge variant="outline" className="h-7 text-sm">Confidence: {report.risk_assessment.confidence_score}</Badge>
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {report.risk_simulations.map((sim, i) => (
-                                <div key={i} className="p-5 rounded-lg border bg-zinc-50 dark:bg-zinc-900/30 hover:shadow-md transition-shadow">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{sim.scenario_title}</h4>
-                                        <Badge className={getRiskColor(sim.severity)}>{sim.severity}</Badge>
-                                    </div>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed italic mb-4 border-l-2 border-zinc-200 pl-3">
-                                        "{sim.description}"
-                                    </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {report.risk_simulations.map((sim, i) => (
+                                    <div key={i} className="p-5 rounded-lg border bg-zinc-50 dark:bg-zinc-900/30 hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{sim.scenario_title}</h4>
+                                            <Badge className={getRiskColor(sim.severity)}>{sim.severity}</Badge>
+                                        </div>
+                                        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed italic mb-4 border-l-2 border-zinc-200 pl-3">
+                                            "{sim.description}"
+                                        </p>
 
-                                    <div className="space-y-3 pt-3 border-t border-dashed">
-                                        <div>
-                                            <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 mb-1">
-                                                <Shield className="w-3 h-3" /> Plausible Failure Class
+                                        <div className="space-y-3 pt-3 border-t border-dashed">
+                                            <div>
+                                                <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 mb-1">
+                                                    <Shield className="w-3 h-3" /> Plausible Failure Class
+                                                </div>
+                                                <p className="text-xs text-zinc-700 dark:text-zinc-300">{sim.plausibility_grounding}</p>
                                             </div>
-                                            <p className="text-xs text-zinc-700 dark:text-zinc-300">{sim.plausibility_grounding}</p>
+
+                                            {Object.entries(realWorldGrounding).map(([key, value]) => (
+                                                sim.failure_mode.includes(key) && (
+                                                    <div key={key} className="p-2.5 rounded bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
+                                                        <div className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Comparative Precedent</div>
+                                                        <div className="text-xs text-zinc-800 dark:text-zinc-200">
+                                                            <span className="font-bold">{value.company}:</span> {value.impact}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            ))}
                                         </div>
 
-                                        {Object.entries(realWorldGrounding).map(([key, value]) => (
-                                            sim.failure_mode.includes(key) && (
-                                                <div key={key} className="p-2.5 rounded bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
-                                                    <div className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Comparative Precedent</div>
-                                                    <div className="text-xs text-zinc-800 dark:text-zinc-200">
-                                                        <span className="font-bold">{value.company}:</span> {value.impact}
-                                                    </div>
-                                                </div>
-                                            )
-                                        ))}
+                                        <div className="mt-4 flex items-center justify-between text-[10px] text-zinc-400 uppercase tracking-wider">
+                                            <span>Violated: {sim.violated_clause}</span>
+                                            <span>Conf: {sim.confidence_level}</span>
+                                        </div>
                                     </div>
-
-                                    <div className="mt-4 flex items-center justify-between text-[10px] text-zinc-400 uppercase tracking-wider">
-                                        <span>Violated: {sim.violated_clause}</span>
-                                        <span>Conf: {sim.confidence_level}</span>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </TabsContent>
 
-                    {/* 3. SYSTEM SPEC */}
-                    <TabsContent value="spec" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card>
+                    {/* 2. SYSTEM & IMPACT */}
+                    <TabsContent value="system" className="space-y-8 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* 2.1 SYSTEM SPEC */}
+                        <Card id="section-spec">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Activity className="w-6 h-6 text-blue-500" />
@@ -244,12 +242,10 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
 
-                    {/* 4. BUSINESS IMPACT */}
-                    <TabsContent value="impact" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* 2.2 BUSINESS IMPACT */}
                         {report.business_impact && (
-                            <Card className="bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
+                            <Card id="section-impact" className="bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-950">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <TargetIcon className="w-6 h-6 text-red-500" />
@@ -294,9 +290,10 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                         )}
                     </TabsContent>
 
-                    {/* 5. DATA MAP */}
-                    <TabsContent value="data" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card>
+                    {/* 3. SAFETY & POLICY */}
+                    <TabsContent value="safety" className="space-y-8 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* 3.1 DATA MAP */}
+                        <Card id="section-data">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Globe className="w-6 h-6 text-indigo-500" />
@@ -344,11 +341,9 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
 
-                    {/* 6. POLICY ALIGNMENT */}
-                    <TabsContent value="policy" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                        {/* 3.2 POLICY ALIGNMENT */}
+                        <Card id="section-policy" className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-center text-slate-900 dark:text-slate-50">
                                     <span>Policy Alignment Matrix</span>
@@ -373,9 +368,10 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                         </Card>
                     </TabsContent>
 
-                    {/* 7. REMEDIATION */}
-                    <TabsContent value="remediation" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card className="border-l-4 border-l-blue-500">
+                    {/* 4. REMEDY & EVIDENCE */}
+                    <TabsContent value="proof" className="space-y-8 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        {/* 4.1 REMEDIATION */}
+                        <Card id="section-remediation" className="border-l-4 border-l-blue-500">
                             <CardHeader className="bg-blue-50/30 dark:bg-blue-900/10 pb-4">
                                 <CardTitle className="flex items-center gap-2">
                                     <CheckCircle className="w-6 h-6 text-blue-600" />
@@ -403,12 +399,9 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
                                 ))}
                             </CardContent>
                         </Card>
-                    </TabsContent>
 
-                    {/* 8. FORENSICS */}
-                    {/* 8. FORENSICS */}
-                    <TabsContent value="evidence" className="focus-visible:outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                        {/* 4.2 FORENSICS */}
+                        <Card id="section-evidence" className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-50">
                                     <FileText className="w-6 h-6 text-red-500" />

@@ -388,6 +388,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {/* Stream 1 Selector */}
                             <div
+                                id="stream-1-selector"
                                 onClick={() => setActiveStream('stream1')}
                                 className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group shadow-sm
                                     ${activeStream === 'stream1'
@@ -416,6 +417,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
 
                             {/* Stream 2 Selector */}
                             <div
+                                id="stream-2-selector"
                                 onClick={() => setActiveStream('stream2')}
                                 className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group shadow-sm
                                     ${activeStream === 'stream2'
@@ -637,7 +639,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <Button variant="outline" size="sm" onClick={() => setGatekeeperStep(2)}>Back</Button>
-                                                        <Button size="sm" onClick={() => setIsGatekeeperConnected(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                        <Button id="finalize-gatekeeper-btn" size="sm" onClick={() => setIsGatekeeperConnected(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                                                             Finalize Integration <CheckCircle2 className="ml-2 w-4 h-4" />
                                                         </Button>
                                                     </div>
@@ -746,8 +748,11 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                     <Card className="lg:col-span-2 border-indigo-100 dark:border-indigo-900/30 overflow-hidden">
                                         <CardHeader className="bg-indigo-50/30 dark:bg-indigo-950/20 border-b border-indigo-100 dark:border-indigo-800/50 pb-3">
-                                            <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-widest text-indigo-600">
-                                                <Activity className="w-4 h-4" /> Live Audit Log
+                                            <CardTitle className="text-sm font-bold flex items-center justify-between uppercase tracking-widest text-indigo-600">
+                                                <div className="flex items-center gap-2">
+                                                    <Activity className="w-4 h-4" /> Live Audit Log
+                                                </div>
+                                                <Badge variant="outline" className="text-[9px] border-indigo-500/30 text-indigo-500">Action Guardrails Active</Badge>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">
@@ -1078,11 +1083,11 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                         {serviceRisk.score > 70 ? 'Policy violation detected' : serviceRisk.score > 30 ? 'Risk threshold reached' : 'Compliance threshold met'}
                                                     </div>
                                                 </div>
-                                                <div className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                                                <div id="action-guardrails-panel" className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-800">
                                                     <div className="flex justify-between items-center text-xs mb-1">
-                                                        <span className="text-indigo-700 dark:text-indigo-300 font-medium">Auto-Remediation</span>
+                                                        <span className="text-indigo-700 dark:text-indigo-300 font-medium">Action Guardrails</span>
                                                         <Badge className={`${serviceRisk.score > 0 ? 'bg-green-500/20 text-green-600' : 'bg-gray-500/10 text-gray-400'} border-none px-1.5 py-0 h-4 text-[9px]`}>
-                                                            {serviceRisk.score > 0 ? 'READY' : 'STANDBY'}
+                                                            {serviceRisk.score > 0 ? 'INTERVENING' : 'MONITORING'}
                                                         </Badge>
                                                     </div>
                                                     <p className="text-[10px] text-indigo-900/60 dark:text-indigo-300/60 leading-tight">

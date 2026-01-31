@@ -49,6 +49,46 @@
       "status": "Active",
       "version": "1.0.0",
       "last_updated": ""
+    },
+    {
+      "id": "5482923d-b3c7-493f-9b68-0a25bb40f444",
+      "name": "ISO_42001_Global_Safety.txt",
+      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
+      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "is_active": true,
+      "status": "Active",
+      "version": "1.0.0",
+      "last_updated": ""
+    },
+    {
+      "id": "5730890e-013b-4cf2-ad0c-5330a161a484",
+      "name": "ISO_42001_Global_Safety.txt",
+      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
+      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "is_active": true,
+      "status": "Active",
+      "version": "1.0.0",
+      "last_updated": ""
+    },
+    {
+      "id": "2c885c6a-4b2a-4cc6-88e7-a7b7b54464fd",
+      "name": "ISO_42001_Global_Safety.txt",
+      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
+      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "is_active": true,
+      "status": "Active",
+      "version": "1.0.0",
+      "last_updated": ""
+    },
+    {
+      "id": "c0807529-b261-4fa9-ad94-aa1c2fe0c39a",
+      "name": "ISO_42001_Global_Safety.txt",
+      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
+      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "is_active": true,
+      "status": "Active",
+      "version": "1.0.0",
+      "last_updated": ""
     }
   ],
   "evaluations": []

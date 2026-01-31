@@ -33,19 +33,19 @@ export default function GovernancePage() {
     }, []);
 
     return (
-        <div className="bg-[#020202] text-white min-h-screen font-sans selection:bg-blue-500/30 overflow-hidden">
+        <div className="bg-[#020202] text-white min-h-screen font-outfit selection:bg-cyan-500/30 overflow-hidden">
             {/* Nav */}
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-black/60 backdrop-blur-xl border-b border-white/5' : 'py-8 bg-transparent'}`}>
                 <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
                     <div className="flex flex-col items-start gap-1">
                         <div onClick={() => router.push('/')} className="flex items-center gap-3 group cursor-pointer">
-                            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center rounded-none border border-blue-400/50 shadow-[0_0_20px_rgba(37,99,235,0.4)] group-hover:scale-110 transition-transform">
+                            <div className="w-10 h-10 bg-cyan-600 flex items-center justify-center rounded-none border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.4)] group-hover:scale-110 transition-transform">
                                 <Shield className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-black uppercase italic tracking-tighter">Policy<span className="text-blue-500">Guard</span> AI</span>
+                            <span className="text-xl font-black uppercase tracking-tighter">Policy<span className="text-cyan-500">Guard</span> AI</span>
                         </div>
-                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-blue-400 backdrop-blur-md">
-                            <span className="w-1 h-1 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]"></span>
+                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-400 backdrop-blur-md">
+                            <span className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.8)]"></span>
                             AI Governance Framework
                         </div>
                     </div>
@@ -59,14 +59,14 @@ export default function GovernancePage() {
                         ].map((item) => (
                             <Link key={item.name} href={item.href} className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-white transition-colors relative group">
                                 {item.name}
-                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-blue-500 transition-all group-hover:w-full"></span>
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-cyan-500 transition-all group-hover:w-full"></span>
                             </Link>
                         ))}
                     </div>
 
                     <div className="flex items-center gap-6">
                         <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Log In</Link>
-                        <Button onClick={() => router.push('/login')} className="bg-white text-black hover:bg-zinc-200 rounded-none px-6 font-black uppercase italic tracking-widest text-[10px] h-11 border border-white/20">
+                        <Button onClick={() => router.push('/login')} className="bg-white text-black hover:bg-zinc-200 rounded-none px-6 font-black uppercase tracking-widest text-[10px] h-11 border border-white/20">
                             Initialize Shell
                         </Button>
                     </div>
@@ -76,10 +76,10 @@ export default function GovernancePage() {
             <section className="pt-40 pb-32 relative z-10">
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="mb-24">
-                        <div className="text-blue-500 font-black uppercase tracking-[0.4em] text-[10px] mb-6">
+                        <div className="text-cyan-500 font-black uppercase tracking-[0.4em] text-[10px] mb-6">
                             Architectural Framework
                         </div>
-                        <h2 className="text-6xl md:text-7xl font-outfit font-black tracking-tighter uppercase italic leading-none">
+                        <h2 className="text-6xl md:text-7xl font-outfit font-black tracking-tighter uppercase leading-none">
                             THE DEPLOYMENT <br /><span className="text-white">PROTOCOLS.</span>
                         </h2>
                     </div>
@@ -89,15 +89,15 @@ export default function GovernancePage() {
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
-                            className="bg-zinc-900/20 backdrop-blur-3xl border border-white/5 p-12 rounded-[3rem] relative group transition-all duration-500 hover:border-blue-500/30"
+                            className="bg-zinc-900/20 backdrop-blur-3xl border border-white/5 p-12 rounded-[3rem] relative group transition-all duration-500 hover:border-cyan-500/30"
                         >
-                            <div className="absolute top-10 right-10 text-[10px] font-black tracking-[0.3em] text-blue-500/50 group-hover:text-blue-500 transition-colors">PHASE_01 // PRE-DEPLOY</div>
+                            <div className="absolute top-10 right-10 text-[10px] font-black tracking-[0.3em] text-cyan-500/50 group-hover:text-cyan-500 transition-colors">PHASE_01 // PRE-DEPLOY</div>
                             <div className="flex items-center gap-4 mb-12">
-                                <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-                                    <Wrench className="w-8 h-8 text-blue-500" />
+                                <div className="p-4 bg-cyan-600/10 border border-cyan-500/20 rounded-2xl">
+                                    <Wrench className="w-8 h-8 text-cyan-500" />
                                 </div>
                                 <div>
-                                    <h3 className="text-3xl font-black uppercase italic text-white">BUILD & HARDEN</h3>
+                                    <h3 className="text-3xl font-black uppercase text-white">BUILD & HARDEN</h3>
                                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Sandbox Environment</p>
                                 </div>
                             </div>
@@ -110,11 +110,11 @@ export default function GovernancePage() {
                                     { title: "Compliance Scorecard", desc: "Quantify agent readiness with cryptographically verifiable risk reports.", icon: FileCheck }
                                 ].map((item, idx) => (
                                     <div key={idx} className="flex gap-6 group/item">
-                                        <div className="w-px h-12 bg-zinc-800 relative mt-2 group-hover/item:bg-blue-500/50 transition-colors">
-                                            <div className="absolute top-0 -left-1 w-2 h-2 rounded-full bg-zinc-700 group-hover/item:bg-blue-500 transition-colors"></div>
+                                        <div className="w-px h-12 bg-zinc-800 relative mt-2 group-hover/item:bg-cyan-500/50 transition-colors">
+                                            <div className="absolute top-0 -left-1 w-2 h-2 rounded-full bg-zinc-700 group-hover/item:bg-cyan-500 transition-colors"></div>
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black uppercase italic text-zinc-300 mb-1 group-hover/item:text-white transition-colors">{item.title}</h4>
+                                            <h4 className="text-lg font-black uppercase text-zinc-300 mb-1 group-hover/item:text-white transition-colors">{item.title}</h4>
                                             <p className="text-sm text-zinc-500 font-medium leading-relaxed max-w-md">{item.desc}</p>
                                         </div>
                                     </div>
@@ -134,7 +134,7 @@ export default function GovernancePage() {
                                     <Activity className="w-8 h-8 text-emerald-500" />
                                 </div>
                                 <div>
-                                    <h3 className="text-3xl font-black uppercase italic text-white">RUN & GOVERN</h3>
+                                    <h3 className="text-3xl font-black uppercase text-white">RUN & GOVERN</h3>
                                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Operational Environment</p>
                                 </div>
                             </div>
@@ -151,7 +151,7 @@ export default function GovernancePage() {
                                             <div className="absolute top-0 -left-1 w-2 h-2 rounded-full bg-zinc-700 group-hover/item:bg-emerald-500 transition-colors"></div>
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black uppercase italic text-zinc-300 mb-1 group-hover/item:text-white transition-colors">{item.title}</h4>
+                                            <h4 className="text-lg font-black uppercase text-zinc-300 mb-1 group-hover/item:text-white transition-colors">{item.title}</h4>
                                             <p className="text-sm text-zinc-500 font-medium leading-relaxed max-w-md">{item.desc}</p>
                                         </div>
                                     </div>

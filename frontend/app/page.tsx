@@ -50,19 +50,19 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="bg-[#020202] text-white min-h-screen font-sans selection:bg-blue-500/30">
+        <div className="bg-[#020202] text-white min-h-screen font-outfit selection:bg-blue-500/30">
             {/* Nav */}
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-black/60 backdrop-blur-xl border-b border-white/5' : 'py-8 bg-transparent'}`}>
                 <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
                     <div className="flex flex-col items-start gap-1">
                         <div className="flex items-center gap-3 group cursor-pointer">
-                            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center rounded-none border border-blue-400/50 shadow-[0_0_20px_rgba(37,99,235,0.4)] group-hover:scale-110 transition-transform">
+                            <div className="w-10 h-10 bg-cyan-600 flex items-center justify-center rounded-none border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.4)] group-hover:scale-110 transition-transform">
                                 <Shield className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-black uppercase italic tracking-tighter">Policy<span className="text-blue-500">Guard</span> AI</span>
+                            <span className="text-xl font-black uppercase tracking-tighter">Policy<span className="text-cyan-500">Guard</span> AI</span>
                         </div>
-                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-blue-400 backdrop-blur-md">
-                            <span className="w-1 h-1 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]"></span>
+                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-400 backdrop-blur-md">
+                            <span className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.8)]"></span>
                             AI Governance Framework
                         </div>
                     </div>
@@ -76,7 +76,7 @@ export default function LandingPage() {
                         ].map((item) => (
                             <Link key={item.name} href={item.href} className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-white transition-colors relative group">
                                 {item.name}
-                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-blue-500 transition-all group-hover:w-full"></span>
+                                <span className="absolute -bottom-1 left-0 w-0 h-px bg-cyan-500 transition-all group-hover:w-full"></span>
                             </Link>
                         ))}
                     </div>
@@ -84,7 +84,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-6">
                         <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Log In</Link>
                         <Link href="/signup">
-                            <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-none px-6 font-black uppercase italic tracking-widest text-[10px] h-11 border border-blue-400/50 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                            <Button className="bg-cyan-600 hover:bg-cyan-500 text-white rounded-none px-6 font-black uppercase tracking-widest text-[10px] h-11 border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
                                 Sign Up Free
                             </Button>
                         </Link>
@@ -103,8 +103,8 @@ export default function LandingPage() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase italic">
-                                THE <span className="text-blue-600">CONTROL LAYER</span><br />
+                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase">
+                                THE <span className="text-cyan-600">CONTROL LAYER</span><br />
                                 <span className="text-zinc-400">FOR AI AGENTS.</span>
                             </h1>
                             <p className="text-lg md:text-xl text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
@@ -115,11 +115,11 @@ export default function LandingPage() {
 
                         <div className="flex flex-wrap gap-4 pt-10">
                             <Link href="/signup">
-                                <Button size="lg" className="h-16 px-10 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase italic tracking-widest border-none rounded-none shadow-[0_0_50px_rgba(37,99,235,0.3)]">
+                                <Button size="lg" className="h-16 px-10 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest border-none rounded-none shadow-[0_0_50px_rgba(6,182,212,0.3)]">
                                     Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="h-16 px-10 border-white/20 text-white font-black uppercase italic tracking-widest hover:bg-white/5 bg-transparent rounded-none outline-none">
+                            <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="h-16 px-10 border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/5 bg-transparent rounded-none outline-none">
                                 <span className="flex items-center gap-2">
                                     <Play className="w-4 h-4 fill-white" /> View Demo <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
                                 </span>
@@ -136,7 +136,7 @@ export default function LandingPage() {
                                 transition={{ delay: 0.3 }}
                                 className="row-span-1 bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/10 p-6 rounded-[2rem] flex flex-col justify-center"
                             >
-                                <div className="text-4xl font-black text-white italic tracking-tighter">500+</div>
+                                <div className="text-4xl font-black text-white tracking-tighter">500+</div>
                                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Threat Vectors Scanned</div>
                             </motion.div>
 
@@ -147,20 +147,20 @@ export default function LandingPage() {
                                 transition={{ delay: 0.5, duration: 0.8 }}
                                 className="row-span-4 col-start-2 bg-[#050505] border border-white/5 p-10 rounded-[3rem] flex flex-col justify-between relative overflow-hidden shadow-2xl"
                             >
-                                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-transparent"></div>
+                                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-cyan-600/10 via-purple-600/5 to-transparent"></div>
                                 {/* Iridescent Line Pattern */}
                                 <div className="absolute -top-1/2 -right-1/4 w-[200%] h-[200%] opacity-20 pointer-events-none rotate-12">
-                                    <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500 via-transparent to-transparent blur-3xl"></div>
+                                    <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500 via-transparent to-transparent blur-3xl"></div>
                                 </div>
 
                                 <div className="relative z-10">
-                                    <div className="text-7xl font-black text-white italic tracking-tighter leading-none">100%</div>
-                                    <div className="text-xs font-black uppercase tracking-[0.3em] text-blue-500 mt-4">Audit Transparency</div>
+                                    <div className="text-7xl font-black text-white tracking-tighter leading-none">100%</div>
+                                    <div className="text-xs font-black uppercase tracking-[0.3em] text-cyan-500 mt-4">Audit Transparency</div>
                                 </div>
                                 <div className="relative flex justify-center py-10">
-                                    <div className="absolute inset-0 bg-blue-500/20 blur-[60px] rounded-full animate-pulse"></div>
+                                    <div className="absolute inset-0 bg-cyan-500/20 blur-[60px] rounded-full animate-pulse"></div>
                                     <div className="w-40 h-40 bg-white/5 border border-white/10 rounded-[2.5rem] flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-700">
-                                        <Shield className="w-20 h-20 text-blue-500" />
+                                        <Shield className="w-20 h-20 text-cyan-500" />
                                     </div>
                                 </div>
                                 <div className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-zinc-600">
@@ -175,10 +175,10 @@ export default function LandingPage() {
                                 transition={{ delay: 0.7 }}
                                 className="row-span-2 bg-[#0A0A0A]/40 backdrop-blur-3xl border border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-center overflow-hidden group"
                             >
-                                <div className="text-5xl font-black text-white italic tracking-tighter leading-none">30+</div>
+                                <div className="text-5xl font-black text-white tracking-tighter leading-none">30+</div>
                                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-3">Governance Policies</div>
                                 <div className="mt-8 relative h-16">
-                                    <Atom className="w-16 h-16 text-zinc-800 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-blue-500/20 transition-colors" />
+                                    <Atom className="w-16 h-16 text-zinc-800 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-cyan-500/20 transition-colors" />
                                 </div>
                             </motion.div>
 
@@ -189,9 +189,9 @@ export default function LandingPage() {
                                 transition={{ delay: 0.9 }}
                                 className="row-span-1 bg-white p-6 rounded-[2rem] flex items-center justify-center text-center shadow-[0_0_50px_rgba(255,255,255,0.15)]"
                             >
-                                <div className="text-black font-black uppercase tracking-tighter leading-none text-[11px] italic">
+                                <div className="text-black font-black uppercase tracking-tighter leading-none text-[11px]">
                                     SEMANTIC <br />
-                                    <span className="text-blue-600 block my-1">RISK</span>
+                                    <span className="text-cyan-600 block my-1">RISK</span>
                                     CONTROLLER
                                 </div>
                             </motion.div>
@@ -218,10 +218,10 @@ export default function LandingPage() {
                             whileHover={{ y: -10 }}
                             className="p-12 bg-zinc-900/20 border border-white/5 rounded-[3rem] group"
                         >
-                            <div className="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                <ShieldAlert className="w-8 h-8 text-blue-500 group-hover:text-white" />
+                            <div className="w-16 h-16 bg-cyan-600/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                                <ShieldAlert className="w-8 h-8 text-cyan-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase italic text-white mb-6">Hallucination <br />Deflector</h3>
+                            <h3 className="text-3xl font-black uppercase text-white mb-6">Hallucination <br />Deflector</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Real-time semantic comparison between agent output and verified knowledge base to intercept false claims before they reach the user.
                             </p>
@@ -235,7 +235,7 @@ export default function LandingPage() {
                             <div className="w-16 h-16 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-emerald-600 group-hover:text-white transition-all">
                                 <Lock className="w-8 h-8 text-emerald-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase italic text-white mb-6">Autonomous <br />SLA Guard</h3>
+                            <h3 className="text-3xl font-black uppercase text-white mb-6">Autonomous <br />SLA Guard</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Hard latency and reliability constraints enforced at the proxy layer. If the agent exceeds parameters, the system executes failover protocols.
                             </p>
@@ -249,7 +249,7 @@ export default function LandingPage() {
                             <div className="w-16 h-16 bg-purple-600/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-purple-600 group-hover:text-white transition-all">
                                 <Target className="w-8 h-8 text-purple-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase italic text-white mb-6">PII Redaction <br />Engines</h3>
+                            <h3 className="text-3xl font-black uppercase text-white mb-6">PII Redaction <br />Engines</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Multi-layered scanning for secrets, crypto-keys, and sensitive personal data within agent trace logs and live response streams.
                             </p>
@@ -260,10 +260,10 @@ export default function LandingPage() {
 
             {/* Section 4: Global Standards Grid */}
             <section className="py-32 bg-[#050505] relative">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-600/5 blur-[120px] rounded-full pointer-events-none"></div>
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase italic mb-6">Built for <span className="text-blue-500">Compliance.</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-6">Built for <span className="text-cyan-500">Compliance.</span></h2>
                         <p className="text-zinc-500 text-lg font-medium max-w-2xl mx-auto">PolicyGuard mapped to the world's most rigorous security frameworks.</p>
                     </div>
 
@@ -277,11 +277,11 @@ export default function LandingPage() {
                             { name: "PCI DSS", level: "L2", icon: CreditCard }
                         ].map((std) => (
                             <div key={std.name} className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl group hover:border-blue-500/30 transition-all text-center flex flex-col items-center">
-                                <div className="mb-5 p-4 bg-zinc-800/30 rounded-2xl group-hover:bg-blue-500/10 group-hover:scale-110 transition-all duration-300">
-                                    <std.icon className="w-6 h-6 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+                                <div className="mb-5 p-4 bg-zinc-800/30 rounded-2xl group-hover:bg-cyan-500/10 group-hover:scale-110 transition-all duration-300">
+                                    <std.icon className="w-6 h-6 text-zinc-500 group-hover:text-cyan-500 transition-colors" />
                                 </div>
-                                <div className="text-[10px] font-black tracking-widest text-blue-500 mb-2 uppercase">Protocol_{std.level}</div>
-                                <div className="text-xs font-black uppercase italic text-zinc-300 group-hover:text-white transition-colors">{std.name}</div>
+                                <div className="text-[10px] font-black tracking-widest text-cyan-500 mb-2 uppercase">Protocol_{std.level}</div>
+                                <div className="text-xs font-black uppercase text-zinc-300 group-hover:text-white transition-colors">{std.name}</div>
                             </div>
                         ))}
                     </div>
@@ -291,14 +291,14 @@ export default function LandingPage() {
             {/* Section 5: The Invisible Shield (Value Statement) */}
             <section className="py-40 bg-black relative">
                 <div className="max-w-[1400px] mx-auto px-6">
-                    <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-[4rem] p-20 border border-white/10 relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-cyan-600/20 to-purple-600/20 rounded-[4rem] p-20 border border-white/10 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-10 opacity-20">
                             <ShieldCheck className="w-64 h-64 text-white" />
                         </div>
                         <div className="max-w-2xl relative z-10">
-                            <h2 className="text-5xl md:text-7xl font-outfit font-black uppercase italic tracking-tighter mb-10 leading-none">
+                            <h2 className="text-5xl md:text-7xl font-outfit font-black uppercase tracking-tighter mb-10 leading-none">
                                 THE <span className="text-white">INVISIBLE SHIELD</span> <br />
-                                <span className="text-blue-500">BETWEEN AI & APPS.</span>
+                                <span className="text-cyan-500">BETWEEN AI & APPS.</span>
                             </h2>
                             <p className="text-zinc-400 text-xl font-medium leading-relaxed mb-12">
                                 PolicyGuard operates at the network periphery, intercepting and inspecting every token in milliseconds.
@@ -306,12 +306,12 @@ export default function LandingPage() {
                             </p>
                             <div className="flex gap-10">
                                 <div>
-                                    <div className="text-4xl font-black text-white italic">8ms</div>
+                                    <div className="text-4xl font-black text-white">8ms</div>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">Avg Overhead</div>
                                 </div>
                                 <div className="w-px h-12 bg-zinc-800"></div>
                                 <div>
-                                    <div className="text-4xl font-black text-white italic">99.9%</div>
+                                    <div className="text-4xl font-black text-white">99.9%</div>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">Uptime Verifier</div>
                                 </div>
                             </div>
@@ -323,8 +323,8 @@ export default function LandingPage() {
             {/* CTA Final */}
             <section className="py-20 bg-black text-center border-t border-white/5">
                 <div className="max-w-4xl mx-auto px-6">
-                    <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase italic mb-10 tracking-tighter">Ready to secure your fleet?</h2>
-                    <Button size="lg" onClick={() => router.push('/login')} className="h-16 px-12 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase italic tracking-widest rounded-none">
+                    <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-10 tracking-tighter">Ready to secure your fleet?</h2>
+                    <Button size="lg" onClick={() => router.push('/login')} className="h-16 px-12 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest rounded-none">
                         Establish Protocol
                     </Button>
                 </div>
@@ -335,8 +335,8 @@ export default function LandingPage() {
                 <div className="max-w-[1400px] mx-auto px-6 grid md:grid-cols-4 gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-3 mb-8">
-                            <Shield className="w-8 h-8 text-blue-500" />
-                            <span className="text-xl font-black uppercase italic tracking-tighter">PolicyGuard AI</span>
+                            <Shield className="w-8 h-8 text-cyan-500" />
+                            <span className="text-xl font-black uppercase tracking-tighter">PolicyGuard AI</span>
                         </div>
                         <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
                             A specialized observability and governance core for securing
@@ -344,7 +344,7 @@ export default function LandingPage() {
                         </p>
                     </div>
                     <div>
-                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8 italic">Platform</h4>
+                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Platform</h4>
                         <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase transition-colors">
                             <Link href="/features" className="hover:text-white cursor-pointer transition-colors block">Risk Core</Link>
                             <Link href="/governance" className="hover:text-white cursor-pointer transition-colors block">Proxy Hub</Link>
@@ -353,7 +353,7 @@ export default function LandingPage() {
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8 italic">Company</h4>
+                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Company</h4>
                         <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase transition-colors">
                             <li className="hover:text-white cursor-pointer transition-colors">Research</li>
                             <li className="hover:text-white cursor-pointer transition-colors">Security</li>
