@@ -5,6 +5,7 @@ import asyncio
 import time
 import re
 import json
+from typing import List
 
 class GeminiService:
     def __init__(self):
@@ -43,33 +44,19 @@ class GeminiService:
         return config
     def clean_json_text(self, text: str) -> str:
         """Helper to extract the first valid JSON object from text."""
-        # Remove markdown code blocks
-        text = re.sub(r'```[a-zA-Z]*', '', text)
-        text = text.replace('```', '')
+        # 1. Strip Markdown Enclosure
+        text = re.sub(r"```[a-zA-Z]*", "", text).replace("```", "").strip()
         
-        # Remove C-style comments // ...
-        text = re.sub(r'//.*', '', text)
-        
-        # Find first {
-        start = text.find('{')
-        if start == -1:
-            return text.strip()
+        # 2. Extract JSON payload (find outermost braces)
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            text = match.group(0)
             
-        text = text[start:]
+        # 3. Clean common LLM JSON artifacts
+        text = re.sub(r"//.*", "", text) # Remove line comments
+        text = re.sub(r",\s*([}\]])", r"\1", text) # Remove trailing commas
         
-        # Remove trailing commas (heuristic)
-        text = re.sub(r',(\s*[}\]])', r'\1', text)
-
-        try:
-            import json
-            obj, idx = json.JSONDecoder().raw_decode(text)
-            return json.dumps(obj)
-        except:
-             # Fallback to brace matching if raw_decode fails (e.g. malformed)
-             end = text.rfind('}')
-             if end != -1:
-                 return text[:end+1]
-             return text.strip()
+        return text
 
     async def _generate_with_retry(self, contents, model=None, config=None, retries=8, fail_fast=True, task_type="deep_audit"):
         """Helper to retry API calls on transient network errors. 

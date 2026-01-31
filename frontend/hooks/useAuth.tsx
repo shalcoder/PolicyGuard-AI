@@ -108,22 +108,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const login = async (email: string, password: string) => {
         if (!auth) {
-            // Support a mock login for testing even in local mode
-            if (email === "admin@dev.local" && password === "password") {
-                const mockUser: any = {
-                    uid: 'mock_admin_1',
-                    email: 'admin@dev.local',
-                    displayName: 'Admin (Local)',
-                    emailVerified: true,
-                    isAnonymous: false,
-                };
-                setUser(mockUser);
-                localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
-                router.push('/dashboard');
-                return;
-            }
-            throw new Error("Local Mode: Please use 'One-Click Test Access' OR 'admin@dev.local' / 'password'.");
+            // Support a mock login for testing even in local mode (Universal Access)
+            const mockUser: any = {
+                uid: `mock_${email.split('@')[0]}`,
+                email: email,
+                displayName: email.split('@')[0],
+                emailVerified: true,
+                isAnonymous: false,
+            };
+            setUser(mockUser);
+            localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
+            router.push('/dashboard');
+            return;
         }
+
         await signInWithEmailAndPassword(auth, email, password);
         router.push('/dashboard');
     };

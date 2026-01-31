@@ -59,7 +59,11 @@ class PolicyStorage:
                 print("  2. OR set FIREBASE_CREDENTIALS env var with the JSON string")
                 print("  3. Run 'python migrate_to_firebase.py' after connecting")
                 print("!"*60 + "\n")
-                print("Application running in CRIPPLED state.")
+                print("  3. Run 'python migrate_to_firebase.py' after connecting")
+                print("!"*60 + "\n")
+                print("Application running in CRIPPLED state -> FALLING BACK TO LOCAL STORAGE.")
+                self._use_firebase = False
+                self._load_from_local_json() # Load local data immediately
         else:
             # Use local JSON storage (fast, no network)
             print("🚀 Using LOCAL JSON storage (Development Mode - Fast)")

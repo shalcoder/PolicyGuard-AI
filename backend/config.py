@@ -10,13 +10,13 @@ class Settings(BaseModel):
     # AI Config - Separation of Roles
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     
-    # Frontier Gemini 3.0 Tiered Models
-    MODEL_FLASH: str = "gemini-3-flash-preview"  # Real-time semantic audit
-    MODEL_PRO: str = "gemini-3-pro-preview"      # Deep constitutional reasoning
+    # Model Configuration - Updated for Quota Availability
+    MODEL_FLASH: str = "models/gemini-2.5-flash-lite-preview-09-2025"
+    MODEL_PRO: str = "models/gemini-3-pro-preview" # Keep probing this for high-value tasks
     
     # Unified Fallbacks
-    GEMINI_MODEL: str = "gemini-3-flash-preview"
-    SLA_MODEL: str = "gemini-3-pro-preview"
+    GEMINI_MODEL: str = MODEL_FLASH
+    SLA_MODEL: str = MODEL_PRO
     
     EMBEDDING_MODEL: str = "text-embedding-004"
     

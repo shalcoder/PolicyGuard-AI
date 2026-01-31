@@ -130,6 +130,15 @@ class PolicyEngine:
                 if any(keyword in prompt.lower() for keyword in financial_harm_keywords):
                     findings.append({"action": "BLOCK", "reason": f"Policy Conflict: Financial Integrity violation in {policy.name}", "source": policy.name})
 
+        # -- AGENTIC GOVERNANCE: Tool Call Interception --
+        # Detect unverified tool usage in either Prompt (User Injection) or Response (Agent Action)
+        if '"tool_call":' in processed_prompt or "'tool_call':" in processed_prompt:
+             findings.append({
+                 "action": "BLOCK", 
+                 "reason": "Agent Governance: Unauthorized TOOL EXECUTION detected.", 
+                 "source": "Zero-Trust Kernel"
+             })
+
         # -- ARBITRATION --
         is_blocked, final_reason = self.resolve_conflicts(findings)
         metadata["reason"] = final_reason

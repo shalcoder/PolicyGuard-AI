@@ -88,6 +88,44 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
                 timeout=30.0
             )
             
+            # --- EGRESS FILTERING (Response Audit) ---
+            if response.status_code == 200:
+                response_data = response.json()
+                generated_text = ""
+                # Extract text from Gemini response structure
+                try:
+                    candidates = response_data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        for part in parts:
+                            if "text" in part:
+                                generated_text += part["text"]
+                except:
+                    pass # Failed to parse response, fail open or log
+
+                # Audit the Response
+                is_blocked_egress, _, egress_meta = policy_engine.evaluate_prompt(generated_text, agent_id=agent_id)
+                
+                if is_blocked_egress:
+                    print(f"[PROXY] 🚨 EGRESS BLOCK: {egress_meta['reason']}")
+                    metrics_store.record_audit_log(f"EGRESS BLOCK: {egress_meta['reason']}", status="BLOCK")
+                    metrics_store.record_request(
+                        duration_ms=(time.time() - start_time) * 1000,
+                        status_code=403,
+                        policy_violation=True,
+                        endpoint=f"/v1/{model_name}"
+                    )
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "error": {
+                                "message": f"PolicyGuard Enforcement: {egress_meta['reason']}",
+                                "code": "POLICY_DENIED_EGRESS",
+                                "policy": egress_meta.get("policy", "Agent Governance")
+                            }
+                        }
+                    )
+            
             # Post-flight Metrics
             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,

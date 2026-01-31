@@ -1,12 +1,17 @@
+from dotenv import load_dotenv
+import os
+import sys
+
+# Load env before ANY other imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(env_path)
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-import os
-from dotenv import load_dotenv
 import traceback
-
-load_dotenv()
 
 app = FastAPI(
     title="PolicyGuard AI Control Plane",
@@ -18,6 +23,8 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
