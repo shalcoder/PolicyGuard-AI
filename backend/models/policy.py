@@ -2,16 +2,42 @@ from pydantic import BaseModel, validator
 from typing import List, Optional, Dict
 from enum import Enum
 
+class PolicyCategory(str, Enum):
+    PRIVACY = "Privacy"
+    SAFETY = "Safety"
+    SECURITY = "Security"
+    FINANCIAL = "Financial"
+    LEGAL = "Legal"
+
+class PIIAction(str, Enum):
+    MASK = "mask"
+    REDACT = "redact"
+    TOKENIZE = "tokenize"
+    BLOCK = "block"
+    ALLOW = "allow"
+
+class FrameworkControl(BaseModel):
+    framework: str # e.g. "SOC2", "GDPR", "HIPAA"
+    control_id: str # e.g. "CC6.1", "Article 32"
+    description: str
+
 class PolicyDocument(BaseModel):
     id: str
     name: str
     content: str
     summary: Optional[str] = None
+    category: PolicyCategory = PolicyCategory.LEGAL
+    weight: float = 1.0 # Multiplier for risk score
     is_active: bool = True
-    status: str = "Active" # "Active" | "Draft" | "Pending Review"
+    status: str = "Active"
     version: str = "1.0.0"
-    last_updated: str = "" # ISO date string
-
+    baselines: List[str] = [] # List of previous versions for regression testing
+    last_updated: str = ""
+    framework_mappings: List[FrameworkControl] = []
+    pii_config: Dict[str, PIIAction] = {} # e.g. {"email": "redact", "credit_card": "mask"}
+    tags: List[str] = [] # For scoping (agent_id, route, etc)
+    regression_score: float = 100.0 # Compliance vs previous version
+    
 class WorkflowDefinition(BaseModel):
     name: str
     description: str 

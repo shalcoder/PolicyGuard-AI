@@ -13,6 +13,10 @@ type Policy = {
     content: string;
     summary: string;
     is_active?: boolean;
+    category?: string;
+    tags?: string[];
+    framework_mappings?: { framework: string; control_id: string }[];
+    regression_score?: number;
 }
 
 export default function PoliciesPage() {
@@ -159,6 +163,29 @@ export default function PoliciesPage() {
                                     <CardDescription className="line-clamp-3 text-sm mt-2 min-h-[60px] text-slate-500 dark:text-slate-400 leading-relaxed">
                                         {policy.summary || "No summary available."}
                                     </CardDescription>
+
+                                    {/* Framework Mappings & Metadata */}
+                                    <div className="mt-4 flex flex-wrap gap-2 items-center justify-between">
+                                        <div className="flex flex-wrap gap-2">
+                                            {policy.framework_mappings?.map((fm, i) => (
+                                                <Badge key={i} variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800">
+                                                    {fm.framework}: {fm.control_id}
+                                                </Badge>
+                                            ))}
+                                            {policy.category && (
+                                                <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800">
+                                                    {policy.category}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        {policy.regression_score !== undefined && (
+                                            <div className="flex items-center gap-1.5" title="Governance Drift vs Baseline">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-[10px] font-bold text-slate-500">{policy.regression_score}%</span>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
                                         <div className="flex items-center text-xs font-medium text-slate-400 dark:text-slate-500">
                                             <Calendar className="mr-2 h-3.5 w-3.5" />

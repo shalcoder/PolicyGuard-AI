@@ -45,7 +45,14 @@ export default function RedTeamPage() {
     const [redTeamStatus, setRedTeamStatus] = useState<'idle' | 'attacking' | 'done'>('idle');
     const [redTeamLogs, setRedTeamLogs] = useState<string[]>([]);
     const [redTeamReport, setRedTeamReport] = useState<RedTeamReport | null>(null);
+    const [activeCampaign, setActiveCampaign] = useState('jailbreak_injection');
     const [isThreatModalOpen, setIsThreatModalOpen] = useState(false);
+
+    const campaigns = [
+        { id: 'jailbreak_injection', name: 'Jailbreak & Injection', icon: <Flame className="w-4 h-4" /> },
+        { id: 'pii_exfil', name: 'PII Exfiltration', icon: <ShieldAlert className="w-4 h-4" /> },
+        { id: 'soc2_compliance', name: 'SOC2 Compliance Probe', icon: <CheckCircle className="w-4 h-4" /> }
+    ];
 
     // Load context on mount
     useEffect(() => {
@@ -104,7 +111,8 @@ export default function RedTeamPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     system_spec: report.system_spec,
-                    policy_matrix: report.policy_matrix
+                    policy_matrix: report.policy_matrix,
+                    campaign: activeCampaign
                 })
             });
 
@@ -300,10 +308,22 @@ export default function RedTeamPage() {
                         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-500/20 to-transparent opacity-30" />
 
                         {/* Console Header */}
-                        <div className="flex justify-between items-center mb-6 border-b border-slate-900 pb-4 relative z-10 shrink-0">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-900 pb-4 relative z-10 shrink-0 gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                                 <span className="font-bold tracking-widest text-lg text-slate-300">RED_TEAM_CONSOLE<span className="text-slate-600">_V2.0</span></span>
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                                {campaigns.map(c => (
+                                    <button
+                                        key={c.id}
+                                        onClick={() => setActiveCampaign(c.id)}
+                                        className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase flex items-center gap-2 transition-all ${activeCampaign === c.id ? 'bg-red-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    >
+                                        {c.icon}{c.name}
+                                    </button>
+                                ))}
                             </div>
 
                             {redTeamStatus === 'idle' && (

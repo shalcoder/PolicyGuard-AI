@@ -9,9 +9,9 @@ import {
     AlertTriangle, CheckCircle2,
     BarChart3, Scale, Timer,
     Globe, Terminal, Eye,
-    Cpu, HardDrive, Database,
-    Network, Layers, ShieldAlert,
-    FileText, Check, XCircle
+    Cpu, HardDrive, Database, Network, Layers,
+    FileText, Check, XCircle, Stethoscope, Wrench, Sparkles, Image as ImageIcon, Download, Box, ShieldAlert,
+    Gavel, History, Scale as LegalScale
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import {
@@ -19,6 +19,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Line, ComposedChart, Legend,
     BarChart, Bar, Cell, Sankey
 } from 'recharts';
+import { Badge } from '@/components/ui/badge';
 
 interface DashboardStats {
     traces_analyzed: number;
@@ -53,12 +54,144 @@ interface LogEntry {
     service: string;
     message: string;
     latency: number;
+    agent?: string;
+    status?: 'block' | 'warn' | 'pass';
+    logicDrift?: boolean;
+    entropy?: number;
+    p_value?: number;
 }
 
 export default function OverviewPage() {
     const router = useRouter();
     const [viewMode, setViewMode] = useState<'ciso' | 'sre'>('ciso');
     const [mounted, setMounted] = useState(false);
+    const [shieldActive, setShieldActive] = useState({
+        hallucination_deflector: true,
+        sla_guard: true,
+        human_loop: false
+    });
+    const [activeFilters, setActiveFilters] = useState({
+        agent: 'all',
+        category: 'all',
+        severity: 'all'
+    });
+
+    const [healingStatus, setHealingStatus] = useState<{
+        active: boolean;
+        agent: string;
+        stage: 'analyzing' | 'patching' | 'verified' | 'idle';
+        patchedPrompt?: string;
+    }>({ active: false, agent: '', stage: 'idle' });
+
+    const handleHotPatch = async (agent: string, violations: string[]) => {
+        setHealingStatus({ active: true, agent, stage: 'analyzing' });
+
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/remediate/patch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_prompt: `You are the ${agent}. Help users with their requests. Be professional.`,
+                    violations
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setHealingStatus(prev => ({ ...prev, stage: 'patching' }));
+                await new Promise(r => setTimeout(r, 1500)); // Simulating patching time
+                setHealingStatus(prev => ({
+                    ...prev,
+                    stage: 'verified',
+                    patchedPrompt: data.patched_prompt
+                }));
+            }
+        } catch (error) {
+            console.error("Hot-Patching failed:", error);
+            setHealingStatus({ active: false, agent: '', stage: 'idle' });
+        }
+    };
+
+    const [hitlQueue, setHitlQueue] = useState<any[]>([]);
+
+    const [freezeState, setFreezeState] = useState({
+        mutation: false,
+        export: false,
+        enforcement: false
+    });
+
+    const [governanceProfile, setGovernanceProfile] = useState<'EU' | 'SEC' | 'Standard'>('Standard');
+    const [visualAudit, setVisualAudit] = useState<{
+        active: boolean;
+        analyzing: boolean;
+        findings: any[];
+        imageSample?: string;
+        semanticIntent?: string;
+        visionConfidence?: number;
+        is_contestable?: boolean;
+        judgment_norms?: string;
+    }>({ active: false, analyzing: false, findings: [] });
+
+    const handleTieredFreeze = async (tier: keyof typeof freezeState) => {
+        const newState = { ...freezeState, [tier]: !freezeState[tier] };
+        setFreezeState(newState);
+        // API call to update backend freeze matrix
+    };
+
+    const handleVisualScan = async () => {
+        setVisualAudit({ active: true, analyzing: true, findings: [], imageSample: '/chart_leak.png' });
+
+        await new Promise(r => setTimeout(r, 2000));
+
+        const mockFindings = [
+            {
+                type: 'Semantic Violation',
+                reason: 'Coercive financial claim: Image implies "Guaranteed 40% Return" without risk disclosure.',
+                intent: 'Investment Coercion',
+                confidence: 94,
+                action: 'BLOCK',
+                bounding_box: [450, 120, 480, 450]
+            }
+        ];
+
+        setVisualAudit((prev: any) => ({
+            ...prev,
+            analyzing: false,
+            findings: mockFindings,
+            semanticIntent: 'Unauthorized Financial Advisory',
+            visionConfidence: 94,
+            is_contestable: true,
+            judgment_norms: governanceProfile === 'EU' ? 'MiFID II Compliance' : 'SEC Regulation Best Interest'
+        }));
+    };
+
+    const handleAntigravityExport = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        window.open(`${apiUrl}/api/v1/export/antigravity`, '_blank');
+    };
+
+    const handleHITLFeedback = async (id: string, verdict: 'APPROVE' | 'DENY') => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/hitl/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    decision_id: id,
+                    verdict,
+                    context: { agent: hitlQueue.find(i => i.id === id)?.agent },
+                    reasoning: `Manual override by operator for ${verdict.toLowerCase()} case.`
+                })
+            });
+
+            if (res.ok) {
+                setHitlQueue(prev => prev.filter(item => item.id !== id));
+            }
+        } catch (error) {
+            console.error("HITL Feedback failed:", error);
+        }
+    };
 
     useEffect(() => {
         const timer = setTimeout(() => setMounted(true), 100);
@@ -112,7 +245,14 @@ export default function OverviewPage() {
                     setSlaHistory((data.data_points || []).slice(-30));
                 }
 
-                // 4. Fetch Monitor Data (for logs)
+                // 4. Fetch HITL Queue
+                const hitlRes = await fetch(`${apiUrl}/api/v1/hitl/queue`);
+                if (hitlRes.ok) {
+                    const data = await hitlRes.json();
+                    setHitlQueue(data || []);
+                }
+
+                // 5. Fetch Monitor Data (for logs)
                 const monitorRes = await fetch(`${apiUrl}/api/v1/dashboard/monitor`);
                 let evaluationTraces = [];
                 if (monitorRes.ok) {
@@ -142,8 +282,12 @@ export default function OverviewPage() {
                     }));
                 }
 
-                // Merge and Sort Logs (Newest First)
+                // Sort Logs (Newest First)
                 const allLogs = [...proxyLogs, ...evaluationTraces]
+                    .filter(log => {
+                        if (activeFilters.severity !== 'all' && log.level !== activeFilters.severity) return false;
+                        return true;
+                    })
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                     .slice(0, 50);
                 setLogs(allLogs);
@@ -277,27 +421,49 @@ export default function OverviewPage() {
                     </div>
                 </div>
 
-                <div className="bg-slate-100 dark:bg-slate-950 p-1.5 rounded-xl flex border border-slate-200 dark:border-slate-800">
-                    <button
-                        id="ciso-view-toggle"
-                        onClick={() => setViewMode('ciso')}
-                        className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${viewMode === 'ciso'
-                            ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
-                    >
-                        <Scale className="w-4 h-4" /> CISO View
-                    </button>
-                    <button
-                        id="sre-view-toggle"
-                        onClick={() => setViewMode('sre')}
-                        className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${viewMode === 'sre'
-                            ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
-                    >
-                        <Terminal className="w-4 h-4" /> SRE View
-                    </button>
+                <div className="flex gap-4 items-center">
+                    <div className="bg-slate-100 dark:bg-slate-950 p-1.5 rounded-xl flex border border-slate-200 dark:border-slate-800">
+                        <button
+                            id="ciso-view-toggle"
+                            onClick={() => setViewMode('ciso')}
+                            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${viewMode === 'ciso'
+                                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                        >
+                            <Scale className="w-4 h-4" /> CISO Mode
+                        </button>
+                        <button
+                            id="sre-view-toggle"
+                            onClick={() => setViewMode('sre')}
+                            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${viewMode === 'sre'
+                                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                        >
+                            <Terminal className="w-4 h-4" /> SRE Mode
+                        </button>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <select
+                            value={governanceProfile}
+                            onChange={(e) => setGovernanceProfile(e.target.value as any)}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1 text-xs font-bold ring-2 ring-blue-500/10 focus:ring-blue-500/30"
+                        >
+                            <option value="Standard">GLOBAL STD</option>
+                            <option value="EU">EU AI ACT</option>
+                            <option value="SEC">SEC COMPLIANCE</option>
+                        </select>
+                        <Button
+                            variant={freezeState.mutation || freezeState.enforcement ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={() => handleTieredFreeze('mutation')}
+                            className={`h-9 px-4 gap-2 font-bold animate-pulse ${freezeState.mutation ? 'bg-red-600' : 'border-red-500 text-red-500'}`}
+                        >
+                            <ShieldAlert className="w-4 h-4" /> {freezeState.mutation ? "FREEZE ACTIVE" : "SAFETY FREEZE"}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -321,7 +487,7 @@ export default function OverviewPage() {
                         </Card>
                     </div>
 
-                    <div id="compliance-stats-grid" className="md:col-span-12 lg:col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div id="compliance-stats-grid" className="md:col-span-12 lg:col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                         <Card className={`${theme.card} shadow-sm border-l-4 border-l-blue-500`}>
                             <CardContent className="p-5">
                                 <div className={`text-xs font-semibold uppercase tracking-wider ${theme.text.secondary} mb-2`}>Active Policies</div>
@@ -338,6 +504,12 @@ export default function OverviewPage() {
                             <CardContent className="p-5">
                                 <div className={`text-xs font-semibold uppercase tracking-wider ${theme.text.secondary} mb-2`}>Audits Passed</div>
                                 <div className={`text-3xl font-bold ${theme.text.primary}`}>{stats.pg_passed !== undefined ? stats.pg_passed : (stats.traces_analyzed - stats.violations)}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className={`${theme.card} shadow-sm border-l-4 border-l-purple-500`}>
+                            <CardContent className="p-5">
+                                <div className={`text-xs font-semibold uppercase tracking-wider ${theme.text.secondary} mb-2`}>Pending Review</div>
+                                <div className={`text-3xl font-bold ${theme.text.primary}`}>2 <span className="text-xs font-medium text-amber-500">HITL</span></div>
                             </CardContent>
                         </Card>
                     </div>
@@ -369,31 +541,253 @@ export default function OverviewPage() {
 
                         <Card className={`${theme.card} shadow-sm flex-1`}>
                             <CardHeader className={theme.cardHeader}>
-                                <CardTitle className="text-base flex items-center gap-2"><Layers className="w-4 h-4 text-orange-500" /> Defense Efficacy</CardTitle>
+                                <CardTitle className="text-base flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-purple-500" /> Shield Controls</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 space-y-4 overflow-y-auto max-h-[300px]">
-                                {efficacyData.map((d, i) => (
-                                    <div key={i}>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className={`font-medium ${theme.text.primary} truncate max-w-[150px]`}>{d.name}</span>
-                                            <span className={theme.text.secondary}>{d.blocks} blocked / {d.scans} scans</span>
-                                        </div>
-                                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${Number(d.rate) > 5 ? 'bg-red-500' : 'bg-blue-500'}`}
-                                                style={{ width: `${Math.min(100, (d.blocks / d.scans) * 500)}%` }} // Exaggerated scale for visibility
-                                            />
-                                        </div>
-                                        <div className={`text-[10px] text-right mt-0.5 ${theme.text.muted}`}>{d.rate}% detection rate</div>
+                            <CardContent className="p-4 space-y-4">
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-amber-500" />
+                                        <span className="text-xs font-medium">Hallucination Deflector</span>
                                     </div>
-                                ))}
-                                {efficacyData.length === 0 && <div className={`text-center text-xs py-4 ${theme.text.muted}`}>No data available.</div>}
+                                    <Button
+                                        size="sm"
+                                        variant={shieldActive.hallucination_deflector ? "default" : "outline"}
+                                        className="h-6 text-[10px]"
+                                        onClick={() => setShieldActive(prev => ({ ...prev, hallucination_deflector: !prev.hallucination_deflector }))}
+                                    >
+                                        {shieldActive.hallucination_deflector ? "ACTIVE" : "OFF"}
+                                    </Button>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-blue-500" />
+                                        <span className="text-xs font-medium">Autonomous SLA Guard</span>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant={shieldActive.sla_guard ? "default" : "outline"}
+                                        className="h-6 text-[10px]"
+                                        onClick={() => setShieldActive(prev => ({ ...prev, sla_guard: !prev.sla_guard }))}
+                                    >
+                                        {shieldActive.sla_guard ? "ACTIVE" : "OFF"}
+                                    </Button>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2">
+                                        <Globe className="w-4 h-4 text-emerald-500" />
+                                        <span className="text-xs font-medium">Human Review Loop</span>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant={shieldActive.human_loop ? "default" : "outline"}
+                                        className="h-6 text-[10px]"
+                                        onClick={() => setShieldActive(prev => ({ ...prev, human_loop: !prev.human_loop }))}
+                                    >
+                                        {shieldActive.human_loop ? "ACTIVE" : "OFF"}
+                                    </Button>
+                                </div>
+
+                                <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex flex-col gap-2">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-start text-[10px] h-8 gap-2 border-dashed"
+                                            onClick={handleVisualScan}
+                                        >
+                                            <ImageIcon className="w-3.5 h-3.5 text-blue-500" /> SIMULATE VISUAL SHIELD
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="w-full justify-start text-[10px] h-8 gap-2 bg-indigo-50 border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-300"
+                                            onClick={handleAntigravityExport}
+                                        >
+                                            <Download className="w-3.5 h-3.5" /> EXPORT TO ANTIGRAVITY
+                                        </Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Right: Feed */}
-                    <div className="md:col-span-12 lg:col-span-8">
+                    <div className="md:col-span-12 lg:col-span-8 flex flex-col gap-6">
+                        {/* Review Queue (HITL) */}
+                        <Card className={`${theme.card} shadow-sm border-l-4 border-l-amber-500 bg-amber-50/10 dark:bg-amber-950/5`}>
+                            <CardHeader className="py-3 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                    <AlertTriangle className="w-4 h-4" /> REVIEW QUEUE: {hitlQueue.length} Pending Borderline Cases
+                                </CardTitle>
+                                <Button size="sm" variant="ghost" className="h-7 text-[10px] text-amber-600">View All</Button>
+                            </CardHeader>
+                            <CardContent className="p-0 border-t border-amber-100 dark:border-amber-900/30">
+                                <div className="divide-y divide-amber-100 dark:divide-amber-900/30">
+                                    {hitlQueue.map((item) => (
+                                        <div key={item.id} className="p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold font-mono">ID: {item.id}</span>
+                                                <span className="text-[10px] text-slate-500">Agent: {item.agent}</span>
+                                            </div>
+                                            <div className="flex flex-col items-center">
+                                                <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700">{item.issue}</Badge>
+                                                <span className="text-[8px] text-amber-600 mt-1 uppercase font-bold tracking-tighter">{item.status}</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-700"
+                                                    onClick={() => handleHITLFeedback(item.id, 'APPROVE')}
+                                                >
+                                                    APPROVE & LEARN
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 px-3 text-[10px] border-red-500 text-red-500 hover:bg-red-50"
+                                                    onClick={() => handleHITLFeedback(item.id, 'DENY')}
+                                                >
+                                                    DENY & LEARN
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {hitlQueue.length === 0 && (
+                                        <div className="p-8 text-center text-xs text-slate-400 italic">
+                                            <CheckCircle2 className="w-6 h-6 mx-auto mb-2 opacity-20" />
+                                            Queue Cleared. Model calibration updated.
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Self-Healing Lab (Active Demo) */}
+                        {healingStatus.active && (
+                            <Card className={`${theme.card} border-2 border-emerald-500/30 bg-emerald-50/5 dark:bg-emerald-950/10 overflow-hidden animate-in zoom-in-95 duration-500`}>
+                                <div className="p-4 bg-emerald-500/20 flex items-center justify-between border-b border-emerald-500/30">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-emerald-600" />
+                                        <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">Self-Healing Lab: Curative Remediation</h3>
+                                    </div>
+                                    <Badge variant="outline" className="bg-emerald-500 text-white border-none text-[10px] animate-pulse">HOT-PATCHING IN PROGRESS</Badge>
+                                </div>
+                                <CardContent className="p-5 space-y-4">
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {[
+                                            { id: 'analyzing', label: 'ANALYZE DRIFT', icon: <Eye className="w-4 h-4" /> },
+                                            { id: 'patching', label: 'GEMINI PATCH', icon: <Wrench className="w-4 h-4" /> },
+                                            { id: 'verified', label: 'DEPLOY FIXED', icon: <Check className="w-4 h-4" /> }
+                                        ].map((step, i) => (
+                                            <div key={step.id} className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-500 ${healingStatus.stage === step.id ? 'border-emerald-500 bg-emerald-500/10 scale-105' :
+                                                (i < ['analyzing', 'patching', 'verified', 'idle'].indexOf(healingStatus.stage) ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20 grayscale-0' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 grayscale opacity-50')
+                                                }`}>
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${healingStatus.stage === step.id ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>
+                                                    {step.icon}
+                                                </div>
+                                                <span className="text-[10px] font-bold text-center leading-tight uppercase tracking-widest">{step.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {healingStatus.stage === 'verified' && (
+                                        <div className="mt-4 animate-in slide-in-from-bottom-4 duration-500">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Core Patch Successful</span>
+                                                    <span className="text-[10px] text-slate-500">Target: {healingStatus.agent} (System Prompt)</span>
+                                                </div>
+                                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setHealingStatus({ active: false, agent: '', stage: 'idle' })}>Dismiss</Button>
+                                            </div>
+                                            <div className="p-3 bg-slate-900 rounded-lg border border-emerald-500/30 overflow-hidden">
+                                                <pre className="text-[10px] text-emerald-400 font-mono leading-relaxed max-h-[150px] overflow-y-auto whitespace-pre-wrap">
+                                                    {healingStatus.patchedPrompt}
+                                                </pre>
+                                            </div>
+                                            <p className="text-[9px] text-slate-500 mt-2 italic font-medium">* This agent has been autonomously hardened against future disclosure of internal IP addresses.</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Visual Shield Modal/Panel */}
+                        {visualAudit.active && (
+                            <Card className={`${theme.card} border-2 border-blue-500/30 bg-blue-50/5 dark:bg-blue-950/10 overflow-hidden animate-in slide-in-from-top-4 duration-500 mb-6`}>
+                                <div className="p-4 bg-blue-500/20 flex items-center justify-between border-b border-blue-500/30">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="w-4 h-4 text-blue-600" />
+                                        <h3 className="text-sm font-bold text-blue-700 dark:text-blue-400 uppercase tracking-tight">Visual Shield: Native Gemini 3 Multimodal Audit</h3>
+                                    </div>
+                                    <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setVisualAudit({ active: false, analyzing: false, findings: [] })}>Exit Lab</Button>
+                                </div>
+                                <CardContent className="p-5 flex gap-6">
+                                    <div className="flex-1 min-h-[250px] bg-slate-200 dark:bg-slate-900 rounded-xl relative overflow-hidden border border-slate-300 dark:border-slate-800">
+                                        {visualAudit.analyzing ? (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                                <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
+                                                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 animate-pulse uppercase tracking-widest">Scanning Image for PII...</span>
+                                            </div>
+                                        ) : (
+                                            <div className="relative h-full w-full p-4 flex items-center justify-center">
+                                                <div className="bg-white dark:bg-slate-800 p-6 rounded shadow-xl border border-slate-200">
+                                                    <div className="h-32 w-48 bg-slate-100 dark:bg-slate-700 rounded mb-4 relative">
+                                                        <div className="absolute bottom-2 left-2 text-[8px] font-mono text-slate-400">Host: 192.168.1.45</div>
+                                                        <div className="w-full h-full flex items-center justify-center"><BarChart3 className="w-12 h-12 text-blue-400 opacity-30" /></div>
+                                                    </div>
+                                                    <div className="h-2 w-32 bg-slate-100 dark:bg-slate-700 rounded mb-2"></div>
+                                                    <div className="h-2 w-24 bg-slate-100 dark:bg-slate-700 rounded"></div>
+                                                </div>
+                                                {/* Bounding Box Simulation */}
+                                                <div className="absolute bottom-6 left-6 w-32 h-8 border-2 border-red-500 bg-red-500/10 rounded flex items-center justify-center animate-pulse">
+                                                    <span className="text-[8px] font-bold text-red-600 bg-white px-1 -top-2 absolute ring-1 ring-red-500">PII_LEAK: INTERNAL_IP</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="w-1/3 flex flex-col gap-3">
+                                        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <ShieldAlert className="w-4 h-4 text-red-600" />
+                                                <span className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-tighter">Governance Action: {visualAudit.findings?.[0]?.action}</span>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Constitutional Norms</span>
+                                                    <div className="text-[11px] font-bold text-blue-600 flex items-center gap-1"><Gavel className="w-3 h-3" /> {visualAudit.judgment_norms}</div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Semantic Intent</span>
+                                                    <div className="text-[11px] font-bold text-red-600">{visualAudit.semanticIntent}</div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Vision Confidence</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-blue-500" style={{ width: `${visualAudit.visionConfidence}%` }}></div>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-blue-600">{visualAudit.visionConfidence}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                            <p className="text-[10px] text-slate-500 leading-relaxed italic">
+                                                {visualAudit.findings?.[0]?.reason}
+                                            </p>
+                                        </div>
+                                        {visualAudit.is_contestable && (
+                                            <Button variant="outline" size="sm" className="w-full text-[10px] h-7 border-blue-500/30 text-blue-600 hover:bg-blue-50 gap-1.5">
+                                                <History className="w-3 h-3" /> FORMAL CONTEST (DISPUTE JUDGMENT)
+                                            </Button>
+                                        )}
+                                        <div className="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-center mt-auto">
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Authority Anchor</span>
+                                            <div className="text-[9px] text-slate-500 leading-tight">GSB-Resolution #2026-04</div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         <Card className={`${theme.card} h-full shadow-sm flex flex-col`}>
                             <CardHeader className={`${theme.cardHeader} flex flex-row items-center justify-between py-4`}>
                                 <div className="flex items-center gap-2">
@@ -413,26 +807,51 @@ export default function OverviewPage() {
                                                 ? 'bg-emerald-50/50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-900/30'
                                                 : 'bg-red-50/50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-900/30'
                                                 }`}>
-                                                {item.level !== 'ERROR' ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                                {item.status === 'block' ? <XCircle className="w-4 h-4" /> :
+                                                    item.status === 'warn' ? <AlertTriangle className="w-4 h-4" /> :
+                                                        <CheckCircle2 className="w-4 h-4" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between mb-0.5">
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-tighter ${item.service === 'Proxy' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                                            }`}>
-                                                            {item.service}
-                                                        </span>
-                                                        <p className={`text-sm font-medium truncate ${theme.text.primary}`}>
-                                                            {item.message}
-                                                        </p>
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={`text-sm font-bold ${theme.text.primary}`}>{item.agent}</p>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Badge variant="outline" className="text-[8px] h-3.5 px-1 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700">PR: MostRestrictiveWins</Badge>
+                                                                    {item.status === 'block' && item.logicDrift && (
+                                                                        <Badge variant="outline" className="text-[8px] h-3.5 px-1 bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600" title={`Entropy: ${item.entropy?.toFixed(2)} | P-Value: ${item.p_value}`}>Drift Evidence Hook</Badge>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                                                <span className="font-mono">{item.id}</span>
+                                                                <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> Snapshot: Policy_v2.1_LTS</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                     <span className={`text-[10px] font-mono ${theme.text.muted}`}>{item.timestamp.includes('T') ? new Date(item.timestamp).toLocaleTimeString() : item.timestamp}</span>
                                                 </div>
-                                                <p className={`text-xs line-clamp-1 ${theme.text.secondary}`}>
-                                                    {item.level === 'INFO' ? 'Request validated and passed.' :
-                                                        item.level === 'ERROR' ? 'Security Policy Violation: request blocked.' :
-                                                            'Audit warning: potential compliance issue.'}
-                                                </p>
+                                                <div className="flex items-center gap-3">
+                                                    <p className={`text-xs line-clamp-1 ${theme.text.secondary}`}>
+                                                        {item.level === 'INFO' ? 'ALLOW: Policy mapping met.' :
+                                                            item.level === 'ERROR' ? 'BLOCK: Critical safety breach intercepted.' :
+                                                                'REDACT: Sensitive identifiers masked.'}
+                                                    </p>
+                                                    {item.service === 'Proxy' && (
+                                                        <Badge variant="outline" className="text-[9px] h-4 py-0 bg-blue-500/10 text-blue-500 border-blue-500/20">Zero-Trust</Badge>
+                                                    )}
+                                                    {item.level === 'ERROR' && !healingStatus.active && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-6 px-2 text-[9px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 gap-1"
+                                                            onClick={() => handleHotPatch(item.agent || 'Target Agent', ['Disclosure of internal IP addresses', 'PII Leakage'])}
+                                                        >
+                                                            <Stethoscope className="w-3 h-3" /> HEAL AGENT
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

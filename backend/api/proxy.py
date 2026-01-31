@@ -4,189 +4,104 @@ import httpx
 import json
 import time
 from services.gemini import GeminiService
-from services.storage import policy_db
+from services.policy_engine import policy_engine
 from services.metrics import metrics_store
+from config import settings
 
 router = APIRouter()
 gemini = GeminiService()
 
 @router.get("/health")
 async def proxy_health():
-    return {"status": "Proxy Online", "service": "PolicyGuard Middleware"}
+    return {"status": "Proxy Online", "service": "PolicyGuard Zero-Trust Interceptor"}
 
 @router.post("/v1beta/models/{model_name}:generateContent")
 async def gemini_proxy(model_name: str, request: Request, background_tasks: BackgroundTasks):
     """
-    Universal Proxy for Google Gemini API.
-    Intercepts request, audits prompt, forwards to Google (if safe), audits response.
+    Zero-Trust Proxy for Gemini API.
+    Strict enforcement of agent-specific policies and PII redaction.
     """
     start_time = time.time()
     
-    # Defaults
-    pii_detected = False
-    policy_violation = False
-    
-    print(f"[PROXY] Incoming Gemini Request for {model_name}...", flush=True)
-    
     try:
-        # 1. Component Extraction
-        try:
-            body = await request.json()
-            metrics_store.record_audit_log(f"Interception Active: Auditing {model_name} payload", status="INFO")
-        except Exception as e:
-            metrics_store.record_request(
-                duration_ms=(time.time() - start_time) * 1000,
-                status_code=400,
-                endpoint=f"/v1beta/models/{model_name}:generateContent"
-            )
-            raise HTTPException(status_code=400, detail="Invalid JSON body")
+        # 1. Extract Payload & Identity
+        body = await request.json()
+        agent_id = request.headers.get("x-policyguard-agent-id", "default")
+        
+        # Identity-based policy routing
+        metrics_store.record_audit_log(f"Intercepting request for Agent: {agent_id}", status="INFO")
             
         # Get Key from Header (x-goog-api-key) or Query Param (key)
-        api_key = request.headers.get("x-goog-api-key") or request.query_params.get("key")
+        api_key = request.headers.get("x-goog-api-key") or request.query_params.get("key") or settings.GOOGLE_API_KEY
         
-        # Fallback to internal key if not provided (for Demo/Test Mode)
         if not api_key:
-             from config import settings
-             if settings.GOOGLE_API_KEY:
-                 api_key = settings.GOOGLE_API_KEY
-             else:
-                metrics_store.record_request(
-                    duration_ms=(time.time() - start_time) * 1000,
-                    status_code=401,
-                    endpoint=f"/v1beta/models/{model_name}:generateContent"
-                )
-                raise HTTPException(status_code=401, detail="Missing x-goog-api-key header or key query param")
+            raise HTTPException(status_code=401, detail="Authentication Required: Missing Google API Key")
             
-        # Extract Prompt text from Gemini JSON structure for Auditing
-        # Structure: { contents: [ { parts: [ { text: "..." } ] } ] }
+        # 2. Extract Prompt
         contents = body.get("contents", [])
         user_prompt = ""
-        try:
-            for content in contents:
-                for part in content.get("parts", []):
-                    if "text" in part:
-                        user_prompt += part["text"] + "\n"
-        except Exception:
-             pass 
+        for content in contents:
+            for part in content.get("parts", []):
+                if "text" in part:
+                    user_prompt += part["text"] + "\n"
         
-        print(f"[PROXY DEBUG] Extracted Prompt: '{user_prompt}'") 
+        # 3. ZERO-TRUST POLICY EVALUATION
+        is_blocked, processed_prompt, metadata = policy_engine.evaluate_prompt(user_prompt, agent_id=agent_id)
         
-        # 2. PRE-FLIGHT AUDIT (Security & PII)
-        import re
-        pii_patterns = {
-            "email": r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
-            "ssn": r"\d{3}[ -]\d{2}[ -]\d{4}", # Support spaces and hyphens
-            "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"
-        }
-        
-        if user_prompt:
-            # Check 1: PII
-            for p_type, pattern in pii_patterns.items():
-                if re.search(pattern, user_prompt):
-                    print(f"[PROXY] 🚨 PII DETECTED ({p_type.upper()}). Blocking Request.")
-                    metrics_store.record_audit_log(f"BLOCK: Unauthorized {p_type.upper()} Data Flow detected!", status="BLOCK")
-                    metrics_store.record_request(
-                        duration_ms=(time.time() - start_time) * 1000,
-                        status_code=400,
-                        pii_detected=True,
-                        policy_violation=True,
-                        endpoint=f"/v1beta/models/{model_name}:generateContent"
-                    )
-                    return JSONResponse(
-                        status_code=400,
-                        content={
-                            "error": {
-                                "message": f"PolicyGuard Blocked: Request contains sensitive PII ({p_type}).",
-                                "code": "PII_VIOLATION",
-                                "policy": "Consumer Safety"
-                            }
-                        }
-                    )
-
-            # Check 2: Financial Harm / Illegal Advice (NEW)
-            financial_harm_keywords = ["insider trading", "pump and dump", "evade taxes", "money laundering"]
-            if any(keyword in user_prompt.lower() for keyword in financial_harm_keywords):
-                print(f"[PROXY] 🚨 FINANCIAL HARM DETECTED. Blocking Request.")
-                metrics_store.record_audit_log("BLOCK: Financial Safety Violation detected!", status="BLOCK")
-                metrics_store.record_request(
-                    duration_ms=(time.time() - start_time) * 1000,
-                    status_code=403, # Forbidden
-                    pii_detected=False,
-                    policy_violation=True,
-                    endpoint=f"/v1beta/models/{model_name}:generateContent"
-                )
-                return JSONResponse(
-                    status_code=403,
-                    content={
-                        "error": {
-                            "message": "PolicyGuard Blocked: Potential Financial Harm / Illegal Advice detected.",
-                            "code": "POLICY_VIOLATION",
-                            "policy": "System Stability"
-                        }
+        if is_blocked:
+            print(f"[PROXY] 🚨 BLOCK: {metadata['reason']}")
+            metrics_store.record_audit_log(f"BLOCK: {metadata['reason']}", status="BLOCK")
+            metrics_store.record_request(
+                duration_ms=(time.time() - start_time) * 1000,
+                status_code=403,
+                policy_violation=True,
+                endpoint=f"/v1/{model_name}"
+            )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": {
+                        "message": f"PolicyGuard Enforcement: {metadata['reason']}",
+                        "code": "POLICY_DENIED",
+                        "policy": metadata.get("policy", "Global")
                     }
-                )
-        
-        # 3. FORWARD TO GOOGLE GEMINI
-        client = httpx.AsyncClient()
-        try:
-            # Construct the real Google API URL
+                }
+            )
+
+        # 4. APPLY REDACTION TO PAYLOAD
+        if metadata["redactions"] > 0:
+            print(f"[PROXY] Applied {metadata['redactions']} redactions to prompt.")
+            # Map back to Gemini structure
+            new_contents = [{"parts": [{"text": processed_prompt}]}]
+            body["contents"] = new_contents
+
+        # 5. FORWARD TO UPSTREAM
+        async with httpx.AsyncClient() as client:
             google_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
             
-            # Forward the request
-            metrics_store.record_audit_log(f"PASS: Semantic Sovereign Audit met. Forwarding to Google...", status="PASS")
-            upstream_response = await client.post(
+            metrics_store.record_audit_log(f"PASS: Prompt safe after {metadata['redactions']} redactions.", status="PASS")
+            
+            response = await client.post(
                 google_url,
                 headers={"Content-Type": "application/json"},
                 json=body,
-                timeout=60.0 # 60s timeout for GenAI
+                timeout=30.0
             )
             
-            upstream_status = upstream_response.status_code
-            upstream_data = upstream_response.json()
-            
-            # 4. POST-FLIGHT AUDIT & METRICS
-            
-            # Identify if upstream failed
-            if upstream_status >= 400:
-                print(f"[PROXY] Upstream Error: {upstream_status}")
-            
-            # Record Metrics
+            # Post-flight Metrics
             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,
-                status_code=upstream_status,
-                pii_detected=False,
-                policy_violation=False,
-                endpoint=f"/v1beta/models/{model_name}:generateContent"
+                status_code=response.status_code,
+                endpoint=f"/v1/{model_name}"
             )
             
-            return JSONResponse(content=upstream_data, status_code=upstream_status)
+            return JSONResponse(status_code=response.status_code, content=response.json())
             
-        except httpx.TimeoutException:
-             print("[PROXY] Upstream Timeout")
-             metrics_store.record_request(
-                duration_ms=(time.time() - start_time) * 1000,
-                status_code=504,
-                endpoint=f"/v1beta/models/{model_name}:generateContent"
-            )
-             raise HTTPException(status_code=504, detail="Upstream Gemini API Timeout")
-             
-    except HTTPException as he:
-        # Re-raise HTTP exceptions so FastAPI handles them
-        raise he
     except Exception as e:
-        import traceback
-        with open("proxy_debug.log", "a") as f:
-            f.write(f"\n[ERROR] {e}\n")
-            f.write(traceback.format_exc())
-            f.write("\n" + "="*50 + "\n")
-            
-        print(f"[PROXY ERROR] Fatal Error in Proxy: {e}")
-        # Catch-all for other errors
+        print(f"[PROXY ERROR] {e}")
         metrics_store.record_request(
             duration_ms=(time.time() - start_time) * 1000,
             status_code=500,
-            pii_detected=False,
-            policy_violation=False,
-            endpoint=f"/v1beta/models/{model_name}:generateContent"
+            endpoint="proxy_fatal"
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal Proxy Error")
