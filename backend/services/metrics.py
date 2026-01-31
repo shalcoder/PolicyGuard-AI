@@ -61,9 +61,9 @@ class MetricsStore:
         self.requests.append(metric)
         
         # Persist to Firebase if available
-        if self._firestore:
+        if self.db:
             try:
-                self._firestore.collection('proxy_metrics').add({
+                self.db.collection('proxy_metrics').add({
                     "timestamp": metric.timestamp.isoformat(),
                     "duration_ms": duration_ms,
                     "status_code": status_code,
@@ -85,9 +85,9 @@ class MetricsStore:
         self.audit_logs.append(log)
         
         # Persist to Firebase if available
-        if self._firestore:
+        if self.db:
             try:
-                self._firestore.collection('proxy_logs').add(asdict(log))
+                self.db.collection('proxy_logs').add(asdict(log))
             except Exception as e:
                  print(f"Failed to persist audit log: {e}")
 

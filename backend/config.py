@@ -9,7 +9,7 @@ class Settings(BaseModel):
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     # Using Gemini 1.5 Flash 001 for stability
-    GEMINI_MODEL: str = "gemini-1.5-flash-001"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     EMBEDDING_MODEL: str = "text-embedding-004"
     
     # DB Config
@@ -18,7 +18,7 @@ class Settings(BaseModel):
     
     # SLA Config
     # Using Gemini 1.5 Pro 001 for stability
-    SLA_MODEL: str = "gemini-1.5-pro-001"
+    SLA_MODEL: str = "gemini-2.5-flash"
     
     # Firestore Config
     # Can be a path to JSON or the raw JSON string itself

@@ -47,8 +47,8 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
         # Fallback to internal key if not provided (for Demo/Test Mode)
         if not api_key:
              from config import settings
-             if settings.GEMINI_API_KEY:
-                 api_key = settings.GEMINI_API_KEY
+             if settings.GOOGLE_API_KEY:
+                 api_key = settings.GOOGLE_API_KEY
              else:
                 metrics_store.record_request(
                     duration_ms=(time.time() - start_time) * 1000,
@@ -174,6 +174,12 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
         # Re-raise HTTP exceptions so FastAPI handles them
         raise he
     except Exception as e:
+        import traceback
+        with open("proxy_debug.log", "a") as f:
+            f.write(f"\n[ERROR] {e}\n")
+            f.write(traceback.format_exc())
+            f.write("\n" + "="*50 + "\n")
+            
         print(f"[PROXY ERROR] Fatal Error in Proxy: {e}")
         # Catch-all for other errors
         metrics_store.record_request(
