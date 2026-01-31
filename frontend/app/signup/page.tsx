@@ -2,17 +2,21 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, ArrowRight, UserPlus } from 'lucide-react';
+import { Shield, ArrowRight, UserPlus, Building, Briefcase } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function SignUpPage() {
     const { signup } = useAuth();
+    const { updateProfile } = useUser();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [company, setCompany] = useState('');
+    const [jobTitle, setJobTitle] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -23,7 +27,18 @@ export default function SignUpPage() {
         setError('');
 
         try {
+            // 1. Create Auth User
             await signup(email, password, name);
+
+            // 2. Update Profile Context with extra details
+            updateProfile({
+                name: name,
+                organization: company || 'My Organization',
+                jobTitle: jobTitle || 'Member',
+                team: 'General',
+                systemRole: 'Admin' // First user is Admin
+            });
+
         } catch (err: any) {
             console.error("Signup Error:", err);
             // Clean up Firebase error message
@@ -96,6 +111,40 @@ export default function SignUpPage() {
                                 className="h-11"
                             />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="company">Company</Label>
+                                <div className="relative">
+                                    <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        id="company"
+                                        type="text"
+                                        placeholder="Acme Inc."
+                                        required
+                                        value={company}
+                                        onChange={(e) => setCompany(e.target.value)}
+                                        className="h-11 pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="jobTitle">Job Title</Label>
+                                <div className="relative">
+                                    <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        id="jobTitle"
+                                        type="text"
+                                        placeholder="CTO"
+                                        required
+                                        value={jobTitle}
+                                        onChange={(e) => setJobTitle(e.target.value)}
+                                        className="h-11 pl-10"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input

@@ -8,8 +8,8 @@ class Settings(BaseModel):
     
     # AI Config
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    # Using Gemini 3 Flash for ultra-low latency & high-throughput
-    GEMINI_MODEL: str = "gemini-3-flash-preview"
+    # Using Gemini 1.5 Flash 001 for stability
+    GEMINI_MODEL: str = "gemini-1.5-flash-001"
     EMBEDDING_MODEL: str = "text-embedding-004"
     
     # DB Config
@@ -17,8 +17,8 @@ class Settings(BaseModel):
     WEAVIATE_URL: str = os.getenv("WEAVIATE_URL", "http://localhost:8080")
     
     # SLA Config
-    # Using Gemini 3 Pro for complex reasoning tasks
-    SLA_MODEL: str = "gemini-3-pro-preview"
+    # Using Gemini 1.5 Pro 001 for stability
+    SLA_MODEL: str = "gemini-1.5-pro-001"
     
     # Firestore Config
     # Can be a path to JSON or the raw JSON string itself

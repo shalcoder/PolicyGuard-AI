@@ -29,7 +29,10 @@ import {
     CheckCircle2,
     AlertTriangle,
     Zap,
-    ChevronRight
+    ChevronRight,
+    Users,
+    Briefcase,
+    Building
 } from 'lucide-react'
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -125,6 +128,7 @@ const defaultSettings: PolicySettings = {
 };
 
 const sections = [
+    { id: 'profile', label: 'Profile', icon: Users },
     { id: 'general', label: 'General', icon: LayoutDashboard },
     { id: 'risk', label: 'Risk Engine', icon: Shield },
     { id: 'guardrails', label: 'Guardrails', icon: Lock },
@@ -135,11 +139,11 @@ const sections = [
 ];
 
 export default function SettingsPage() {
-    const { profile } = useUser();
+    const { profile, updateProfile } = useUser();
     const { theme, setTheme } = useTheme();
     const [settings, setSettings] = useState<PolicySettings>(defaultSettings);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeSection, setActiveSection] = useState('general');
+    const [activeSection, setActiveSection] = useState('profile');
     const [simResult, setSimResult] = useState<any>(null);
     const [showSimResult, setShowSimResult] = useState(false);
     const [saveMessage, setSaveMessage] = useState("");
@@ -177,6 +181,7 @@ export default function SettingsPage() {
             });
             if (!res.ok) throw new Error("Failed to save");
             setInitialSettings(settings);
+            // Simulate profile save (it's already local, just strict sync)
             setSaveMessage("Saved successfully!");
             setTimeout(() => setSaveMessage(""), 3000);
         } catch (error) {
@@ -319,6 +324,69 @@ export default function SettingsPage() {
                     transition={{ duration: 0.15 }}
                     className="space-y-8"
                 >
+                    {activeSection === 'profile' && (
+                        <div className="max-w-2xl">
+                            <GroupHeader title="User Profile" description="Manage your personal information and role." />
+                            <SettingsGroup>
+                                <SettingsRow>
+                                    <div className="space-y-0.5">
+                                        <Label className="text-base font-medium">Full Name</Label>
+                                    </div>
+                                    <div className="w-[300px]">
+                                        <input
+                                            type="text"
+                                            value={profile.name}
+                                            onChange={(e) => updateProfile({ name: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                    </div>
+                                </SettingsRow>
+                                <SettingsRow>
+                                    <div className="space-y-0.5">
+                                        <Label className="text-base font-medium">Organization</Label>
+                                    </div>
+                                    <div className="w-[300px] relative">
+                                        <Building className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={profile.organization}
+                                            onChange={(e) => updateProfile({ organization: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        />
+                                    </div>
+                                </SettingsRow>
+                                <SettingsRow>
+                                    <div className="space-y-0.5">
+                                        <Label className="text-base font-medium">Job Title</Label>
+                                    </div>
+                                    <div className="w-[300px] relative">
+                                        <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={profile.jobTitle}
+                                            onChange={(e) => updateProfile({ jobTitle: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        />
+                                    </div>
+                                </SettingsRow>
+                                <SettingsRow noDivider>
+                                    <div className="space-y-0.5">
+                                        <Label className="text-base font-medium">Team</Label>
+                                    </div>
+                                    <div className="w-[300px] relative">
+                                        <Users className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={profile.team}
+                                            onChange={(e) => updateProfile({ team: e.target.value })}
+                                            className="flex h-10 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        />
+                                    </div>
+                                </SettingsRow>
+                            </SettingsGroup>
+                        </div>
+                    )}
+
                     {activeSection === 'general' && (
                         <div className="max-w-2xl">
                             <GroupHeader title="Environment" description="Configure the deployment phase and region." />

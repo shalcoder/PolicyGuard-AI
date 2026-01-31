@@ -83,9 +83,11 @@ export default function LandingPage() {
 
                     <div className="flex items-center gap-6">
                         <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Log In</Link>
-                        <Button onClick={() => router.push('/login')} className="bg-white text-black hover:bg-zinc-200 rounded-none px-6 font-black uppercase italic tracking-widest text-[10px] h-11 border border-white/20">
-                            Initialize Shell
-                        </Button>
+                        <Link href="/signup">
+                            <Button className="bg-blue-600 hover:bg-blue-500 text-white rounded-none px-6 font-black uppercase italic tracking-widest text-[10px] h-11 border border-blue-400/50 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
+                                Sign Up Free
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </nav>
@@ -112,9 +114,11 @@ export default function LandingPage() {
                         </motion.div>
 
                         <div className="flex flex-wrap gap-4 pt-10">
-                            <Button size="lg" onClick={() => router.push('/login')} className="h-16 px-10 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase italic tracking-widest border-none rounded-none shadow-[0_0_50px_rgba(37,99,235,0.3)]">
-                                Enter Dashboard <ArrowRight className="ml-2 w-5 h-5" />
-                            </Button>
+                            <Link href="/signup">
+                                <Button size="lg" className="h-16 px-10 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase italic tracking-widest border-none rounded-none shadow-[0_0_50px_rgba(37,99,235,0.3)]">
+                                    Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+                                </Button>
+                            </Link>
                             <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="h-16 px-10 border-white/20 text-white font-black uppercase italic tracking-widest hover:bg-white/5 bg-transparent rounded-none outline-none">
                                 <span className="flex items-center gap-2">
                                     <Play className="w-4 h-4 fill-white" /> View Demo <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
@@ -265,16 +269,19 @@ export default function LandingPage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {[
-                            { name: "SOC2 Type II", level: "L3" },
-                            { name: "GDPR", level: "L3" },
-                            { name: "HIPAA", level: "L2" },
-                            { name: "ISO 27001", level: "L3" },
-                            { name: "NIST AI RMF", level: "L1" },
-                            { name: "PCI DSS", level: "L2" }
+                            { name: "SOC2 Type II", level: "L3", icon: FileCheck },
+                            { name: "GDPR", level: "L3", icon: Globe },
+                            { name: "HIPAA", level: "L2", icon: Activity },
+                            { name: "ISO 27001", level: "L3", icon: ShieldCheck },
+                            { name: "NIST AI RMF", level: "L1", icon: Brain },
+                            { name: "PCI DSS", level: "L2", icon: CreditCard }
                         ].map((std) => (
-                            <div key={std.name} className="p-8 bg-zinc-900/40 border border-white/5 rounded-3xl group hover:border-blue-500/30 transition-all text-center">
-                                <div className="text-[10px] font-black tracking-widest text-blue-500 mb-4 uppercase">Protocol_{std.level}</div>
-                                <div className="text-sm font-black uppercase italic text-zinc-300 group-hover:text-white transition-colors">{std.name}</div>
+                            <div key={std.name} className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl group hover:border-blue-500/30 transition-all text-center flex flex-col items-center">
+                                <div className="mb-5 p-4 bg-zinc-800/30 rounded-2xl group-hover:bg-blue-500/10 group-hover:scale-110 transition-all duration-300">
+                                    <std.icon className="w-6 h-6 text-zinc-500 group-hover:text-blue-500 transition-colors" />
+                                </div>
+                                <div className="text-[10px] font-black tracking-widest text-blue-500 mb-2 uppercase">Protocol_{std.level}</div>
+                                <div className="text-xs font-black uppercase italic text-zinc-300 group-hover:text-white transition-colors">{std.name}</div>
                             </div>
                         ))}
                     </div>

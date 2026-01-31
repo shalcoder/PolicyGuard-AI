@@ -144,7 +144,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signup = async (email: string, password: string, name: string) => {
         if (!auth) {
-            throw new Error("Authentication is disabled in Local Mode.");
+            // Local Mode Signup Logic
+            const mockUser: any = {
+                uid: `local_user_${Date.now()}`,
+                email: email,
+                displayName: name,
+                emailVerified: false,
+                isAnonymous: false,
+            };
+            setUser(mockUser);
+            localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
+            router.push('/dashboard');
+            return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         router.push('/dashboard');

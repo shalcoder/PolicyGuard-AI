@@ -1,50 +1,122 @@
 "use client";
 
 import React, { useRef, useMemo, useEffect } from "react";
-import dynamic from "next/dynamic";
-import * as THREE from "three";
 import { ComplianceReport } from "@/types/policy";
 import { transformReportToGraph } from "@/lib/graphUtils";
-
-// Import ForceGraph3D dynamically
-const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), { ssr: false });
 
 interface ComplianceGraphProps {
     report: ComplianceReport;
 }
 
 const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
-    const fgRef = useRef<any>();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const graphRef = useRef<any>(null);
     const graphData = useMemo(() => transformReportToGraph(report), [report]);
-    const [isMounted, setIsMounted] = React.useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
-        // Small delay to ensure container is ready for canvas
-        const timer = setTimeout(() => {
-            if (fgRef.current) {
-                // Force Setup for 3D Spacing
-                if (!fgRef.current) return;
-                const linkForce = fgRef.current.d3Force('link');
-                if (linkForce) linkForce.distance(150).strength(0.5);
+        let ForceGraph3D: any;
+        let THREE: any;
 
-                fgRef.current.d3Force('charge').strength(-500);
+        const initGraph = async () => {
+            if (!containerRef.current) return;
 
-                // Warm up engine
-                // fgRef.current.numDimensions(3); // Not needed/available in React wrapper
+            // Dynamic import for client-side only
+            const fgModule = await import('3d-force-graph');
+            ForceGraph3D = fgModule.default;
+            const threeModule = await import('three');
+            THREE = threeModule;
+
+            if (graphRef.current) {
+                // Update data if graph exists
+                graphRef.current.graphData(graphData);
+                return;
             }
-        }, 100);
-        return () => clearTimeout(timer);
+
+            const width = containerRef.current.clientWidth;
+            const height = containerRef.current.clientHeight;
+
+            const Graph = ForceGraph3D()(containerRef.current)
+                .width(width)
+                .height(height)
+                .backgroundColor("#020617")
+                .graphData(graphData)
+                .nodeThreeObject((node: any) => {
+                    let geometry;
+                    let color;
+                    let size = node.val ? node.val : 5;
+
+                    if (node.group === "risk") {
+                        geometry = new THREE.OctahedronGeometry(size * 1.5);
+                        color = "#ef4444";
+                    } else if (node.group === "policy") {
+                        geometry = new THREE.BoxGeometry(size * 2, size * 2, size * 2);
+                        color = "#3b82f6";
+                    } else {
+                        geometry = new THREE.SphereGeometry(size * 1.2, 24, 24);
+                        color = "#06b6d4";
+                    }
+
+                    const material = new THREE.MeshPhongMaterial({
+                        color,
+                        transparent: true,
+                        opacity: 0.9,
+                        shininess: 100,
+                        specular: new THREE.Color(color).multiplyScalar(1.5)
+                    });
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    const wireframe = new THREE.WireframeGeometry(geometry);
+                    const lineMaterial = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3 });
+                    const line = new THREE.LineSegments(wireframe, lineMaterial);
+                    mesh.add(line);
+
+                    return mesh;
+                })
+                .nodeThreeObjectExtend(true)
+                .linkColor(() => "rgba(6, 182, 212, 0.3)")
+                .linkWidth(0.5)
+                .linkDirectionalParticles(2)
+                .linkDirectionalParticleSpeed(0.005)
+                .linkDirectionalParticleWidth(2)
+                .linkDirectionalParticleColor(() => "#06b6d4")
+                .showNavInfo(false);
+
+            // Physics tweaks
+            Graph.d3Force('link').distance(150);
+            Graph.d3Force('charge').strength(-500);
+
+            // Auto rotate roughly
+            // Graph.cameraPosition({ x: 500, y: 500, z: 500 });
+
+            graphRef.current = Graph;
+        };
+
+        const timeout = setTimeout(initGraph, 100);
+
+        const handleResize = () => {
+            if (graphRef.current && containerRef.current) {
+                graphRef.current.width(containerRef.current.clientWidth);
+                graphRef.current.height(containerRef.current.clientHeight);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            clearTimeout(timeout);
+            window.removeEventListener('resize', handleResize);
+            // Cleanup strictly isn't easy with pure lib without destructing DOM
+        };
     }, [graphData]);
 
-    if (!isMounted || !graphData || graphData.nodes.length === 0) return (
+
+    if (!graphData || graphData.nodes.length === 0) return (
         <div className="h-[700px] w-full border border-slate-800 rounded-3xl flex items-center justify-center bg-[#020617] text-slate-500">
             Initializing Neural Topology...
         </div>
     );
 
     return (
-        <div className="h-[700px] w-full border border-slate-800 rounded-3xl overflow-hidden relative bg-[#020617] group shadow-2xl">
+        <div className="relative group w-full h-[700px] border border-slate-800 rounded-3xl overflow-hidden bg-[#020617] shadow-2xl">
             {/* Legend / Overlay - HUD Style */}
             <div className="absolute top-6 left-6 z-10 bg-slate-950/60 p-4 rounded-2xl text-white text-xs border border-cyan-500/20 backdrop-blur-xl shadow-2xl pointer-events-none select-none">
                 <h3 className="font-bold text-xl mb-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-mono tracking-tighter uppercase italic">
@@ -75,8 +147,8 @@ const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (fgRef.current) {
-                            fgRef.current.zoomToFit(800, 100);
+                        if (graphRef.current) {
+                            graphRef.current.zoomToFit(800, 100);
                         }
                     }}
                     className="px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-cyan-500/20 backdrop-blur-sm transition-all shadow-lg active:scale-95 cursor-pointer"
@@ -85,78 +157,7 @@ const ComplianceGraph: React.FC<ComplianceGraphProps> = ({ report }) => {
                 </button>
             </div>
 
-            <ForceGraph3D
-                ref={fgRef}
-                graphData={graphData}
-                backgroundColor="#020617"
-
-                // Advanced Node Object Factory
-                nodeThreeObject={(node: any) => {
-                    let geometry;
-                    let color;
-                    let size = node.val ? node.val : 5;
-
-                    if (node.group === "risk") {
-                        // Diamond/Octahedron for risks
-                        geometry = new THREE.OctahedronGeometry(size * 1.5);
-                        color = "#ef4444";
-                    } else if (node.group === "policy") {
-                        // Cube for policies
-                        geometry = new THREE.BoxGeometry(size * 2, size * 2, size * 2);
-                        color = "#3b82f6";
-                    } else {
-                        // Sphere for components
-                        geometry = new THREE.SphereGeometry(size * 1.2, 24, 24);
-                        color = "#06b6d4";
-                    }
-
-                    const material = new THREE.MeshPhongMaterial({
-                        color,
-                        transparent: true,
-                        opacity: 0.9,
-                        shininess: 100,
-                        specular: new THREE.Color(color).multiplyScalar(1.5)
-                    });
-
-                    const mesh = new THREE.Mesh(geometry, material);
-
-                    // Add wireframe overlay for tech look
-                    const wireframe = new THREE.WireframeGeometry(geometry);
-                    const lineMaterial = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3 });
-                    const line = new THREE.LineSegments(wireframe, lineMaterial);
-                    mesh.add(line);
-
-                    return mesh;
-                }}
-
-                // Labels in 3D using canvas texture or Sprite?
-                // Sprite is easier for billboard effect
-                nodeThreeObjectExtend={true}
-
-                // Interaction
-                onNodeDragEnd={(node: any) => {
-                    node.fx = node.x;
-                    node.fy = node.y;
-                    node.fz = node.z;
-                }}
-
-                // Link Visuals - Tron Lines
-                linkColor={() => "rgba(6, 182, 212, 0.3)"}
-                linkWidth={0.5}
-                linkDirectionalParticles={2}
-                linkDirectionalParticleSpeed={0.005}
-                linkDirectionalParticleWidth={2}
-                linkDirectionalParticleColor={() => "#06b6d4"}
-
-                // Scene Lighting
-                enableNodeDrag={false}
-                showNavInfo={false}
-                // Fix for the crash: dispose controls when unmounting
-                onEngineStop={() => { }}
-                cooldownTicks={100}
-                // Safety check for renderer to avoid DragControls crash
-                rendererConfig={{ antialias: true, alpha: true }}
-            />
+            <div ref={containerRef} className="w-full h-full" />
         </div>
     );
 };

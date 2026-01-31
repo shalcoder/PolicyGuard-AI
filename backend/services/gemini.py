@@ -386,17 +386,12 @@ class GeminiService:
             context_section = "--- NO RELEVANT POLICY SECTIONS FOUND ---"
 
         prompt = f"""
-        Role: Compliance Officer.
-        Goal: Answer user question using Context.
-        
-        Rules:
-        1. Base answer on Context if available.
-        2. Citations required.
-        3. If no context, use general knowledge but warn the user.
+        Role: Compliance AI Helper.
+        Task: Answer briefly using context.
         
         {context_section}
         {conversation_context}
-        QUESTION: {query}
+        User: {query}
         """
         
         try:
@@ -404,9 +399,23 @@ class GeminiService:
             response = await self._generate_with_retry(
                 model=settings.GEMINI_MODEL, 
                 contents=prompt,
-                retries=3
+                retries=1, # OPTIMIZATION: Fail fast to fallback logic
+                config={
+                    'max_output_tokens': 150, # OPTIMIZATION: Limit response length for speed
+                    'temperature': 0.7
+                }
             )
+            
+            # Check for empty response (blocked content)
+            if not response.candidates or not response.candidates[0].content.parts:
+                print(f"[WARN] Gemini returned empty response (Safety/Filter). Finish Reason: {response.candidates[0].finish_reason if response.candidates else 'Unknown'}")
+                return "I'm sorry, I cannot answer that request as it may violate safety guidelines or the model returned no content."
+                
             return response.text
+            
+        except ValueError:
+            # Captures "model output must contain..." errors from SDK
+            return "The model was unable to generate a response for this query (Empty Output)."
         except Exception as e:
             print(f"Gemini Chat CRITICAL FAILURE: {e}")
             
