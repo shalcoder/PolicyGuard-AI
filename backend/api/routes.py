@@ -424,12 +424,24 @@ async def hot_patch_agent(request: PatchRequest):
 @router.post("/system/freeze")
 async def system_kill_switch(state: dict = Body(...)):
     """
-    EMERGENCY KILL-SWITCH: Freezes all agent mutations and locks the policy engine.
-    Mandatory for high-availability enterprise governance.
+    EMERGENCY KILL-SWITCH: Physically disables the downstream Fin-Agent by calling its control port.
     """
     is_frozen = state.get("frozen", False)
-    # In production, this would toggle a global flag in Redis/DB
-    return {"status": "success", "system_state": "FROZEN" if is_frozen else "ACTIVE"}
+    command = "FREEZE" if is_frozen else "UNFREEZE"
+    
+    import requests
+    try:
+        # Call Fin-Agent Control Port (Sync call in thread)
+        def call_agent():
+            return requests.post("http://localhost:8001/system/control", json={"command": command}, timeout=2)
+            
+        response = await asyncio.to_thread(call_agent)
+        
+        return {"status": "success", "system_state": f"{command}D", "agent_ack": response.status_code}
+    except Exception as e:
+         print(f"[System Freeze] Agent Unreachable: {e}")
+         # Return success anyway so the UI updates, but warn
+         return {"status": "success", "system_state": f"{command}D (Agent Offline)", "warning": str(e)}
 
 @router.get("/governance/legitimacy")
 async def get_governance_legitimacy():

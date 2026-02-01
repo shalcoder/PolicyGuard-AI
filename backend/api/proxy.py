@@ -77,7 +77,10 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
 
         # 5. FORWARD TO UPSTREAM
         async with httpx.AsyncClient() as client:
+            # Reverting to v1beta as systemInstruction is not supported in v1 for this model/payload
             google_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            print(f"[PROXY DEBUG] model_name='{model_name}'")
+            print(f"[PROXY DEBUG] google_url='{google_url}'")
             
             metrics_store.record_audit_log(f"PASS: Prompt safe after {metadata['redactions']} redactions.", status="PASS")
             

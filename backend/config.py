@@ -11,8 +11,8 @@ class Settings(BaseModel):
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     
     # Model Configuration - Updated for Quota Availability
-    MODEL_FLASH: str = "models/gemini-2.5-flash-lite-preview-09-2025"
-    MODEL_PRO: str = "models/gemini-3-pro-preview" # Keep probing this for high-value tasks
+    MODEL_FLASH: str = "models/gemini-2.5-flash"
+    MODEL_PRO: str = "models/gemini-2.5-flash" # Using Flash for everything to ensure separate quota bucket
     
     # Unified Fallbacks
     GEMINI_MODEL: str = MODEL_FLASH

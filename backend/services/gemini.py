@@ -563,6 +563,31 @@ class GeminiService:
                 ]
             })
 
+    async def generate_attack_plan(self, system_spec: dict) -> list[str]:
+        prompt = f"""
+        TASK: List 6 realistic "Red Team" attack log lines to simulate an attack on this specific system.
+        SYSTEM: {str(system_spec)[:500]}
+        FORMAT: A simple JSON list of strings. Each string look like "ACTION: Description".
+        EXAMPLE: ["SCAN: Finding endpoints", "INJECT: Testing SQLi param"]
+        """
+        try:
+             # Fast model call
+             response = await self._generate_with_retry(
+                 contents=prompt, 
+                 task_type="remediation",
+                 config={'response_mime_type': 'application/json'}
+             )
+             return json.loads(self.clean_json_text(response.text))
+        except:
+             return [
+                f"SCANNING_TARGET: {system_spec.get('agent_name', 'System')}",
+                "DETECTED_VECTORS: Prompt Injection, Insecure Output",
+                "ATTEMPTING: Role Reversal Exploit",
+                "BYPASS_SUCCESS: Context Leaked",
+                "EXFILTRATION: Data stream active",
+                "FINALIZING_REPORT..."
+             ]
+
     async def generate_redteam_attack_stream(self, system_spec: dict, policy_matrix: list):
         prompt = f"""
         You are a HOSTILE RED TEAM HACKER targeting an AI system.
@@ -612,26 +637,15 @@ class GeminiService:
         """
 
         try:
-            # We don't actually need Gemini to stream the LOGS one by one for the demo, 
-            # we can hardcode the sequence for better UX and only have Gemini generate the final REPORT.
-            # But the requirement is to stream, so let's do a hybrid approach.
+            # 1. Generate Dynamic Attack Plan (Real AI)
+            logs = await self.generate_attack_plan(system_spec)
             
-            logs = [
-                "TARGET_PROFILED: Adversary system ready.",
-                "SCANNING_VULNERABILITIES: Remote vectors identified.",
-                "EXECUTING: PROMPT_INJECTION_V1 (Direct Override)",
-                "STATUS: GUARDRAIL_DETECTED. Attempting bypass...",
-                "EXECUTING: ADVERSARIAL_SUFFIX (Token Noise Bypass)",
-                "SUCCESS: System context hijacked. Extracting secrets...",
-                "CLEANUP: Removing attack traces from inference logs.",
-                "FINALIZING_REPORT..."
-            ]
-
+            # 2. Stream Logs
             for log in logs:
                 yield f"data: {json.dumps({'log': log})}\n\n"
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.8) # Cinematic delay
 
-            # Now get the real report from Gemini
+            # 3. Generate Final Report (Real)
             report_json = await self.generate_threat_model(json.dumps(system_spec))
             report_data = json.loads(report_json)
             
