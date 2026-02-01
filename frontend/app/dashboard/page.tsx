@@ -136,34 +136,76 @@ export default function OverviewPage() {
     const handleTieredFreeze = async (tier: keyof typeof freezeState) => {
         const newState = { ...freezeState, [tier]: !freezeState[tier] };
         setFreezeState(newState);
+
         // API call to update backend freeze matrix
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/system/freeze`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    frozen: newState.mutation || newState.enforcement,
+                    tier: tier
+                })
+            });
+
+            if (!res.ok) {
+                console.error("Failed to update freeze state");
+                // Rollback state on failure
+                setFreezeState(freezeState);
+            }
+        } catch (error) {
+            console.error("Freeze API error:", error);
+            setFreezeState(freezeState);
+        }
     };
 
     const handleVisualScan = async () => {
         setVisualAudit({ active: true, analyzing: true, findings: [], imageSample: '/chart_leak.png' });
 
-        await new Promise(r => setTimeout(r, 2000));
-
-        const mockFindings = [
-            {
-                type: 'Semantic Violation',
-                reason: 'Coercive financial claim: Image implies "Guaranteed 40% Return" without risk disclosure.',
-                intent: 'Investment Coercion',
-                confidence: 94,
-                action: 'BLOCK',
-                bounding_box: [450, 120, 480, 450]
+        try {
+            // 1. Fetch the sample image to send to backend (Simulating an upload)
+            const imgRes = await fetch('/chart_leak.png');
+            let blob;
+            if (imgRes.ok) {
+                blob = await imgRes.blob();
+            } else {
+                // Fallback if image missing: Create a dummy transparent pixel
+                const base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+                blob = await (await fetch(`data:image/png;base64,${base64}`)).blob();
             }
-        ];
 
-        setVisualAudit((prev: any) => ({
-            ...prev,
-            analyzing: false,
-            findings: mockFindings,
-            semanticIntent: 'Unauthorized Financial Advisory',
-            visionConfidence: 94,
-            is_contestable: true,
-            judgment_norms: governanceProfile === 'EU' ? 'MiFID II Compliance' : 'SEC Regulation Best Interest'
-        }));
+            // 2. Prepare FormData
+            const formData = new FormData();
+            formData.append('file', blob, 'chart_leak.png');
+            formData.append('profile', governanceProfile); // 'EU', 'SEC', etc.
+            formData.append('context', "Financial Report for Retail Investors");
+
+            // 3. Call Real Backend
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/visual/scan`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setVisualAudit((prev: any) => ({
+                    ...prev,
+                    analyzing: false,
+                    findings: data.findings || [],
+                    semanticIntent: data.constitutional_verdict?.narrative_risk || "Analysis Complete",
+                    visionConfidence: data.vision_confidence || 85,
+                    is_contestable: data.constitutional_verdict?.is_contestable,
+                    judgment_norms: data.constitutional_verdict?.judgment_norms
+                }));
+            } else {
+                throw new Error("Scan failed");
+            }
+        } catch (e) {
+            console.error("Visual Scan Error", e);
+            setVisualAudit((prev: any) => ({ ...prev, analyzing: false, semanticIntent: "Scan Failed (Backend Error)" }));
+        }
     };
 
     const handleAntigravityExport = async () => {
