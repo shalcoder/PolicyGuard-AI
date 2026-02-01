@@ -35,11 +35,62 @@ class MetricsStore:
         self.start_time = datetime.now()
         self.total_downtime_seconds = 0.0  # Track total downtime for uptime calculations
         self.db = None
-        # Lazy load db connection
         try:
              from services.storage import policy_db
              self.db = policy_db.db
-        except: pass
+             print(f"[METRICS] DB Connection attached: {self.db is not None}")
+        except Exception as e:
+             print(f"[METRICS] ❌ DB Attachment Failed: {e}")
+        
+        # Hydrate history
+        import threading
+        threading.Thread(target=self._hydrate_history, daemon=True).start()
+        
+    def _hydrate_history(self):
+        """Load history from persistent store (Firebase or Local)"""
+        # Give DB connection a moment to stabilize if it's being set asynchronously?
+        # Actually storage.py sets self.db synchronously in __init__.
+        
+        if self.db:
+            self._load_history_from_firebase()
+        else:
+            print("[METRICS] ⚠️ No DB connection for hydration - History will be empty")
+            # Future: Local JSON load
+            pass
+
+    def _load_history_from_firebase(self):
+        try:
+            from firebase_admin import firestore
+            print("[METRICS] Hydrating history from Firebase...")
+            
+            # Fetch last 500 requests (approx 1 hour of heavy traffic)
+            # Ordered manually to avoid index errors if composite index missing
+            # Using simple order-by timestamp if possible
+            docs = self.db.collection('proxy_metrics')\
+                .order_by('timestamp', direction=firestore.Query.DESCENDING)\
+                .limit(500).stream()
+            
+            loaded = []
+            for doc in docs:
+                d = doc.to_dict()
+                try:
+                    loaded.append(RequestMetric(
+                        timestamp=datetime.fromisoformat(d['timestamp']),
+                        duration_ms=d.get('duration_ms', 0),
+                        status_code=d.get('status_code', 200),
+                        pii_detected=d.get('pii_detected', False),
+                        policy_violation=d.get('policy_violation', False),
+                        endpoint=d.get('endpoint', 'unknown')
+                    ))
+                except: pass
+            
+            # Append in chronological order (Oldest first)
+            for m in reversed(loaded):
+                self.requests.append(m)
+                
+            print(f"[METRICS] ✅ Hydrated {len(loaded)} historical requests")
+        except Exception as e:
+            print(f"[METRICS] ⚠️ History hydration failed: {e}")
         
     def record_request(
         self,
