@@ -3,14 +3,14 @@
 import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+
 import {
     Activity, ShieldCheck, Zap,
     ArrowRight, Lock, Server,
     AlertTriangle, CheckCircle2,
     BarChart3, Scale, Timer,
-    Globe, Terminal, Eye,
-    Cpu, HardDrive, Database, Network, Layers,
+    Globe, Eye,
+    Cpu, HardDrive, Database, Layers,
     FileText, Check, XCircle, Stethoscope, Wrench, Sparkles, Image as ImageIcon, Download, Box, ShieldAlert,
     Gavel, History, Scale as LegalScale, Sun, Moon
 } from 'lucide-react';
@@ -62,10 +62,11 @@ interface LogEntry {
     p_value?: number;
 }
 
+
 export default function OverviewPage() {
-    const router = useRouter();
+    // Removed useRouter as it was unused
     const { theme: currentTheme, setTheme } = useTheme();
-    const [viewMode, setViewMode] = useState<'ciso' | 'sre'>('ciso');
+    // Removed viewMode state in favor of activeTab
     const [mounted, setMounted] = useState(false);
     const [shieldActive, setShieldActive] = useState({
         hallucination_deflector: true,
@@ -268,7 +269,7 @@ export default function OverviewPage() {
 
     // Live Logs State
     const [logs, setLogs] = useState<LogEntry[]>([]);
-    const logContainerRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -362,11 +363,7 @@ export default function OverviewPage() {
     }, []);
 
     // Auto-scroll logs
-    useEffect(() => {
-        if (logContainerRef.current) {
-            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-        }
-    }, [logs]);
+
 
 
     // --- DATA PREP ---
@@ -398,44 +395,7 @@ export default function OverviewPage() {
     }));
 
     // DYNAMIC Traffic Flow: Infer architecture from user's workflow
-    const inferTrafficFlow = () => {
-        // Extract unique workflow names from recent evaluations
-        const workflows = stats.recent_evaluations.map(e => e.workflow_name || '').filter(Boolean);
 
-        // Pattern detection
-        const hasRAG = workflows.some(w => /rag|retrieval|vector|search/i.test(w));
-        const hasChat = workflows.some(w => /chat|conversation|dialogue/i.test(w));
-        const hasImage = workflows.some(w => /image|vision|multimodal/i.test(w));
-        const hasCode = workflows.some(w => /code|copilot|completion/i.test(w));
-
-        // Build flow based on detected patterns
-        const flow = [
-            { icon: Globe, label: 'User Request', desc: 'Incoming Traffic', color: 'blue' }
-        ];
-
-        if (hasRAG) {
-            flow.push({ icon: Database, label: 'Vector DB', desc: 'Semantic Search', color: 'purple' });
-        }
-        if (hasImage) {
-            flow.push({ icon: Eye, label: 'Vision API', desc: 'Image Processing', color: 'pink' });
-        }
-
-        // Always include Policy Guard
-        flow.push({ icon: ShieldCheck, label: 'Policy Guard', desc: 'Compliance Check', color: 'purple' });
-
-        // Destination based on type
-        if (hasCode) {
-            flow.push({ icon: Terminal, label: 'Code Model', desc: 'Generation (95%)', color: 'green' });
-        } else if (hasChat) {
-            flow.push({ icon: Activity, label: 'Chat Model', desc: 'Response (97%)', color: 'green' });
-        } else {
-            flow.push({ icon: Zap, label: 'LLM API', desc: 'Processing (98%)', color: 'green' });
-        }
-
-        return flow;
-    };
-
-    const trafficFlow = inferTrafficFlow();
 
     // --- THEME & LAYOUT COLORS ---
     const theme = {
@@ -702,7 +662,7 @@ export default function OverviewPage() {
             )}
 
             {/* --- DEFAULT VIEW: OVERVIEW --- */}
-            {activeTab === 'Overview' && viewMode === 'ciso' && (
+            {activeTab === 'Overview' && (
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-in slide-in-from-bottom-2 duration-300">
 
                     {/* Left: Policy Insights */}
@@ -1125,137 +1085,11 @@ export default function OverviewPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </div >
-                </div >
+                    </div>
+                </div>
             )}
 
-            {/* --- VIEW 2: SRE DASHBOARD (Standardized) --- */}
-            {
-                viewMode === 'sre' && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in slide-in-from-right-2 duration-300">
-
-                        {/* Top Row: 4 Metric Cards */}
-                        {[
-                            { label: 'Uptime (24h)', val: `${stats.system_health}%`, icon: <Activity className="w-4 h-4" />, color: getHealthColor(stats.system_health) },
-                            { label: 'Avg Latency', val: `${sreChartData.length > 0 ? Math.round(sreChartData[sreChartData.length - 1].latency) : 0}ms`, icon: <Timer className="w-4 h-4" />, color: 'text-indigo-600 dark:text-indigo-400' },
-                            { label: 'Error Rate', val: `${sreChartData.length > 0 ? ((sreChartData[sreChartData.length - 1].errors / (sreChartData[sreChartData.length - 1].requests || 1)) * 100).toFixed(2) : 0}%`, icon: <AlertTriangle className="w-4 h-4" />, color: 'text-indigo-600 dark:text-indigo-400' },
-                            { label: 'Throughput', val: `${sreChartData.length > 0 ? sreChartData[sreChartData.length - 1].requests : 0} rpm`, icon: <Zap className="w-4 h-4" />, color: 'text-indigo-600 dark:text-indigo-400' },
-                        ].map((m, i) => (
-                            <Card key={i} className={`${theme.card} shadow-sm hover:shadow-md transition-shadow`}>
-                                <CardContent className="p-5">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className={`text-xs font-semibold uppercase tracking-wider ${theme.text.secondary} mb-1`}>{m.label}</div>
-                                            <div className={`text-2xl font-bold ${m.color}`}>{m.val}</div>
-                                        </div>
-                                        <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${theme.text.muted}`}>{m.icon}</div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-
-                        {/* Main Chart Section (Takes 3/4 width) */}
-                        <div className="md:col-span-3 space-y-6">
-                            <Card className={`${theme.card} shadow-md`}>
-                                <CardHeader className={theme.cardHeader}>
-                                    <div className="flex justify-between items-center">
-                                        <CardTitle className="text-base flex items-center gap-2"><Server className="w-4 h-4 text-indigo-500" /> Live Telemetry</CardTitle>
-                                        <div className="flex gap-2">
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-indigo-500"></span> Traffic</div>
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Latency</div>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="h-[400px] p-2">
-                                    {mounted ? (
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
-                                            <ComposedChart data={sreChartData.length > 0 ? sreChartData : [{ time: '00:00', requests: 0, latency: 0 }]} margin={{ top: 20, right: 20, bottom: 0, left: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-slate-800" />
-                                                <XAxis dataKey="time" tick={{ fontSize: 12 }} stroke="currentColor" className="text-slate-400" />
-                                                <YAxis yAxisId="left" orientation="left" stroke="#6366f1" fontSize={11} tickLine={false} axisLine={false} />
-                                                <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" fontSize={11} tickLine={false} axisLine={false} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#0f172a', color: '#f8fafc', borderRadius: '8px', border: '1px solid #1e293b', fontSize: '12px' }} />
-                                                <Area yAxisId="left" type="monotone" dataKey="requests" fill="url(#colorReq)" stroke="#6366f1" strokeWidth={2} />
-                                                <Line yAxisId="right" type="monotone" dataKey="latency" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    ) : (
-                                        <div className={`h-full w-full flex items-center justify-center text-xs ${theme.text.muted}`}>Loading Live Telemetry...</div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Right Logic Section (Takes 1/4 width) - Terminal & Traffic Flow */}
-                        <div className="md:col-span-1 space-y-6">
-
-                            {/* Traffic Flow - Dynamic Architecture */}
-                            <Card className={`${theme.card} shadow-sm`}>
-                                <CardHeader className={`${theme.cardHeader} py-3`}>
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2"><Network className="w-4 h-4 text-purple-500" /> Traffic Flow</CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-4">
-                                    <div className="space-y-4 relative">
-                                        <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-200 via-purple-200 to-green-200 dark:from-blue-900 dark:via-purple-900 dark:to-green-900"></div>
-
-                                        {trafficFlow.map((node, idx) => {
-                                            const IconComponent = node.icon;
-                                            const colorMap: Record<string, string> = {
-                                                blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-                                                purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-                                                green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-                                                pink: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400'
-                                            };
-
-                                            return (
-                                                <div key={idx} className="relative flex items-center gap-3 animate-in fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 ${colorMap[node.color] || colorMap.blue}`}>
-                                                        <IconComponent className="w-4 h-4" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className={`text-xs font-medium ${theme.text.primary}`}>{node.label}</div>
-                                                        <div className="text-[10px] text-gray-500">{node.desc}</div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {trafficFlow.length === 1 && (
-                                        <div className={`text-center text-xs mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg ${theme.text.muted}`}>
-                                            Run evaluations to see your AI system's architecture
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            {/* Live Terminal */}
-                            <Card className="flex flex-col h-[250px] bg-[#0c0c0c] dark:bg-[#020617] border border-gray-800 dark:border-slate-800 shadow-xl overflow-hidden rounded-xl">
-                                <div className="bg-[#1f1f1f] dark:bg-[#0f172a] border-b border-white/5 p-2 px-3 flex items-center justify-between">
-                                    <div className="text-[10px] font-mono text-gray-400 dark:text-slate-400 flex items-center gap-2">
-                                        <Terminal className="w-3 h-3 text-emerald-500" /> bash --live
-                                    </div>
-                                    <div className="flex gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/20"></div><div className="w-2 h-2 rounded-full bg-yellow-500/20"></div><div className="w-2 h-2 rounded-full bg-emerald-500/20"></div></div>
-                                </div>
-                                <div className="flex-1 p-3 font-mono text-[10px] text-gray-300 dark:text-slate-300 overflow-y-auto space-y-1.5 custom-scrollbar" ref={logContainerRef}>
-                                    {logs.map((log, i) => (
-                                        <div key={i} className="flex gap-2">
-                                            <span className="text-gray-600 dark:text-slate-600 w-10 shrink-0">{log.timestamp.split('T')[1]?.split('.')[0]}</span>
-                                            <span className={log.level === 'ERROR' ? 'text-red-400' : log.level === 'WARN' ? 'text-yellow-400' : 'text-green-400'}>{log.level}</span>
-                                            <span className="break-all opacity-80">{log.message}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Card>
-
-                        </div>
-                    </div>
-                )
-            }
-
-        </div >
+        </div>
     );
 }
+
