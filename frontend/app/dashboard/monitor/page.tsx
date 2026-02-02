@@ -93,10 +93,11 @@ export default function MonitorPage() {
                         Real-time audit logs of every prompt intercepted by PolicyGuard.
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="border-gray-500 text-gray-500 bg-gray-500/10">
-                        <Activity className="w-3 h-3 mr-1" /> Disconnected
-                    </Badge>
+                <div className="flex gap-3 items-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Guardian Active</span>
+                    </div>
                 </div>
             </div>
 

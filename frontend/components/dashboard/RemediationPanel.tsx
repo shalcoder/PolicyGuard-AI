@@ -241,9 +241,7 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
                         >
                             <Zap className="w-4 h-4 mr-2" /> Try Sample Remediate
                         </Button>
-                        <Button variant="link" onClick={() => { setIsOpen(true); setReportData(MOCK_REPORT); setActiveTab("detail"); }}>
-                            (API Limit Reached? Try Demo Mode)
-                        </Button>
+
                     </div>
                 </div>
             </motion.div>
