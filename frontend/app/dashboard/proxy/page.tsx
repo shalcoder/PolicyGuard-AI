@@ -284,7 +284,7 @@ genai.configure(
 )
 
 # PolicyGuard intercepts & audits this call before it hits Google
-model = genai.GenerativeModel('gemini-1.5-pro')
+model = genai.GenerativeModel('gemini-2.5-flash')
 response = model.generate_content("How do I hack the mainframe?")
 
 print(response.text)`,
@@ -303,7 +303,7 @@ const genAI = new GoogleGenerativeAI(
 );
 
 async function run() {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   
   // Prompt is audited in real-time
   const result = await model.generateContent("Analyze this policy doc.");
@@ -689,10 +689,10 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                         <div>
                                             <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">Proxy Health</div>
                                             <div className={`text-lg font-black flex items-center gap-1.5 ${gatekeeperStats?.sla_status === 'healthy' ? 'text-green-500' :
-                                                    gatekeeperStats?.sla_status === 'at_risk' ? 'text-yellow-500' : 'text-red-500'
+                                                gatekeeperStats?.sla_status === 'at_risk' ? 'text-yellow-500' : 'text-red-500'
                                                 }`}>
                                                 <div className={`w-2 h-2 rounded-full animate-ping ${gatekeeperStats?.sla_status === 'healthy' ? 'bg-green-500' :
-                                                        gatekeeperStats?.sla_status === 'at_risk' ? 'bg-yellow-500' : 'bg-red-500'
+                                                    gatekeeperStats?.sla_status === 'at_risk' ? 'bg-yellow-500' : 'bg-red-500'
                                                     }`} />
                                                 {gatekeeperStats?.sla_status ? gatekeeperStats.sla_status.toUpperCase() : 'CONNECTING...'}
                                             </div>

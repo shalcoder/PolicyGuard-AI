@@ -8,11 +8,12 @@ class Settings(BaseModel):
     API_V1_STR: str = "/api/v1"
     
     # AI Config - Separation of Roles
-    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    GOOGLE_API_KEYS: list[str] = [k.strip() for k in os.getenv("GOOGLE_API_KEYS", "").split(",") if k.strip()]
+    GOOGLE_API_KEY: str = GOOGLE_API_KEYS[0] if GOOGLE_API_KEYS else os.getenv("GOOGLE_API_KEY", "")
     
     # Model Configuration - Updated for Quota Availability
-    MODEL_FLASH: str = "gemini-1.5-flash"
-    MODEL_PRO: str = "gemini-1.5-flash" # Using Flash for everything to ensure separate quota bucket
+    MODEL_FLASH: str = "gemini-2.5-flash"
+    MODEL_PRO: str = "gemini-2.5-pro" # Using 2.5 series to try and get fresh quota bucket
     
     # Unified Fallbacks
     GEMINI_MODEL: str = MODEL_FLASH

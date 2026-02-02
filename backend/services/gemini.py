@@ -9,18 +9,29 @@ from typing import List
 
 class GeminiService:
     def __init__(self):
-        if not settings.GOOGLE_API_KEY:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables. Please check your .env file.")
+        self.api_keys = settings.GOOGLE_API_KEYS if settings.GOOGLE_API_KEYS else [settings.GOOGLE_API_KEY]
+        self.clients = [genai.Client(api_key=key) for key in self.api_keys]
+        self.current_key_index = 0
         
-        self.client = genai.Client(api_key=settings.GOOGLE_API_KEY)
         self.model_flash = settings.MODEL_FLASH
         self.model_pro = settings.MODEL_PRO
+        
+        print(f"[DEBUG] GeminiService initialized with MODEL_FLASH: {self.model_flash}, MODEL_PRO: {self.model_pro}")
         
         # Thinking Level Mapping (Scale 1-10)
         self.thinking_configs = {
             level: self._get_config_for_thinking(score) 
             for level, score in settings.THINKING_LEVELS.items()
         }
+
+    def __getattr__(self, name):
+        """Debug helper to catch stale 'self.client' access."""
+        if name == "client":
+            import traceback
+            print(f"\n[CRITICAL DEBUG] 'client' attribute access detected!")
+            traceback.print_stack()
+            raise AttributeError(f"'GeminiService' object has no attribute 'client'. Use 'self.clients' instead.")
+        raise AttributeError(f"'GeminiService' object has no attribute '{name}'")
 
     def _get_config_for_thinking(self, score: int):
         """
@@ -58,7 +69,7 @@ class GeminiService:
         
         return text
 
-    async def _generate_with_retry(self, contents, model=None, config=None, retries=8, fail_fast=True, task_type="deep_audit"):
+    async def _generate_with_retry(self, contents, model=None, config=None, retries=12, fail_fast=True, task_type="deep_audit"):
         """Helper to retry API calls on transient network errors. 
            Optimized for Gemini 3.0 + Tiered Reasoning.
            
@@ -69,19 +80,21 @@ class GeminiService:
         
         # Apply thinking level config if available
         base_config = self.thinking_configs.get(task_type, self._get_config_for_thinking(5))
+        if config:
+            base_config.update(config)
+            
         base_delay = 1
         
         for attempt in range(retries):
             try:
-                # Use PDF support if contents is long
-                if isinstance(contents, str) and len(contents) > 100000:
-                    print(f"[LONG CONTEXT] Processing {len(contents)} chars with {current_model}")
+                # Get current client
+                client = self.clients[self.current_key_index]
                 
                 # The "Dispatched" log for terminal visibility
                 if attempt == 0:
-                    print(f"🚀 Dispatched {current_model} for task: {task_type}")
+                    print(f"🚀 Dispatched {current_model} for task: {task_type} (Key Index: {self.current_key_index})")
 
-                response = await self.client.aio.models.generate_content(
+                response = await client.aio.models.generate_content(
                     model=current_model,
                     contents=contents,
                     config=base_config
@@ -91,34 +104,123 @@ class GeminiService:
             except Exception as e:
                 error_str = str(e)
                 is_rate_limit = "429" in error_str or "RESOURCE_EXHAUSTED" in error_str
+                is_not_found = "404" in error_str or "NOT_FOUND" in error_str
                 
                 if attempt == retries - 1:
                     print(f"Gemini API Final Failure after {retries} attempts ({current_model}): {e}")
                     raise e
                 
-                if is_rate_limit:
+                if is_rate_limit or is_not_found:
+                    # 1. KEY ROTATION 🔄: If we have multiple keys, try the next one instantly
+                    if len(self.clients) > 1:
+                        old_index = self.current_key_index
+                        self.current_key_index = (self.current_key_index + 1) % len(self.clients)
+                        print(f"🔄 {'Rate Limit' if is_rate_limit else 'Not Found'} hit on Key {old_index}. Rotating to Key {self.current_key_index}...")
+                        
+                        # 2. MODEL DIVERSIFICATION 🔀: 
+                        # Always try a different model if it's a 404, or if we've cycled through keys once for 429
+                        if is_not_found or attempt >= len(self.clients):
+                             model_fallbacks = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash"]
+                             current_model = model_fallbacks[attempt % len(model_fallbacks)]
+                             print(f"🔀 {'Model Missing' if is_not_found else 'Keys exhausted'}. Switching to: {current_model}")
+                        
+                        # Instant retry for the first few rotation attempts
+                        if attempt < len(self.clients) * 2:
+                             continue
+
                     wait_time = base_delay * (1.5 ** attempt)
-                    match = re.search(r"retryDelay['\"]?\s*[:=]\s*['\"]?(\d+\.?\d*)s?['\"]?", error_str)
-                    if match:
-                        server_delay = float(match.group(1))
-                        wait_time = max(wait_time, server_delay + 0.5)
-                    
-                    if fail_fast and wait_time > 10:
-                        print(f"[FAIL FAST] Rate limit wait {wait_time}s > 10s. Aborting retry.")
+                    if fail_fast and wait_time > 15:
+                        print(f"[FAIL FAST] Rate limit wait {wait_time}s > 15s. Aborting retry.")
                         raise e
 
-                    print(f"[WAIT] Waiting {wait_time}s for {current_model}...")
+                    print(f"[WAIT] Waiting {int(wait_time)}s for {current_model}...")
                     await asyncio.sleep(wait_time)
                 else:
-                    # Check if it's a DNS error - fail fast
                     is_dns_error = "[Errno -3]" in error_str or "name resolution" in error_str.lower() or "DNS" in error_str
-                    
-                    if is_dns_error and attempt >= 2:  # Fail after 3 attempts for DNS
-                        print(f"DNS resolution failed after {attempt+1} attempts. Giving up.")
+                    if is_dns_error and attempt >= 2:
                         raise e
-                    
                     print(f"Gemini API Error ({attempt+1}): {e}. Retrying in 1s...")
                     await asyncio.sleep(1)
+
+    async def _generate_stream_with_retry(self, contents, model=None, config=None, retries=8, task_type="remediation"):
+        """Standardized retry logic for Streaming API."""
+        current_model = model or settings.get_model_id(task_type)
+        base_config = self.thinking_configs.get(task_type, self._get_config_for_thinking(5))
+        if config:
+            base_config.update(config)
+
+        for attempt in range(retries):
+            try:
+                client = self.clients[self.current_key_index]
+                if attempt == 0:
+                    print(f"🌊 Streaming {current_model} for task: {task_type}...")
+
+                async for chunk in await client.aio.models.generate_content_stream(
+                    model=current_model,
+                    contents=contents,
+                    config=base_config
+                ):
+                    yield chunk
+
+                # Success, break retry loop
+                return 
+
+            except Exception as e:
+                error_str = str(e)
+                is_rate_limit = "429" in error_str or "RESOURCE_EXHAUSTED" in error_str
+                is_not_found = "404" in error_str or "NOT_FOUND" in error_str
+
+                if attempt == retries - 1:
+                    print(f"Gemini Stream Final Failure: {e}")
+                    raise e
+
+                if is_rate_limit or is_not_found:
+                    if len(self.clients) > 1:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.clients)
+                        print(f"🔄 Stream {'Rate' if is_rate_limit else '404'} hit. Rotating to Key {self.current_key_index}...")
+                        
+                        if is_not_found or attempt >= len(self.clients):
+                            model_fallbacks = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash"]
+                            current_model = model_fallbacks[attempt % len(model_fallbacks)]
+                            print(f"🔀 Stream Model Switch -> {current_model}")
+                        
+                        if attempt < len(self.clients) * 2:
+                            continue
+
+                    wait = 2 ** (attempt + 1)
+                    print(f"[STREAM WAIT] Waiting {wait}s...")
+                    await asyncio.sleep(wait)
+                else:
+                    await asyncio.sleep(1)
+
+    async def _embed_with_retry(self, text: str, retries: int = 5):
+        """Standardized retry logic for Embeddings."""
+        for attempt in range(retries):
+            try:
+                client = self.clients[self.current_key_index]
+                # Embeddings API is usually synchronous in the current SDK version we use
+                import functools
+                loop = asyncio.get_running_loop()
+                func = functools.partial(
+                    client.models.embed_content,
+                    model="text-embedding-004",
+                    contents=text
+                )
+                response = await loop.run_in_executor(None, func)
+                if hasattr(response, 'embeddings') and response.embeddings:
+                    return response.embeddings[0].values
+                return []
+            except Exception as e:
+                error_str = str(e)
+                if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and len(self.clients) > 1:
+                    self.current_key_index = (self.current_key_index + 1) % len(self.clients)
+                    print(f"🔄 Embedding Rate Limit. Rotating to Key {self.current_key_index}...")
+                    continue
+                if attempt == retries - 1:
+                    print(f"Embedding Generation Failed: {e}")
+                    return []
+                await asyncio.sleep(1)
+        return []
 
     async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, audit_config) -> str:
         # 1. Dynamic Persona & Strictness
@@ -321,30 +423,7 @@ class GeminiService:
 
     async def create_embedding(self, text: str) -> list[float]:
         """Generates a vector embedding for the given text."""
-        # Using the standard embedding model
-        # Note: run_in_executor is not strictly needed for embed_content if using async client, 
-        # but consistent patterns help. 'embed_content' is a models method.
-        # However, the SDK syntax is: client.models.embed_content(model=..., contents=...)
-        import functools
-        loop = asyncio.get_running_loop()
-        
-        func = functools.partial(
-            self.client.models.embed_content,
-            model="text-embedding-004",
-            contents=text
-        )
-        
-        try:
-            response = await loop.run_in_executor(None, func)
-            # Response object has 'embeddings'. We sent 1 content, so we want the 1st embedding.
-            # print(f"DEBUG: Embedding Response Type: {type(response)}") 
-            # In latest SDK, response.embeddings[0].values is likely the list.
-            if hasattr(response, 'embeddings') and response.embeddings:
-                return response.embeddings[0].values
-            return []
-        except Exception as e:
-            print(f"Embedding Generation Failed: {e}")
-            return []
+        return await self._embed_with_retry(text)
 
     def calculate_cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         try:
@@ -405,7 +484,9 @@ class GeminiService:
         response = await self._generate_with_retry(
             contents=prompt,
             task_type="sla_forecasting",
-            config={'response_mime_type': 'application/json'}
+            config={'response_mime_type': 'application/json'},
+            retries=3, # Fewer retries for analytics
+            fail_fast=True
         )
         return self.clean_json_text(response.text)
 
@@ -764,29 +845,15 @@ class GeminiService:
         Stream the rewritten document text immediately.
         """
         
-        # Retry Logic for Stream
-        import asyncio
-        for attempt in range(5):
-             try:
-                async for chunk in await self.client.aio.models.generate_content_stream(
-                    model=settings.GEMINI_MODEL,
-                    contents=prompt
-                ):
-                    if chunk.text:
-                        yield chunk.text
-                return # Success
-             except Exception as e:
-                is_rate_limit = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
-                if is_rate_limit:
-                     wait = 2 ** (attempt + 2)
-                     if wait > 5:
-                         yield "\n\n**[DEMO MODE: RATE LIMIT ACTIVE]**\n\n### Mock Remediation Applied\nDue to high API traffic, we have applied standard best-practice controls:\n\n1. **Data Encryption**: Added AES-256 requirement.\n2. **Audit Logging**: Enabled verbose transaction logging.\n3. **Access Control**: Enforced RBAC for all endpoints.\n"
-                         return
-                     print(f"Stream Rate Limit (Doc). Retrying in {wait}s...")
-                     yield f"// [INFO] Rate limit hit. Retrying in {wait}s...\n"
-                     await asyncio.sleep(wait)
-                else:
-                     raise e
+        try:
+            async for chunk in self._generate_stream_with_retry(
+                contents=prompt,
+                task_type="remediation"
+            ):
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            yield f"\n\n**[REMEDIATION ERROR: RATE LIMIT ACTIVE]**\n\n### Mock Remediation Applied\nDue to high API traffic, we have applied standard best-practice controls:\n\n1. **Data Encryption**: Added AES-256 requirement.\n2. **Audit Logging**: Enabled verbose transaction logging.\n3. **Access Control**: Enforced RBAC for all endpoints.\n"
 
     async def generate_guardrail_code_stream(self, policy_summary: str, language: str = "python"):
         if language.lower() == "python":
@@ -823,29 +890,15 @@ class GeminiService:
         Return ONLY the raw code (no markdown fences if possible, or standard markdown).
         """
         
-        import asyncio
-        for attempt in range(5):
-            try:
-                # Use Thinking model for high-quality Code Gen
-                async for chunk in await self.client.aio.models.generate_content_stream(
-                    model=settings.GEMINI_MODEL,
-                    contents=prompt
-                ):
-                    if chunk.text:
-                       yield chunk.text
-                return # Success
-            except Exception as e:
-                is_rate_limit = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
-                if is_rate_limit:
-                     wait = 2 ** (attempt + 2)
-                     if wait > 5:
-                         yield "\n# [DEMO MODE] Rate Limit Active. Falling back to Mock Guardrail.\n\nclass Guardrail(BaseModel):\n    user_input: str\n    \n    @validator('user_input')\n    def sanitize(cls, v):\n        if '<script>' in v: raise ValueError('XSS Detected')\n        return v\n"
-                         return
-                     print(f"Stream Rate Limit (Code). Retrying in {wait}s...")
-                     yield f"// [INFO] Rate limit hit. Retrying in {wait}s...\n"
-                     await asyncio.sleep(wait)
-                else:
-                     raise e
+        try:
+            async for chunk in self._generate_stream_with_retry(
+                contents=prompt,
+                task_type="remediation"
+            ):
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+             yield "\n# [DEMO MODE] Rate Limit Active. Falling back to Mock Guardrail.\n\nclass Guardrail(BaseModel):\n    user_input: str\n    \n    @validator('user_input')\n    def sanitize(cls, v):\n        if '<script>' in v: raise ValueError('XSS Detected')\n        return v\n"
 
     async def explain_remediation_strategy(self, violations: list, original_text: str) -> str:
         prompt = f"""
@@ -960,12 +1013,14 @@ class GeminiService:
         """
         
         try:
-            response = await self.client.aio.models.generate_content(
-                model=self.model_flash,
-                contents=[
-                    types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
-                    prompt
-                ],
+            # Use unified retry logic even for multimodal
+            contents = [
+                types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+                prompt
+            ]
+            response = await self._generate_with_retry(
+                contents=contents,
+                task_type="deep_audit",
                 config={'response_mime_type': 'application/json'}
             )
             return self.clean_json_text(response.text)

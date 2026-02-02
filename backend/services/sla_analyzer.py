@@ -40,15 +40,18 @@ EPISTEMIC REQUIREMENTS:
 OUTPUT FORMAT: Strict JSON only."""
         
         try:
-            # Use the Pro model for deep SLA reasoning
-            analysis_json = await self.gemini.analyze_sla(current)
+            # Use the Pro model for deep SLA reasoning (with 30s safety timeout)
+            analysis_json = await asyncio.wait_for(
+                self.gemini.analyze_sla(current),
+                timeout=30.0
+            )
             analysis = json.loads(analysis_json)
             
             # Enrich with Calibration Metadata
             analysis.update({
                 "timestamp": current['timestamp'],
                 "provenance": {
-                    "method": "Gemini-1.5-Pro-Calibration",
+                    "method": "Gemini-Multi-Tier-Resilience",
                     "calibration_level": analysis.get("calibration", "Experimental"),
                     "evidence_strength": "High" if len(history) > 50 else "Limited",
                     "is_stationary": analysis.get("is_stationary", True)
@@ -73,12 +76,10 @@ OUTPUT FORMAT: Strict JSON only."""
             return self._get_fallback_analysis(current)
         except json.JSONDecodeError as e:
             print(f"[SLA Analyzer] JSON parse error: {e}")
-            print(f"[SLA Analyzer] Response: {response_text[:500]}")
-            
-            # Return fallback analysis
+            # Try to recover the response if possible from error context, but safe-fallback is better
             return self._get_fallback_analysis(current)
         except Exception as e:
-            print(f"[SLA Analyzer] Error: {e}")
+            print(f"[SLA Analyzer] Error in analyze_sla_risk: {e}")
             return self._get_fallback_analysis(current)
     
     def _get_fallback_analysis(self, current: dict) -> dict:
