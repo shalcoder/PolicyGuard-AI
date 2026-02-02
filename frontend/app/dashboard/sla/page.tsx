@@ -299,7 +299,7 @@ export default function SLAMonitorPage() {
                                     Risk Factors
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
+                            <CardContent id="risk-factors-section" className="space-y-6">
                                 <div className="space-y-4">
                                     {aiAnalysis?.risk_factors?.map((factor, i) => (
                                         <div key={i}>
@@ -325,7 +325,7 @@ export default function SLAMonitorPage() {
                                     )}
                                 </div>
 
-                                <div className="pt-4 border-t border-border">
+                                <div id="forecast-section" className="pt-4 border-t border-border">
                                     <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
                                         <TrendingUp className="w-4 h-4 text-indigo-500" /> Next Hour Forecast
                                     </h4>

@@ -32,61 +32,83 @@ export default function RemediatePage() {
     const [selectedDemoViolation, setSelectedDemoViolation] = useState<string | null>(null);
 
     useEffect(() => {
-        // Try to get data from URL params
-        const violationsParam = searchParams.get('violations');
-        const workflowParam = searchParams.get('workflow');
-        const descriptionParam = searchParams.get('description');
-        const policyParam = searchParams.get('policy');
-        const reportParam = searchParams.get('report');
+        const loadContext = async () => {
+            // Try to get data from URL params
+            const violationsParam = searchParams.get('violations');
+            const workflowParam = searchParams.get('workflow');
+            const descriptionParam = searchParams.get('description');
+            const policyParam = searchParams.get('policy');
+            const reportParam = searchParams.get('report');
 
-        if (violationsParam) {
-            try {
-                const parsedViolations = JSON.parse(decodeURIComponent(violationsParam));
-                setViolations(parsedViolations);
-            } catch (e) {
-                console.error('Failed to parse violations:', e);
-            }
-        }
-
-        if (workflowParam) {
-            setWorkflowName(decodeURIComponent(workflowParam));
-        }
-
-        if (descriptionParam) {
-            setWorkflowDescription(decodeURIComponent(descriptionParam));
-        }
-
-        if (policyParam) {
-            setPolicySummary(decodeURIComponent(policyParam));
-        }
-
-        if (reportParam) {
-            try {
-                const parsedReport = JSON.parse(decodeURIComponent(reportParam));
-                setReport(parsedReport);
-            } catch (e) {
-                console.error('Failed to parse report:', e);
-            }
-        }
-
-        // Fallback: Try to get from sessionStorage
-        if (!violationsParam) {
-            const storedContext = sessionStorage.getItem('remediation-context');
-            if (storedContext) {
+            if (violationsParam) {
                 try {
-                    const context = JSON.parse(storedContext);
-                    setViolations(context.violations || []);
-                    setWorkflowName(context.workflowName || '');
-                    setWorkflowDescription(context.workflowDescription || '');
-                    setPolicySummary(context.policySummary || '');
-                    setReport(context.report || null);
+                    const parsedViolations = JSON.parse(decodeURIComponent(violationsParam));
+                    setViolations(parsedViolations);
                 } catch (e) {
-                    console.error('Failed to parse stored context:', e);
+                    console.error('Failed to parse violations:', e);
                 }
             }
-        }
 
-        setLoading(false);
+            if (workflowParam) setWorkflowName(decodeURIComponent(workflowParam));
+            if (descriptionParam) setWorkflowDescription(decodeURIComponent(descriptionParam));
+            if (policyParam) setPolicySummary(decodeURIComponent(policyParam));
+
+            if (reportParam) {
+                try {
+                    const parsedReport = JSON.parse(decodeURIComponent(reportParam));
+                    setReport(parsedReport);
+                } catch (e) {
+                    console.error('Failed to parse report:', e);
+                }
+            }
+
+            // Fallback: Try to get from sessionStorage
+            if (!violationsParam) {
+                const storedContext = sessionStorage.getItem('remediation-context');
+                if (storedContext) {
+                    try {
+                        const context = JSON.parse(storedContext);
+                        setViolations(context.violations || []);
+                        setWorkflowName(context.workflowName || '');
+                        setWorkflowDescription(context.workflowDescription || '');
+                        setPolicySummary(context.policySummary || '');
+                        setReport(context.report || null);
+                        setLoading(false);
+                        return;
+                    } catch (e) {
+                        console.error('Failed to parse stored context:', e);
+                    }
+                }
+
+                // Final Fallback: Fetch from Backend API
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                    const res = await fetch(`${apiUrl}/api/v1/evaluate/latest`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setReport(data);
+
+                        // Map policy matrix to violations
+                        if (data.policy_matrix) {
+                            const mappedViolations = data.policy_matrix.map((p: any) => ({
+                                policy_area: p.policy_area,
+                                status: p.status,
+                                reason: p.reason
+                            }));
+                            setViolations(mappedViolations);
+                        }
+
+                        setWorkflowName(data.workflow_name || data.system_spec?.agent_name || 'AI Workflow');
+                        setWorkflowDescription(data.system_spec?.summary || '');
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch latest report:", e);
+                }
+            }
+            setLoading(false);
+        };
+
+        loadContext();
     }, [searchParams]);
 
     const handleBack = () => {

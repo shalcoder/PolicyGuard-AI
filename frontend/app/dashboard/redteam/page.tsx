@@ -56,29 +56,50 @@ export default function RedTeamPage() {
 
     // Load context on mount
     useEffect(() => {
-        const contextStr = sessionStorage.getItem('redteam-context');
-        if (contextStr) {
-            try {
-                const context = JSON.parse(contextStr);
-                setReport(context.report);
-                setIsLocked(false);
+        const loadContext = async () => {
+            const contextStr = sessionStorage.getItem('redteam-context');
+            if (contextStr) {
+                try {
+                    const context = JSON.parse(contextStr);
+                    setReport(context.report);
+                    setIsLocked(false);
 
-                // Restore previous red team session if available
-                const savedSession = sessionStorage.getItem('redteam-session');
-                if (savedSession) {
-                    const session = JSON.parse(savedSession);
-                    setRedTeamStatus(session.status);
-                    setRedTeamLogs(session.logs);
-                    setRedTeamReport(session.report);
+                    // Restore previous red team session if available
+                    const savedSession = sessionStorage.getItem('redteam-session');
+                    if (savedSession) {
+                        const session = JSON.parse(savedSession);
+                        setRedTeamStatus(session.status);
+                        setRedTeamLogs(session.logs);
+                        setRedTeamReport(session.report);
+                    }
+                    setLoading(false);
+                    return; // Loaded from session, exit
+                } catch (e) {
+                    console.error("Failed to load context", e);
                 }
-            } catch (e) {
-                console.error("Failed to load context", e);
-                setIsLocked(true);
             }
-        } else {
-            setIsLocked(true);
-        }
-        setLoading(false);
+
+            // Fallback: Fetch latest from API
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const res = await fetch(`${apiUrl}/api/v1/evaluate/latest`);
+                if (res.ok) {
+                    const latestReport = await res.json();
+                    setReport(latestReport);
+                    setIsLocked(false);
+                } else {
+                    console.warn("No latest report found on backend");
+                    setIsLocked(true);
+                }
+            } catch (error) {
+                console.error("Failed to fetch latest report", error);
+                setIsLocked(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadContext();
     }, []);
 
     // Auto-scroll logs
@@ -334,7 +355,7 @@ export default function RedTeamPage() {
                         </div>
 
                         {/* Logs Area */}
-                        <div className="flex-1 overflow-y-auto font-mono text-sm relative z-10 space-y-1 pr-2 custom-scrollbar">
+                        <div id="red-team-logs" className="flex-1 overflow-y-auto font-mono text-sm relative z-10 space-y-1 pr-2 custom-scrollbar">
                             {!redTeamReport && redTeamStatus === 'idle' && (
                                 <div className="flex flex-col items-center justify-center h-full text-zinc-600 space-y-4 opacity-50">
                                     <TargetIcon className="w-24 h-24 stroke-1" />

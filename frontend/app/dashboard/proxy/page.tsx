@@ -404,8 +404,8 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 </div>
                                 <div className="mt-2 flex items-center justify-between">
                                     {isGatekeeperConnected ? (
-                                        <span className="text-[10px] text-green-700 dark:text-green-400 font-bold flex items-center gap-1 bg-green-100 dark:bg-green-500/10 px-1.5 py-0.5 rounded">
-                                            <CheckCircle2 className="w-3 h-3" /> ACTIVE
+                                        <span className="text-[10px] text-gray-500 font-bold flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-300 dark:border-zinc-700">
+                                            <Activity className="w-3 h-3" /> DISCONNECTED
                                         </span>
                                     ) : (
                                         <span className="text-[10px] text-yellow-700 dark:text-yellow-400 font-bold flex items-center gap-1 bg-yellow-100 dark:bg-yellow-500/10 px-1.5 py-0.5 rounded">
@@ -433,7 +433,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 </div>
                                 <div className="mt-2 flex items-center justify-between">
                                     {isSlaConnected ? (
-                                        <span className="text-[10px] text-green-700 dark:text-green-400 font-bold flex items-center gap-1 bg-green-100 dark:bg-green-500/10 px-1.5 py-0.5 rounded"><CheckCircle2 className="w-3 h-3" /> ACTIVE</span>
+                                        <span className="text-[10px] text-gray-500 font-bold flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-300 dark:border-zinc-700"><Activity className="w-3 h-3" /> DISCONNECTED</span>
                                     ) : (
                                         <span className="text-[10px] text-yellow-700 dark:text-yellow-400 font-bold flex items-center gap-1 bg-yellow-100 dark:bg-yellow-500/10 px-1.5 py-0.5 rounded"><AlertTriangle className="w-3 h-3" /> PENDING</span>
                                     )}
@@ -485,8 +485,8 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 <h2 className="text-xl font-bold">Stream 1: AI Gatekeeper</h2>
                             </div>
                             {isGatekeeperConnected && (
-                                <Badge variant="outline" className="border-indigo-500 text-indigo-500 bg-indigo-500/10 gap-1.5 py-1 px-3">
-                                    <Shield className="w-3.5 h-3.5" /> Gatekeeper Active
+                                <Badge variant="outline" className="border-gray-500 text-gray-500 bg-gray-500/10 gap-1.5 py-1 px-3">
+                                    <Shield className="w-3.5 h-3.5" /> Gatekeeper Disconnected
                                 </Badge>
                             )}
                         </div>
@@ -542,6 +542,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                     Back to Dashboard
                                                 </Button>
                                                 <Button
+                                                    id="proxy-wizard-step1-next"
                                                     className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white shadow-md group h-11"
                                                     onClick={() => setGatekeeperStep(2)}
                                                     disabled={!gatewayId.trim()}
@@ -582,6 +583,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                         <div className="flex justify-between items-center mt-8">
                                             <Button variant="ghost" onClick={() => setGatekeeperStep(1)}>Back</Button>
                                             <Button
+                                                id="proxy-wizard-step2-next"
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
                                                 onClick={() => setGatekeeperStep(3)}
                                             >
@@ -752,7 +754,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                 <div className="flex items-center gap-2">
                                                     <Activity className="w-4 h-4" /> Live Audit Log
                                                 </div>
-                                                <Badge variant="outline" className="text-[9px] border-indigo-500/30 text-indigo-500">Action Guardrails Active</Badge>
+                                                <Badge variant="outline" className="text-[9px] border-gray-500/30 text-gray-500">Action Guardrails Disconnected</Badge>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">

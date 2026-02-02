@@ -269,6 +269,7 @@ export default function OverviewPage() {
 
     // Live Logs State
     const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [reports, setReports] = useState<any[]>([]);
 
 
     useEffect(() => {
@@ -301,7 +302,14 @@ export default function OverviewPage() {
                     setSlaHistory((data.data_points || []).slice(-30));
                 }
 
-                // 4. Fetch HITL Queue
+                // 4. Fetch Reports (Live)
+                const reportsRes = await fetch(`${apiUrl}/api/v1/compliance/reports`);
+                if (reportsRes.ok) {
+                    const data = await reportsRes.json();
+                    setReports(data);
+                }
+
+                // 5. Fetch HITL Queue
                 const hitlRes = await fetch(`${apiUrl}/api/v1/hitl/queue`);
                 if (hitlRes.ok) {
                     const data = await hitlRes.json();
@@ -426,7 +434,7 @@ export default function OverviewPage() {
                 {/* Title & Actions */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
+                        <h1 id="dashboard-title" className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
                         <p className="text-sm text-slate-500 mt-1">Real-time governance oversight and system health monitoring.</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -434,6 +442,7 @@ export default function OverviewPage() {
                             {['Overview', 'Analytics', 'Reports', 'Notifications'].map((tab) => (
                                 <button
                                     key={tab}
+                                    id={`tab-${tab.toLowerCase()}`}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === tab
                                         ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
@@ -585,27 +594,34 @@ export default function OverviewPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {[
-                                    { name: "Monthly Compliance Audit - January", type: "PDF", size: "2.4 MB", date: "Jan 31, 2025" },
-                                    { name: "Incident Response Summary - Week 4", type: "CSV", size: "156 KB", date: "Jan 28, 2025" },
-                                    { name: "SLA Performance Review", type: "PDF", size: "1.2 MB", date: "Jan 25, 2025" },
-                                    { name: "GDPR Data Access Log", type: "JSON", size: "8.5 MB", date: "Jan 24, 2025" },
-                                ].map((report, i) => (
-                                    <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg">
-                                                <FileText className="w-5 h-5" />
+                                {reports.length > 0 ? (
+                                    reports.map((report, i) => (
+                                        <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{report.name}</p>
+                                                    <p className="text-xs text-slate-500">{report.date} • {report.size}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100">{report.name}</p>
-                                                <p className="text-xs text-slate-500">{report.date} • {report.size}</p>
-                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-2"
+                                                onClick={() => {
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                                    window.open(`${apiUrl}${report.download_url}`, '_blank');
+                                                }}
+                                            >
+                                                <Download className="w-3.5 h-3.5" /> {report.type}
+                                            </Button>
                                         </div>
-                                        <Button variant="outline" size="sm" className="gap-2">
-                                            <Download className="w-3.5 h-3.5" /> {report.type}
-                                        </Button>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center text-slate-500">Generating compliance reports...</div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

@@ -29,7 +29,7 @@ export default function PoliciesPage() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
             const res = await fetch(`${apiUrl}/api/v1/policies`, {
                 signal: controller.signal
@@ -42,7 +42,7 @@ export default function PoliciesPage() {
             }
         } catch (error: any) {
             if (error.name === 'AbortError') {
-                console.error("Policies fetch timed out after 30s - Check backend connection.");
+                console.error("Policies fetch timed out after 60s - Check backend connection.");
             } else {
                 console.error("Failed to fetch policies", error);
             }

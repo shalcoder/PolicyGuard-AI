@@ -66,8 +66,8 @@ export default function MonitorPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Badge variant="outline" className="animate-pulse border-green-500 text-green-500 bg-green-500/10">
-                        <Activity className="w-3 h-3 mr-1" /> Live Audit Stream
+                    <Badge variant="outline" className="border-gray-500 text-gray-500 bg-gray-500/10">
+                        <Activity className="w-3 h-3 mr-1" /> Disconnected
                     </Badge>
                 </div>
             </div>

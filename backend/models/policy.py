@@ -72,6 +72,29 @@ class PolicyAlignment(BaseModel):
     status: PolicyStatus
     reason: str
 
+    @validator("status", pre=True)
+    def normalize_status(cls, v):
+        # Case-insensitive match attempt
+        for status in PolicyStatus:
+            if v.lower() == status.value.lower():
+                return status
+        
+        # Fuzzy matching for robust LLM handling
+        v_str = str(v).lower()
+        if "non-compliant" in v_str or "violation" in v_str:
+            return PolicyStatus.NON_COMPLIANT
+        if "partial" in v_str:
+            return PolicyStatus.PARTIAL
+        if "at risk" in v_str:
+            return PolicyStatus.RISK
+        if "compliant" in v_str:
+            return PolicyStatus.COMPLIANT
+        if "not applicable" in v_str:
+            return PolicyStatus.NOT_APPLICABLE
+            
+        # Default fallback to prevent crash
+        return PolicyStatus.CANNOT_ASSESS
+
 class RiskLevel(str, Enum):
     CRITICAL = "Critical"
     HIGH = "High"

@@ -120,7 +120,7 @@ class GeminiService:
                         # 2. MODEL DIVERSIFICATION 🔀: 
                         # Always try a different model if it's a 404, or if we've cycled through keys once for 429
                         if is_not_found or attempt >= len(self.clients):
-                             model_fallbacks = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash"]
+                             model_fallbacks = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"]
                              current_model = model_fallbacks[attempt % len(model_fallbacks)]
                              print(f"🔀 {'Model Missing' if is_not_found else 'Keys exhausted'}. Switching to: {current_model}")
                         
@@ -180,7 +180,7 @@ class GeminiService:
                         print(f"🔄 Stream {'Rate' if is_rate_limit else '404'} hit. Rotating to Key {self.current_key_index}...")
                         
                         if is_not_found or attempt >= len(self.clients):
-                            model_fallbacks = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash"]
+                            model_fallbacks = ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash"]
                             current_model = model_fallbacks[attempt % len(model_fallbacks)]
                             print(f"🔀 Stream Model Switch -> {current_model}")
                         
@@ -610,55 +610,79 @@ class GeminiService:
         }}
         """
         
-        try:
-            print(f"[INFO] ANALYZING ARCHITECTURE (Thinking Mode): {workflow_context[:50]}...")
-            # Using the specialized 'thinking' model for deep reasoning
-            response = await self._generate_with_retry(
-                contents=prompt,
-                task_type="deep_audit",
-                config={'response_mime_type': 'application/json'},
-                fail_fast=False,
-                retries=3 
-            )
-            
-            if not response or not response.text:
-                raise ValueError("Empty response from Gemini API")
+        # EXPERIMENTAL RED TEAM MODELS (Ordered by Reasoning Capability)
+        # We explicitly switch models here to ensure the Red Team task completes even if the primary Pro model is rate-limited.
+        red_team_stack = [
+            settings.MODEL_PRO,           # Configured Primary (Gemini 3 Pro)
+            "gemini-3-flash-preview",     # High speed 3 fallback
+            "gemini-2.5-pro",             # Stable High-Reasoning
+            "gemini-2.0-flash-thinking-exp-1219", # Thinking Flash
+            "gemini-2.0-flash"            # Fast Fallback
+        ]
+
+        last_error = None
+
+        print(f"[INFO] ANALYZING ARCHITECTURE (Thinking Mode): {workflow_context[:50]}...")
+
+        for model_id in red_team_stack:
+            try:
+                print(f"[RED TEAM] ⚔️ Engaging Model: {model_id}")
                 
-            cleaned_json = self.clean_json_text(response.text)
-            print(f"[SUCCESS] REAL ANALYSIS COMPLETE for {workflow_context[:30]}")
-            return cleaned_json
+                # We use _generate_with_retry but force a specific model each time.
+                # The _generate_with_retry method handles KEY ROTATION internally.
+                # So here we are handling MODEL SWITCHING.
+                response = await self._generate_with_retry(
+                    contents=prompt,
+                    task_type="deep_audit", # Keeps reasoning config
+                    model=model_id,         # FORCE this specific model
+                    config={'response_mime_type': 'application/json'},
+                    fail_fast=True,         # Fail faster so we can switch models in this loop
+                    retries=1               # Retry logic is handled by our outer loop + internal key rotation
+                )
+                
+                if not response or not response.text:
+                    raise ValueError("Empty response from Gemini API")
+                    
+                cleaned_json = self.clean_json_text(response.text)
+                print(f"[SUCCESS] REAL ANALYSIS COMPLETE with {model_id}")
+                return cleaned_json
             
-        except Exception as e:
-            print(f"[ERROR] REAL ANALYSIS FAILED: {str(e)}")
-            print("[WARN] ACTIVATING CIRCUIT BREAKER: Returning Mock Threat Report for Demo.")
+            except Exception as e:
+                print(f"[RED TEAM] ❌ Model {model_id} failed: {e}")
+                last_error = e
+                # Continue to next model in stack
+                continue
             
-            # MOCK FALLBACK RESPONSE - Include the actual error in the profile summary for debugging
-            error_preview = str(e)[:100]
-            return json.dumps({
-                "system_profile_analyzed": f"LIVE AUDIT FAILED: {error_preview}",
-                "overall_resilience_score": 45,
-                "critical_finding": "API Rate Limit Bypass: System fails open to mock data.",
-                "attack_vectors": [
-                    {
-                        "name": "Fallback: Indirect Prompt Injection (LLM01)",
-                        "category": "LLM01: Prompt Injection",
-                        "method": "Simulated injection attack for UI demonstration purposes (API Quota Exceeded).",
-                        "likelihood": "High",
-                        "impact": "High",
-                        "severity_score": 90,
-                        "mitigation_suggestion": "Implement rate limiting and fallback caching."
-                    },
-                    {
-                        "name": "Fallback: Insecure Output Handling (LLM02)",
-                        "category": "LLM02: Insecure Output Handling",
-                        "method": "Mock vulnerability: System does not sanitize HTML output.",
-                        "likelihood": "Medium",
-                        "impact": "Medium",
-                        "severity_score": 60,
-                        "mitigation_suggestion": "Sanitize all model outputs."
-                    }
-                ]
-            })
+        print(f"[ERROR] RED TEAM ALL MODELS FAILED: {str(last_error)}")
+        print("[WARN] ACTIVATING CIRCUIT BREAKER: Returning Mock Threat Report for Demo.")
+        
+        # MOCK FALLBACK RESPONSE - Include the actual error in the profile summary for debugging
+        error_preview = str(last_error)[:100]
+        return json.dumps({
+            "system_profile_analyzed": f"LIVE AUDIT FAILED: {error_preview}",
+            "overall_resilience_score": 45,
+            "critical_finding": "API Rate Limit Bypass: System fails open to mock data.",
+            "attack_vectors": [
+                {
+                    "name": "Fallback: Indirect Prompt Injection (LLM01)",
+                    "category": "LLM01: Prompt Injection",
+                    "method": "Simulated injection attack for UI demonstration purposes (API Quota Exceeded).",
+                    "likelihood": "High",
+                    "impact": "High",
+                    "severity_score": 90,
+                    "mitigation_suggestion": "Implement rate limiting and fallback caching."
+                },
+                {
+                    "name": "Fallback: Insecure Output Handling (LLM02)",
+                    "category": "LLM02: Insecure Output Handling",
+                    "method": "Mock vulnerability: System does not sanitize HTML output.",
+                    "likelihood": "Medium",
+                    "impact": "Medium",
+                    "severity_score": 60,
+                    "mitigation_suggestion": "Sanitize all model outputs."
+                }
+            ]
+        })
 
     async def generate_attack_plan(self, system_spec: dict) -> list[str]:
         prompt = f"""
@@ -910,9 +934,17 @@ class GeminiService:
         
         OUTPUT FORMAT (Strict JSON):
         {{
-            "strategy": "High level strategy",
-            "findings": [
-                {{ "risk": "...", "fix": "...", "impact": "..." }}
+            "summary": "High level summary of the remediation strategy.",
+            "risks_explained": [
+                {{ 
+                    "violation": "The specific violation detected", 
+                    "why_it_matters": "Business impact explanation", 
+                    "fix_strategy": "The applied technical fix" 
+                }}
+            ],
+            "improvement_tips": [
+                "Tip 1 for future compliance",
+                "Tip 2 for better security"
             ]
         }}
         """
@@ -925,9 +957,17 @@ class GeminiService:
             return self.clean_json_text(response.text)
         except Exception as e:
             return json.dumps({
-                "strategy": "Fallback Strategy: Standard Compliance Controls",
-                "findings": [
-                    { "risk": "Regulatory non-compliance", "fix": "Applied standard guardrails", "impact": "Mitigates immediate policy conflict" }
+                "summary": "Fallback Strategy: Standard Compliance Controls applied due to analysis error.",
+                "risks_explained": [
+                    { 
+                        "violation": "Regulatory non-compliance", 
+                        "why_it_matters": "Potential legal exposure and operational risk.", 
+                        "fix_strategy": "Applied standard industry guardrails." 
+                    }
+                ],
+                "improvement_tips": [
+                    "Ensure all data fields are encrypted.",
+                    "Review access control policies periodically."
                 ]
             })
 

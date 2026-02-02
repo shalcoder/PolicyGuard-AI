@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Zap, Globe, X,
     LayoutDashboard, FileText, Activity, Target as TargetIcon,
-    Shield, Server, Box, Wrench, Lightbulb, Brain, TrendingUp
+    Shield, Server, Box, Wrench, Lightbulb, Brain, TrendingUp, Code2
 } from 'lucide-react';
 
 const TOUR_STEPS = [
@@ -16,7 +16,7 @@ const TOUR_STEPS = [
         id: 1,
         route: '/dashboard',
         selector: '#dashboard-title',
-        badge: "Mission Control • 1/20",
+        badge: "Mission Control • 1/22",
         title: "Agent Governance Hub",
         desc: "Welcome to PolicyGuard AI. This is your unified control plane for autonomous agent governance. We ensure your AI fleet remains safe, ethical, and within regulatory boundaries.",
         icon: LayoutDashboard,
@@ -25,9 +25,20 @@ const TOUR_STEPS = [
     },
     {
         id: 2,
+        route: '/dashboard',
+        selector: '#coverage-map-card', // NEW: Coverage Map
+        badge: "Overview • 2/22",
+        title: "Policy Coverage Map",
+        desc: "Visualize your governance posture. The radar chart shows real-time alignment with key frameworks like GDPR, SOC2, and Ethical AI standards.",
+        icon: Globe,
+        color: "text-indigo-400",
+        bg: "bg-indigo-500/10"
+    },
+    {
+        id: 3,
         route: '/dashboard/policies',
         selector: '#active-policies-list',
-        badge: "Governance • 2/20",
+        badge: "Governance • 3/22",
         title: "Active Guardrails",
         desc: "Every AI agent is governed by these live policies. This is where your organization's legal and safety requirements are translated into real-time enforcement rules.",
         icon: Shield,
@@ -35,23 +46,23 @@ const TOUR_STEPS = [
         bg: "bg-blue-500/10"
     },
     {
-        id: 3,
+        id: 4,
         route: '/dashboard',
-        selector: '#sre-view-toggle',
-        badge: "Telemetry • 3/20",
+        selector: '#tab-analytics',
+        badge: "Telemetry • 4/22",
         title: "SRE Reliability Console",
         desc: "Monitor per-token latency, error rates, and throughput. PolicyGuard tracks the heartbeat of your distributed AI infrastructure to prevent performance degradation.",
         icon: Activity,
         color: "text-indigo-400",
         bg: "bg-indigo-500/10",
-        action: '#sre-view-toggle'
+        action: '#tab-analytics'
     },
     {
-        id: 4,
+        id: 5,
         route: '/dashboard/proxy',
         selector: '#stream-1-selector',
-        badge: "Integration • 4/20",
-        title: "Inline Interceptor (Stream 1)",
+        badge: "Integration • 5/22",
+        title: "Inline Interceptor (Stream 1 - Disconnected)",
         desc: "Stream 1 provides real-time, synchronous protection. It intercepts prompts and responses, blocking PII leaks and non-compliant content instantly.",
         icon: Zap,
         color: "text-cyan-400",
@@ -59,10 +70,34 @@ const TOUR_STEPS = [
         action: '#stream-1-selector'
     },
     {
-        id: 5,
+        id: 6,
+        route: '/dashboard/proxy',
+        selector: '#proxy-wizard-step1-next', // NEW: Wizard Step 1
+        badge: "Setup • 6/22",
+        title: "Gateway Configuration",
+        desc: "Assign a unique ID to your AI Gateway. This identifier tags all audit logs and telemetry, ensuring traceability across your fleet.",
+        icon: Server,
+        color: "text-indigo-400",
+        bg: "bg-indigo-500/10",
+        action: '#proxy-wizard-step1-next'
+    },
+    {
+        id: 7,
+        route: '/dashboard/proxy',
+        selector: '#proxy-wizard-step2-next', // NEW: Wizard Step 2
+        badge: "Setup • 7/22",
+        title: "Integration Pattern",
+        desc: "Select your stack. PolicyGuard generates drop-in SDK snippets for Python and Node.js to route traffic through the secure gateway.",
+        icon: Code2,
+        color: "text-emerald-400",
+        bg: "bg-emerald-500/10",
+        action: '#proxy-wizard-step2-next'
+    },
+    {
+        id: 8,
         route: '/dashboard/proxy',
         selector: '#finalize-gatekeeper-btn',
-        badge: "Integration • 5/20",
+        badge: "Integration • 8/22",
         title: "Zero-Trust Activation",
         desc: "Activating Stream 1 deploys our sub-10ms latency interceptor. Your agent is now protected by a cryptographic policy handshake for every interaction.",
         icon: Shield,
@@ -71,10 +106,10 @@ const TOUR_STEPS = [
         action: '#finalize-gatekeeper-btn'
     },
     {
-        id: 6,
+        id: 9,
         route: '/dashboard/proxy',
         selector: '#stream-2-selector',
-        badge: "Reliability • 6/20",
+        badge: "Reliability • 9/22",
         title: "SLA Stability (Stream 2)",
         desc: "Stream 2 focuses on long-term reliability. We ingest system heartbeats and model output logs to detect performance drift and ensure SLIs are maintained.",
         icon: Server,
@@ -83,10 +118,10 @@ const TOUR_STEPS = [
         action: '#stream-2-selector'
     },
     {
-        id: 7,
+        id: 10,
         route: '/dashboard/evaluate',
         selector: '#run-evaluation-btn',
-        badge: "Forensics • 7/20",
+        badge: "Forensics • 10/22",
         title: "Deep Forensic Audit",
         desc: "Let's run a Deep Audit. Our Gemini-powered engine debates itself to find edge cases and hidden policy contradictions in your system spec.",
         icon: Zap,
@@ -95,10 +130,10 @@ const TOUR_STEPS = [
         action: '#run-evaluation-btn'
     },
     {
-        id: 8,
+        id: 11,
         route: '/dashboard/evaluate',
         selector: '#readiness-scorecard',
-        badge: "Analysis • 8/20",
+        badge: "Analysis • 11/22",
         title: "Compliance Readiness Results",
         desc: "The audit is complete. PolicyGuard has generated a comprehensive scorecard mapping your agent's behavior against corporate policy and legal requirements.",
         icon: FileText,
@@ -106,10 +141,10 @@ const TOUR_STEPS = [
         bg: "bg-green-500/10"
     },
     {
-        id: 9,
+        id: 12,
         route: '/dashboard/evaluate',
         selector: '#tab-executive',
-        badge: "Analysis • 9/20",
+        badge: "Analysis • 12/22",
         title: "Executive Summary",
         desc: "High-level verdict and categorical risk assessment. This tab provides a binary 'Go/No-Go' status for deployment based on legal reasoning.",
         icon: CheckCircle,
@@ -118,10 +153,10 @@ const TOUR_STEPS = [
         action: '#tab-executive'
     },
     {
-        id: 10,
+        id: 13,
         route: '/dashboard/evaluate',
         selector: '#section-risk',
-        badge: "Analysis • 10/20",
+        badge: "Analysis • 13/22",
         title: "Failure Class Simulation",
         desc: "We simulate catastrophic scenarios—from prompt injection to data exfiltration—and quantify the financial and reputational exposure for your business.",
         icon: ShieldAlert,
@@ -129,10 +164,10 @@ const TOUR_STEPS = [
         bg: "bg-red-500/10"
     },
     {
-        id: 11,
+        id: 14,
         route: '/dashboard/evaluate',
         selector: '#tab-proof',
-        badge: "Analysis • 11/20",
+        badge: "Analysis • 14/22",
         title: "Remedy & Evidence Log",
         desc: "Transparency is key. This tab contains raw trace evidence snippets for every violation, alongside immutable cryptographic hashes for audit-readiness.",
         icon: FileText,
@@ -141,10 +176,10 @@ const TOUR_STEPS = [
         action: '#tab-proof'
     },
     {
-        id: 12,
+        id: 15,
         route: '/dashboard/remediate',
         selector: '#auto-remediate-btn',
-        badge: "Resilience • 12/20",
+        badge: "Resilience • 15/22",
         title: "Automated Patching",
         desc: "Vulnerabilities found? The Remediation Engine generates production-ready library code and rewritten system instructions to patch gaps instantly.",
         icon: Wrench,
@@ -153,10 +188,10 @@ const TOUR_STEPS = [
         action: '#auto-remediate-btn'
     },
     {
-        id: 13,
+        id: 16,
         route: '/dashboard/remediate',
         selector: '#remediation-tabs',
-        badge: "Resilience • 13/20",
+        badge: "Resilience • 16/22",
         title: "Explainable Remediation",
         desc: "PolicyGuard explains precisely HOW the fix solves the risk. We provide a logic graph and code-level walkthrough for the generated guardrails.",
         icon: Lightbulb,
@@ -164,10 +199,10 @@ const TOUR_STEPS = [
         bg: "bg-indigo-500/10"
     },
     {
-        id: 14,
+        id: 17,
         route: '/dashboard/redteam',
         selector: '#initiate-attack-btn',
-        badge: "Adversarial • 14/20",
+        badge: "Adversarial • 17/22",
         title: "Offensive Security Lab",
         desc: "Now we test. We launch 50+ adversarial attacks—including jailbreaks and prompt-probing—to see if the new guardrails hold under pressure.",
         icon: TargetIcon,
@@ -176,10 +211,10 @@ const TOUR_STEPS = [
         action: '#initiate-attack-btn'
     },
     {
-        id: 15,
+        id: 18,
         route: '/dashboard/redteam',
         selector: '#red-team-logs',
-        badge: "Adversarial • 15/20",
+        badge: "Adversarial • 18/22",
         title: "Real-time Attack Feed",
         desc: "Watch the 'Debate Protocol'. Our red-team engine attempts to bypass defenses while the Guardrail Interceptor blocks malicious intent in real-time.",
         icon: Activity,
@@ -187,10 +222,10 @@ const TOUR_STEPS = [
         bg: "bg-orange-500/10"
     },
     {
-        id: 16,
+        id: 19,
         route: '/dashboard/monitor',
         selector: '#audit-log-stream',
-        badge: "Visibility • 16/20",
+        badge: "Visibility • 19/22",
         title: "Live Safety Stream",
         desc: "Final visibility layer. Monitor the production interceptor as it executes PASS/BLOCK decisions on live traffic with 100% auditability.",
         icon: Activity,
@@ -198,10 +233,10 @@ const TOUR_STEPS = [
         bg: "bg-indigo-500/10"
     },
     {
-        id: 17,
+        id: 20,
         route: '/dashboard/sla',
         selector: '#gemini-risk-card',
-        badge: "Intelligence • 17/20",
+        badge: "Intelligence • 20/22",
         title: "Predictive SLA Monitoring",
         desc: "We look ahead. Gemini analyzes historical latency and throughput to forecast risk spikes and breaches before they impact your end-users.",
         icon: Brain,
@@ -209,10 +244,10 @@ const TOUR_STEPS = [
         bg: "bg-purple-500/10"
     },
     {
-        id: 18,
+        id: 21,
         route: '/dashboard/sla',
-        selector: '.bg-card',
-        badge: "Intelligence • 18/20",
+        selector: '#risk-factors-section',
+        badge: "Intelligence • 21/22",
         title: "Risk Factor Analysis",
         desc: "PolicyGuard identifies the causal drivers for SLA breaches—whether it's model versioning, prompt length, or geographic traffic spikes.",
         icon: Zap,
@@ -220,10 +255,10 @@ const TOUR_STEPS = [
         bg: "bg-cyan-500/10"
     },
     {
-        id: 19,
+        id: 22,
         route: '/dashboard/sla',
-        selector: '.rounded-xl.border.border-border', // Targeting forecast chart/box
-        badge: "Intelligence • 19/20",
+        selector: '#forecast-section',
+        badge: "Intelligence • 22/22",
         title: "Future Output Forecast",
         desc: "Projected latency and success rates for the next hour. This allows for proactive infrastructure scaling and model fallback strategies.",
         icon: TrendingUp,
@@ -231,10 +266,10 @@ const TOUR_STEPS = [
         bg: "bg-emerald-500/10"
     },
     {
-        id: 20,
+        id: 23,
         route: '/dashboard',
         selector: '#dashboard-title',
-        badge: "Certified • 20/20",
+        badge: "Certified • 23/23",
         title: "Governance Mastery",
         desc: "Mission Accomplished. Your AI fleet is now robust, compliant, and ready for scale. You have completed the full PolicyGuard Governance Cycle.",
         icon: CheckCircle,
