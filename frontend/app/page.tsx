@@ -33,15 +33,44 @@ import {
     FileCheck,
     Code,
     ShieldAlert,
-    Link2
+    Link2,
+    Fingerprint
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LandingPage() {
     const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
+    const { loginAsGuest } = useAuth() as any;
+    const [demoSequence, setDemoSequence] = useState(false);
+    const [terminalLines, setTerminalLines] = useState<string[]>([]);
+
+    const triggerGuestLogin = async () => {
+        setDemoSequence(true);
+        // Simulate Terminal Sequence
+        const lines = [
+            "Initializing Test Protocol...",
+            "Bypassing SSO...",
+            "Granting 'Judge' Permissions...",
+            "ACCESS_GRANTED: Welcome to PolicyGuard AI."
+        ];
+
+        for (const line of lines) {
+            await new Promise(r => setTimeout(r, 600)); // Delay per line
+            setTerminalLines(prev => [...prev, line]);
+        }
+
+        await new Promise(r => setTimeout(r, 800)); // Final pause for wow factor
+
+        // Start Tour
+        localStorage.setItem('pg_tour_active', 'true');
+        window.dispatchEvent(new CustomEvent('pg-start-tour'));
+
+        // Login
+        loginAsGuest();
+    };
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -51,6 +80,41 @@ export default function LandingPage() {
 
     return (
         <div className="bg-[#020202] text-white min-h-screen font-outfit selection:bg-blue-500/30">
+            {/* Demo Sequence Overlay */}
+            <AnimatePresence>
+                {demoSequence && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center font-mono text-cyan-400 p-8"
+                    >
+                        <div className="w-full max-w-lg space-y-4">
+                            <div className="flex items-center gap-2 text-white mb-6 border-b border-white/10 pb-4">
+                                <Terminal className="w-6 h-6" />
+                                <span className="text-xl font-bold tracking-widest uppercase">JUDGE_TERMINAL_V1.0</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                {terminalLines.map((line, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="flex items-center gap-3"
+                                    >
+                                        <span className="text-cyan-600">➜</span>
+                                        <span>{line}</span>
+                                        {i === terminalLines.length - 1 && (
+                                            <span className="inline-block w-2 h-4 bg-cyan-400 animate-pulse ml-2" />
+                                        )}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Nav */}
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-black/60 backdrop-blur-xl border-b border-white/5' : 'py-8 bg-transparent'}`}>
                 <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
@@ -82,6 +146,13 @@ export default function LandingPage() {
                     </div>
 
                     <div className="flex items-center gap-6">
+                        <button
+                            onClick={triggerGuestLogin}
+                            className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-cyan-300 transition-colors mr-4"
+                        >
+                            <Fingerprint className="w-3.5 h-3.5" />
+                            Judge Access
+                        </button>
                         <Link href="/login" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors">Log In</Link>
                         <Link href="/signup">
                             <Button className="bg-cyan-600 hover:bg-cyan-500 text-white rounded-none px-6 font-black uppercase tracking-widest text-[10px] h-11 border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
@@ -119,9 +190,11 @@ export default function LandingPage() {
                                     Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" onClick={() => router.push('/login')} className="h-16 px-10 border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/5 bg-transparent rounded-none outline-none">
-                                <span className="flex items-center gap-2">
-                                    <Play className="w-4 h-4 fill-white" /> View Demo <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
+                            <Button size="lg" variant="outline" onClick={triggerGuestLogin} className="h-16 px-10 border-cyan-500/30 text-white font-black uppercase tracking-widest hover:bg-cyan-500/10 bg-black/40 rounded-none relative group overflow-hidden">
+                                <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
+                                <span className="relative flex items-center gap-3">
+                                    <Fingerprint className="w-5 h-5 text-cyan-500" />
+                                    Judge Test Access
                                 </span>
                             </Button>
                         </div>

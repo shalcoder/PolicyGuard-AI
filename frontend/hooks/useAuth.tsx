@@ -17,6 +17,7 @@ interface AuthContextType {
     signup: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
     loginAsGuest: () => Promise<void>;
+    isJudge: boolean;
     isLoading: boolean;
 }
 
@@ -26,12 +27,29 @@ const AuthContext = createContext<AuthContextType>({
     signup: async () => { },
     logout: async () => { },
     loginAsGuest: async () => { },
+    isJudge: false,
     isLoading: true,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // Synchronous initialization to prevent "null flash" redirect
+    const [user, setUser] = useState<User | null>(() => {
+        if (typeof window !== 'undefined') {
+            const cached = localStorage.getItem('pg_auth_user');
+            if (cached) {
+                try { return JSON.parse(cached); } catch (e) { return null; }
+            }
+        }
+        return null;
+    });
+
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return !localStorage.getItem('pg_auth_user'); // Only load if nothing cached
+        }
+        return true;
+    });
+
     const router = useRouter();
 
     useEffect(() => {
@@ -137,6 +155,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
         setUser(mockUser);
         localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
+        localStorage.setItem('pg_is_judge', 'true');
+
+        // Give state time to propagate
+        await new Promise(r => setTimeout(r, 150));
         router.push('/dashboard');
     };
 
@@ -165,11 +187,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         setUser(null);
         localStorage.removeItem('pg_auth_user');
+        localStorage.removeItem('pg_tour_active');
+        localStorage.removeItem('pg_is_judge');
         router.push('/login');
     };
 
+    const isJudge = (user?.uid === 'guest_judge_1' || user?.email === 'judge@hackathon.com') &&
+        (typeof window !== 'undefined' && localStorage.getItem('pg_is_judge') === 'true');
+
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, isLoading, loginAsGuest }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, isLoading, loginAsGuest, isJudge }}>
             {children}
         </AuthContext.Provider>
     );

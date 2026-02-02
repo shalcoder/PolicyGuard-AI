@@ -45,11 +45,11 @@ export interface UserProfileEnhanced {
 }
 
 const defaultProfileEnhanced: UserProfileEnhanced = {
-    name: 'Executive User',
-    organization: 'Acme Corp',
-    systemRole: 'Admin',
-    jobTitle: 'Compliance Officer',
-    team: 'Risk & Compliance',
+    name: 'User',
+    organization: 'Organization',
+    systemRole: 'Viewer',
+    jobTitle: 'Administrator',
+    team: 'General',
     region: 'Global',
     timezone: 'UTC',
 };

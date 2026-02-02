@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { DashboardMobileNav } from '@/components/layout/DashboardMobileNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function DashboardLayout({
     children,
@@ -13,14 +13,16 @@ export default function DashboardLayout({
 }) {
     const { user, isLoading } = useAuth();
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         if (!isLoading && !user) {
             router.push('/login');
         }
     }, [user, isLoading, router]);
 
-    if (isLoading) {
+    if (!mounted || isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-zinc-950">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

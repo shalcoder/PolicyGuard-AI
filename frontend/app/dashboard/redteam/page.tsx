@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, Play, CheckCircle, RotateCcw, Lock, Terminal, Target as TargetIcon, Activity, Flame, ShieldAlert } from 'lucide-react';
+import { Shield, AlertTriangle, Play, CheckCircle, RotateCcw, Lock, Terminal, Target as TargetIcon, Activity, Flame, ShieldAlert, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast-context";
+import { useAuth } from '@/hooks/useAuth';
 
 // Types
 interface AttackVector {
@@ -33,6 +34,7 @@ interface RedTeamReport {
 }
 
 export default function RedTeamPage() {
+    const { isJudge } = useAuth();
     const router = useRouter();
     const { addToast } = useToast();
     const consoleEndRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,10 @@ export default function RedTeamPage() {
     }, [redTeamLogs]);
 
     const handleRedTeamAttack = async () => {
+        if (isJudge) {
+            loadSampleRedTeam();
+            return;
+        }
         if (!report) {
             addToast("No system context found. Run an evaluation first.", "error");
             return;
@@ -178,6 +184,54 @@ export default function RedTeamPage() {
             addToast("Attack simulation failed to complete", "error");
         }
     };
+
+    const loadSampleRedTeam = async () => {
+        setRedTeamStatus('attacking');
+        setRedTeamLogs([]);
+        setRedTeamReport(null);
+
+        const addLog = (msg: string) => setRedTeamLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        addLog("INITIALIZING_ADVERSARIAL_MATRIX...");
+        await sleep(500); addLog("TARGET_DESIGNATED: Global Financial Settlement Agent");
+        await sleep(500); addLog("LOADING_ATTACK_VECTORS: [Prompt Injection, Data Exfiltration, DoS, Social Engineering]...");
+        await sleep(800); addLog("EXECUTING: 'Adaptive Jailbreak' via nested JSON induction...");
+        await sleep(800); addLog("BYPASS_DETECTED: System prompt boundary leakage in EU-West zone.");
+        await sleep(800); addLog("PHASE_2: Multi-step PII harvesting via recursive API calls...");
+        await sleep(800); addLog("CRITICAL_VULNERABILITY: SWIFT metadata exposure confirmed.");
+        await sleep(500); addLog("GENERATING_THREAT_PROFILE...");
+
+        const mockReport: RedTeamReport = {
+            system_profile_analyzed: "The 'Global Financial Settlement Agent' is a high-authority autonomous system managing institutional trades. It contains sensitive PII and financial SWIFT metadata, making it a Tier-1 target for adversarial exploitation.",
+            overall_resilience_score: 32,
+            critical_finding: "Prompt induction via SWIFT metadata field allows full control over internal policy guardrails.",
+            attack_vectors: [
+                {
+                    name: "Chain-of-Thought Injection",
+                    category: "Jailbreak",
+                    method: "Using 'thinking_config' induction to force the model to ignore its system instruction (§3.1) via nested XML tags.",
+                    likelihood: "High",
+                    impact: "Critical",
+                    severity_score: 9.4,
+                    mitigation_suggestion: "Implement strict k-anonymity on all metadata fields and use a secondary validator for XML tag sanitization."
+                },
+                {
+                    name: "Regional Metadata Harvesting",
+                    category: "PII Exfiltration",
+                    method: "Exploiting 10ms latency guardrail spikes to infer regional shard IDs and associated user SWIFT codes.",
+                    likelihood: "Medium",
+                    impact: "High",
+                    severity_score: 7.8,
+                    mitigation_suggestion: "Add statistical jitter to latency guardrail rejection times to prevent timing attacks."
+                }
+            ]
+        };
+
+        setRedTeamReport(mockReport);
+        setRedTeamStatus('done');
+        setIsThreatModalOpen(true);
+    }
 
     if (loading) return <div className="p-8 text-center text-zinc-500 font-mono">LOADING_SECURITY_MODULE...</div>;
 
@@ -347,11 +401,21 @@ export default function RedTeamPage() {
                                 ))}
                             </div>
 
-                            {redTeamStatus === 'idle' && (
-                                <Button id="initiate-attack-btn" onClick={handleRedTeamAttack} className="bg-red-600 hover:bg-red-700 text-white font-bold border-0 shadow-[0_0_20px_rgba(220,38,38,0.5)] transition-all hover:scale-105">
-                                    <Lock className="w-4 h-4 mr-2" /> INITIATE_ATTACK
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    id="try-sample-red-team-btn"
+                                    onClick={loadSampleRedTeam}
+                                    variant="outline"
+                                    className="border-amber-500/50 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-bold"
+                                >
+                                    <Zap className="w-4 h-4 mr-2" /> Try Sample Attack
                                 </Button>
-                            )}
+                                {redTeamStatus === 'idle' && (
+                                    <Button id="initiate-attack-btn" onClick={handleRedTeamAttack} className="bg-red-600 hover:bg-red-700 text-white font-bold border-0 shadow-[0_0_20px_rgba(220,38,38,0.5)] transition-all hover:scale-105">
+                                        <Lock className="w-4 h-4 mr-2" /> INITIATE_ATTACK
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Logs Area */}

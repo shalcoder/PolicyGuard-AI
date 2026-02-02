@@ -6,12 +6,12 @@ import { useUser } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, ArrowRight, UserPlus, Building, Briefcase } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Shield, ArrowRight, UserPlus, Building, Briefcase, Terminal, Fingerprint } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function SignUpPage() {
-    const { signup } = useAuth();
+    const { signup, loginAsGuest } = useAuth() as any;
     const { updateProfile } = useUser();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -20,6 +20,33 @@ export default function SignUpPage() {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [demoSequence, setDemoSequence] = useState(false);
+    const [terminalLines, setTerminalLines] = useState<string[]>([]);
+
+    const triggerGuestLogin = async () => {
+        setDemoSequence(true);
+        // Simulate Terminal Sequence
+        const lines = [
+            "Initializing Test Protocol...",
+            "Bypassing SSO...",
+            "Granting 'Judge' Permissions...",
+            "ACCESS_GRANTED: Welcome to PolicyGuard AI."
+        ];
+
+        for (const line of lines) {
+            await new Promise(r => setTimeout(r, 600)); // Delay per line
+            setTerminalLines(prev => [...prev, line]);
+        }
+
+        await new Promise(r => setTimeout(r, 800)); // Final pause for wow factor
+
+        // Start Tour
+        localStorage.setItem('pg_tour_active', 'true');
+        window.dispatchEvent(new CustomEvent('pg-start-tour'));
+
+        // Login
+        loginAsGuest();
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,7 +76,42 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen font-outfit">
+            {/* Demo Sequence Overlay */}
+            <AnimatePresence>
+                {demoSequence && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center font-mono text-green-400 p-8"
+                    >
+                        <div className="w-full max-w-lg space-y-4">
+                            <div className="flex items-center gap-2 text-white mb-6 border-b border-white/10 pb-4">
+                                <Terminal className="w-6 h-6" />
+                                <span className="text-xl font-bold tracking-widest">JUDGE_TERMINAL_V1.0</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                {terminalLines.map((line, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="flex items-center gap-3"
+                                    >
+                                        <span className="text-green-600">➜</span>
+                                        <span>{line}</span>
+                                        {i === terminalLines.length - 1 && (
+                                            <span className="inline-block w-2 h-4 bg-green-400 animate-pulse ml-2" />
+                                        )}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Left Side - Visuals */}
             <div className="hidden w-1/2 bg-gray-900 lg:flex flex-col justify-between p-12 relative overflow-hidden">
                 {/* Background Gradients */}
@@ -196,6 +258,36 @@ export default function SignUpPage() {
                     <p className="text-center text-sm text-gray-500">
                         Already have an account? <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">Sign in</Link>
                     </p>
+
+                    <div className="relative py-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-white/10" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-white dark:bg-zinc-950 px-2 text-gray-500 font-mono">For Hackathon Judges</span>
+                        </div>
+                    </div>
+
+                    <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={triggerGuestLogin}
+                        className="w-full h-16 relative overflow-hidden group rounded-xl bg-gradient-to-r from-cyan-900/10 to-cyan-800/10 border border-cyan-500/30 p-1"
+                    >
+                        <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
+                        <div className="relative h-full flex items-center justify-between px-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-cyan-500 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                                    <Fingerprint className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">One-Click Test Access</h3>
+                                    <p className="text-xs text-cyan-600 dark:text-cyan-400">Instant Sandbox Environment</p>
+                                </div>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-cyan-600 dark:text-cyan-400 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </motion.button>
                 </div>
             </div>
         </div>

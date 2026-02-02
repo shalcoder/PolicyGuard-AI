@@ -3,6 +3,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Home, Shield, Activity, Settings, FileText, ChevronRight, BarChart3, LogOut, Zap, MessageSquare, Wrench, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/context/UserContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // Grouped Navigation Configuration
 const navGroups = [
@@ -42,8 +43,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     const router = useRouter();
     const { profile } = useUser();
 
-    const handleLogout = () => {
-        router.push('/');
+    const { logout } = useAuth();
+    const handleLogout = async () => {
+        await logout();
     };
 
     return (

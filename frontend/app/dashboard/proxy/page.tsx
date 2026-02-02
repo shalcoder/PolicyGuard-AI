@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Shield, AlertTriangle, Terminal, Copy, Activity, Server, Zap, ArrowRight, Eye, Clock, Code2, Cpu, Trash2, Settings2 } from 'lucide-react';
@@ -19,6 +20,7 @@ export default function ProxyPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const proxyUrl = `${apiUrl}/api/proxy`;
     const router = useRouter();
+    const { isJudge } = useAuth();
 
     // View State
     const [activeStream, setActiveStream] = useState<'stream1' | 'stream2'>('stream1');
@@ -79,6 +81,12 @@ export default function ProxyPage() {
                 if (initialConfig.isGatekeeperConnected !== undefined) setIsGatekeeperConnected(initialConfig.isGatekeeperConnected);
                 if (initialConfig.gatekeeperStep) setGatekeeperStep(initialConfig.gatekeeperStep);
                 if (initialConfig.gatewayId) setGatewayId(initialConfig.gatewayId);
+            } else if (isJudge) {
+                // Pre-fill for judges if no previous config
+                setIsSlaConnected(true);
+                setIsGatekeeperConnected(true);
+                setWizardStep(4);
+                setGatekeeperStep(4);
             }
             setIsLoaded(true);
         };

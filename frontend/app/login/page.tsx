@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,13 +10,21 @@ import { Shield, ArrowRight, Activity, CheckCircle2, Terminal, Lock, Fingerprint
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
-    const { login, loginAsGuest } = useAuth() as any;
+    const { login, loginAsGuest, user, isLoading } = useAuth() as any;
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [demoSequence, setDemoSequence] = useState(false);
     const [terminalLines, setTerminalLines] = useState<string[]>([]);
+
+    // Auto-redirect if already logged in
+    useEffect(() => {
+        if (!isLoading && user) {
+            router.push('/dashboard');
+        }
+    }, [user, isLoading, router]);
 
     const triggerGuestLogin = async () => {
         setDemoSequence(true);
@@ -24,7 +33,6 @@ export default function LoginPage() {
             "Initializing Test Protocol...",
             "Bypassing SSO...",
             "Granting 'Judge' Permissions...",
-            "Loading System Topology...",
             "ACCESS_GRANTED: Welcome to PolicyGuard AI."
         ];
 
@@ -37,6 +45,7 @@ export default function LoginPage() {
 
         // Start Tour
         localStorage.setItem('pg_tour_active', 'true');
+        window.dispatchEvent(new CustomEvent('pg-start-tour'));
 
         // Login
         loginAsGuest();

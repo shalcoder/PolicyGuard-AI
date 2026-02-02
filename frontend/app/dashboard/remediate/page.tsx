@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Wrench, AlertTriangle, CheckCircle2, Activity, BookOpen, Code, FileText, Lightbulb, Sparkles, ArrowRight, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/toast-context';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Violation {
     policy_area: string;
@@ -19,6 +20,7 @@ export default function RemediatePage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { addToast } = useToast();
+    const { isJudge } = useAuth();
 
     const [violations, setViolations] = useState<Violation[]>([]);
     const [workflowName, setWorkflowName] = useState<string>('');
@@ -103,7 +105,22 @@ export default function RemediatePage() {
                     }
                 } catch (e) {
                     console.error("Failed to fetch latest report:", e);
+                    if (isJudge) {
+                        setWorkflowName("Investment Advisor Bot v2");
+                        setWorkflowDescription("Automated retail investment advice based on risk profile.");
+                        setViolations([
+                            { policy_area: "Fiduciary Duty", status: "Non-Compliant", reason: "Potential conflict of interest in stock recommendation logic." },
+                            { policy_area: "GDPR Art 9", status: "At Risk", reason: "Sensitive biometric data used for identity verification without explicit consent store." }
+                        ]);
+                    }
                 }
+            } else if (isJudge && violations.length === 0) {
+                setWorkflowName("Investment Advisor Bot v2");
+                setWorkflowDescription("Automated retail investment advice based on risk profile.");
+                setViolations([
+                    { policy_area: "Fiduciary Duty", status: "Non-Compliant", reason: "Potential conflict of interest in stock recommendation logic." },
+                    { policy_area: "GDPR Art 9", status: "At Risk", reason: "Sensitive biometric data used for identity verification without explicit consent store." }
+                ]);
             }
             setLoading(false);
         };
