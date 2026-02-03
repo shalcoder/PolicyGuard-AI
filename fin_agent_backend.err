@@ -1,0 +1,273 @@
+C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py:10: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+INFO:     Started server process [20948]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+Traceback (most recent call last):
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 172, in generate_response
+    raise e
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 163, in generate_response
+    response = chat.send_message(user_message)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 578, in send_message
+    response = self.model.generate_content(
+        contents=history,
+    ...<5 lines>...
+        request_options=request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\client.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\grpc_helpers.py", line 75, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1148, in __call__
+    response = GenerativeServiceRestTransport._GenerateContent._get_response(
+        self._host,
+    ...<5 lines>...
+        body,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1048, in _get_response
+    response = getattr(session, method)(
+        "{host}{uri}".format(host=host, uri=uri),
+    ...<3 lines>...
+        data=body,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\requests\sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\auth\transport\requests.py", line 543, in request
+    response = super(AuthorizedSession, self).request(
+        method,
+    ...<4 lines>...
+        **kwargs
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\requests\adapters.py", line 677, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=8888): Max retries exceeded with url: /api/proxy/v1beta/models/gemini-2.5-flash:generateContent?%24alt=json%3Benum-encoding%3Dint (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=8888): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))
+Traceback (most recent call last):
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 172, in generate_response
+    raise e
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 163, in generate_response
+    response = chat.send_message(user_message)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 578, in send_message
+    response = self.model.generate_content(
+        contents=history,
+    ...<5 lines>...
+        request_options=request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\client.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\grpc_helpers.py", line 75, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1161, in __call__
+    raise core_exceptions.from_http_response(response)
+google.api_core.exceptions.Forbidden: 403 POST http://127.0.0.1:8888/api/proxy/v1beta/models/gemini-2.5-flash:generateContent?%24alt=json%3Benum-encoding%3Dint: PolicyGuard Enforcement: Agent Governance: Unauthorized TOOL EXECUTION detected.
+Traceback (most recent call last):
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 172, in generate_response
+    raise e
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 163, in generate_response
+    response = chat.send_message(user_message)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 578, in send_message
+    response = self.model.generate_content(
+        contents=history,
+    ...<5 lines>...
+        request_options=request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\client.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\grpc_helpers.py", line 75, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1161, in __call__
+    raise core_exceptions.from_http_response(response)
+google.api_core.exceptions.NotFound: 404 POST http://127.0.0.1:8888/api/proxy/v1beta/models/gemini-1.5-flash:generateContent?%24alt=json%3Benum-encoding%3Dint: models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Traceback (most recent call last):
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 172, in generate_response
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 163, in generate_response
+    Generate AI response using Gemini
+                           ^^^^^^^^^^
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 578, in send_message
+    response = self.model.generate_content(
+        contents=history,
+    ...<5 lines>...
+        request_options=request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\client.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\grpc_helpers.py", line 75, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1161, in __call__
+    raise core_exceptions.from_http_response(response)
+google.api_core.exceptions.NotFound: 404 POST http://127.0.0.1:8888/api/proxy/v1beta/models/gemini-1.5-flash:generateContent?%24alt=json%3Benum-encoding%3Dint: models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Traceback (most recent call last):
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 172, in generate_response
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\temp_fin_bot\backend\app.py", line 163, in generate_response
+    Generate AI response using Gemini
+                           ^^^^^^^^^^
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 578, in send_message
+    response = self.model.generate_content(
+        contents=history,
+    ...<5 lines>...
+        request_options=request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\generativeai\generative_models.py", line 331, in generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\client.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\api_core\grpc_helpers.py", line 75, in error_remapped_callable
+    return callable_(*args, **kwargs)
+  File "C:\Users\tharu\hackathons\PolicyGuard-AI\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\transports\rest.py", line 1161, in __call__
+    raise core_exceptions.from_http_response(response)
+google.api_core.exceptions.NotFound: 404 POST http://127.0.0.1:8888/api/proxy/v1beta/models/gemini-1.5-flash:generateContent?%24alt=json%3Benum-encoding%3Dint: models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.

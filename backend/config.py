@@ -1,5 +1,9 @@
 import os
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+# Load .env file explicitly
+load_dotenv()
 from typing import Dict
 
 class Settings(BaseModel):
@@ -12,8 +16,8 @@ class Settings(BaseModel):
     GOOGLE_API_KEY: str = GOOGLE_API_KEYS[0] if GOOGLE_API_KEYS else os.getenv("GOOGLE_API_KEY", "")
     
     # Model Configuration - Updated for Quota Availability
-    MODEL_FLASH: str = os.getenv("MODEL_FLASH", "gemini-3-flash-preview")
-    MODEL_PRO: str = os.getenv("MODEL_PRO", "gemini-3-pro-preview") 
+    MODEL_FLASH: str = os.getenv("MODEL_FLASH", "gemini-2.5-flash")
+    MODEL_PRO: str = os.getenv("MODEL_PRO", "gemini-1.5-pro") 
     
     # Unified Fallbacks
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", MODEL_FLASH)

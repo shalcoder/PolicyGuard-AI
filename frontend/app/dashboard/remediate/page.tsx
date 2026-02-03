@@ -84,7 +84,7 @@ export default function RemediatePage() {
 
                 // Final Fallback: Fetch from Backend API
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
                     const res = await fetch(`${apiUrl}/api/v1/evaluate/latest`);
                     if (res.ok) {
                         const data = await res.json();

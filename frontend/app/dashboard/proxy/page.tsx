@@ -11,13 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Shield, AlertTriangle, Terminal, Copy, Activity, Server, Zap, ArrowRight, Eye, Clock, Code2, Cpu, Trash2, Settings2 } from 'lucide-react';
+import { CheckCircle2, Shield, AlertTriangle, Terminal, Copy, Activity, Server, Zap, ArrowRight, Eye, Clock, Code2, Cpu, Trash2, Settings2, Stethoscope } from 'lucide-react';
+import { toast } from 'sonner';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function ProxyPage() {
     const [selectedLang, setSelectedLang] = useState('python');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888";
     const proxyUrl = `${apiUrl}/api/proxy`;
     const router = useRouter();
     const { isJudge } = useAuth();
@@ -356,7 +357,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
             <div>
                 <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
                     <Shield className="h-8 w-8 text-indigo-500" />
-                    AI Integration Hub
+                    Integration Wizards
                 </h1>
                 <p className="text-muted-foreground mt-2 max-w-3xl">
                     Centralize your AI governance. Click a stream below to configure:
@@ -407,7 +408,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 <div className="flex items-center gap-2 mb-2 group-hover:translate-x-1 transition-transform">
                                     <Shield className={`w-4 h-4 ${activeStream === 'stream1' ? 'text-indigo-700 dark:text-indigo-400' : 'text-indigo-600 dark:text-indigo-400'}`} />
                                     <span className={`font-black text-[10px] tracking-widest ${activeStream === 'stream1' ? 'text-indigo-800 dark:text-indigo-200' : 'text-indigo-700 dark:text-indigo-300'}`}>
-                                        STREAM 1
+                                        AI GATEWAY
                                     </span>
                                 </div>
                                 <div className="mt-2 flex items-center justify-between">
@@ -436,7 +437,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                 <div className="flex items-center gap-2 mb-2 group-hover:translate-x-1 transition-transform">
                                     <Activity className={`w-4 h-4 ${activeStream === 'stream2' ? 'text-purple-700 dark:text-purple-400' : 'text-purple-600 dark:text-purple-400'}`} />
                                     <span className={`font-black text-[10px] tracking-widest ${activeStream === 'stream2' ? 'text-purple-800 dark:text-purple-200' : 'text-purple-700 dark:text-purple-300'}`}>
-                                        STREAM 2
+                                        STABILITY HUB
                                     </span>
                                 </div>
                                 <div className="mt-2 flex items-center justify-between">
@@ -490,7 +491,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 font-bold">1</div>
-                                <h2 className="text-xl font-bold">Stream 1: AI Gatekeeper</h2>
+                                <h2 className="text-xl font-bold">AI Integration Gateway</h2>
                             </div>
                             {isGatekeeperConnected && (
                                 <Badge variant="outline" className="border-gray-500 text-gray-500 bg-gray-500/10 gap-1.5 py-1 px-3">
@@ -503,13 +504,13 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                             <div className="space-y-6">
                                 {/* Wizard Steps Indicator */}
                                 <div className="flex items-center justify-center mb-8 gap-1 md:gap-4">
-                                    {[1, 2, 3].map((step) => (
+                                    {[1, 2, 3, 4].map((step) => (
                                         <React.Fragment key={step}>
                                             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-base transition-all duration-300 ${gatekeeperStep >= step ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-200 dark:bg-zinc-800 text-gray-400'
                                                 }`}>
                                                 {step}
                                             </div>
-                                            {step < 3 && (
+                                            {step < 4 && (
                                                 <div className={`w-8 md:w-16 h-1 transition-all duration-300 ${gatekeeperStep > step ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-zinc-800'
                                                     }`} />
                                             )}
@@ -649,8 +650,8 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <Button variant="outline" size="sm" onClick={() => setGatekeeperStep(2)}>Back</Button>
-                                                        <Button id="finalize-gatekeeper-btn" size="sm" onClick={() => setIsGatekeeperConnected(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                            Finalize Integration <CheckCircle2 className="ml-2 w-4 h-4" />
+                                                        <Button id="finalize-gatekeeper-btn" size="sm" onClick={() => setGatekeeperStep(4)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                            Next: Self-Healing Setup <ArrowRight className="ml-2 w-4 h-4" />
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -686,6 +687,59 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                                             </Card>
                                         </div>
                                     </div>
+                                )}
+
+                                {gatekeeperStep === 4 && (
+                                    <Card className="border-purple-100 dark:border-purple-900/30 max-w-2xl mx-auto overflow-hidden shadow-xl">
+                                        <div className="h-2 bg-gradient-to-r from-purple-500 to-indigo-500"></div>
+                                        <CardHeader className="text-center pt-8">
+                                            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                                <Stethoscope className="w-8 h-8 text-purple-600" />
+                                            </div>
+                                            <CardTitle className="text-2xl">Enable Self-Healing?</CardTitle>
+                                            <CardDescription>
+                                                Self-healing allows PolicyGuard to automatically detect and patch vulnerabilities in your downstream agents
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-6 pb-8">
+                                            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                                    <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                                                    What Self-Healing Does:
+                                                </h4>
+                                                <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                                                    <li>Detects policy violations in real-time</li>
+                                                    <li>Generates patches using Gemini AI</li>
+                                                    <li>Deploys fixes to your agents automatically</li>
+                                                    <li>Requires Stream 2 (downstream agent) configuration</li>
+                                                </ul>
+                                            </div>
+
+                                            <div className="flex gap-4">
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex-1 h-12"
+                                                    onClick={() => {
+                                                        setIsGatekeeperConnected(true);
+                                                        toast.success('Stream 1 setup complete!');
+                                                    }}
+                                                >
+                                                    Skip for Now
+                                                </Button>
+                                                <Button
+                                                    className="flex-[2] bg-purple-600 hover:bg-purple-700 text-white h-12"
+                                                    onClick={() => {
+                                                        setIsGatekeeperConnected(true);
+                                                        router.push('/dashboard/settings?section=gatekeeper&setup=self-healing&return=proxy');
+                                                        toast.info('Complete Stream 2 setup to enable self-healing');
+                                                    }}
+                                                >
+                                                    <Stethoscope className="w-4 h-4 mr-2" />
+                                                    Yes, Enable Self-Healing
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 )}
                             </div>
                         ) : (
@@ -838,7 +892,7 @@ curl ${proxyUrl}/v1beta/models/gemini-pro:generateContent \\
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 font-bold">2</div>
-                                <h2 className="text-xl font-bold">Stream 2: System Stability</h2>
+                                <h2 className="text-xl font-bold">System Stability Hub</h2>
                             </div>
                             {isSlaConnected && (
                                 <Badge variant="outline" className="border-green-500 text-green-500 bg-green-500/10 gap-1.5 py-1 px-3">

@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useToast } from '@/components/ui/toast-context';
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -45,6 +47,8 @@ import {
 } from "../../../components/ui/dialog"
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
+import { IntegrationCodeModal } from "@/components/settings/IntegrationCodeModal";
+import { Stream1SetupWizard } from "@/components/settings/Stream1SetupWizard";
 
 // --- Types for Local Settings ---
 interface PolicySettings {
@@ -136,32 +140,44 @@ const sections = [
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'audit', label: 'Audit', icon: FileText },
     { id: 'ai', label: 'AI Model', icon: Bot },
-    { id: 'gatekeeper', label: 'Gatekeeper', icon: Shield },
+    { id: 'gatekeeper', label: 'Connection Streams', icon: Shield },
 ];
 
 export default function SettingsPage() {
     const { profile, updateProfile } = useUser();
     const { theme, setTheme } = useTheme();
+    const toast = useToast();
     const [settings, setSettings] = useState<PolicySettings>(defaultSettings);
     const [gkSettings, setGkSettings] = useState({
         stream1_url: '',
         stream1_key: '',
         stream2_url: '',
         stream2_key: '',
-        routing_mode: 'Failover'
+        routing_mode: 'Failover',
+        self_healing_enabled: false,
+        self_healing_agent_url: ''
     });
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveSection] = useState('profile');
     const [simResult, setSimResult] = useState<any>(null);
     const [showSimResult, setShowSimResult] = useState(false);
+    const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+    const [showSetupWizard, setShowSetupWizard] = useState(false);
+    const [setupStep, setSetupStep] = useState(1);
+    const [wizardData, setWizardData] = useState({
+        stream1_url: '',
+        stream1_key: '',
+        enable_self_healing: false
+    });
     const [saveMessage, setSaveMessage] = useState("");
     const [initialSettings, setInitialSettings] = useState<PolicySettings>(defaultSettings);
     const [initialGkSettings, setInitialGkSettings] = useState(gkSettings);
     const [isDirty, setIsDirty] = useState(false);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
 
     useEffect(() => {
         const fetchSettings = async () => {
+            console.log("[SETTINGS] apiUrl is:", apiUrl);
             try {
                 const res = await fetch(`${apiUrl}/api/v1/settings`);
                 if (res.ok) {
@@ -184,6 +200,27 @@ export default function SettingsPage() {
         fetchSettings();
     }, []);
 
+    // Handle URL parameters for auto-navigation
+    const searchParams = useSearchParams();
+    useEffect(() => {
+        const section = searchParams.get('section');
+        const setup = searchParams.get('setup');
+
+        if (section === 'gatekeeper') {
+            setActiveSection('gatekeeper');
+
+            // If setup=self-healing, scroll to self-healing section
+            if (setup === 'self-healing') {
+                setTimeout(() => {
+                    const selfHealingSection = document.getElementById('self-healing-section');
+                    if (selfHealingSection) {
+                        selfHealingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 300);
+            }
+        }
+    }, [searchParams]);
+
     useEffect(() => {
         const settingsDirty = JSON.stringify(settings) !== JSON.stringify(initialSettings);
         const gkDirty = JSON.stringify(gkSettings) !== JSON.stringify(initialGkSettings);
@@ -192,27 +229,66 @@ export default function SettingsPage() {
 
     const handleSave = async () => {
         setIsSaving(true);
+        setSaveMessage("");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort("TIMEOUT"), 30000); // 30s safety timeout
+
         try {
-            const res = await fetch(`${apiUrl}/api/v1/settings`, {
+            console.log("[SETTINGS] Saving to:", apiUrl);
+
+            const settingsPromise = fetch(`${apiUrl}/api/v1/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings),
+                signal: controller.signal
             });
-            if (!res.ok) throw new Error("Failed to save settings");
 
-            const gkRes = await fetch(`${apiUrl}/api/v1/settings/gatekeeper`, {
+            const gkPromise = fetch(`${apiUrl}/api/v1/settings/gatekeeper`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(gkSettings),
+                signal: controller.signal
             });
-            if (!gkRes.ok) throw new Error("Failed to save Gatekeeper settings");
 
-            setInitialSettings(settings);
-            // Simulate profile save (it's already local, just strict sync)
-            setSaveMessage("Saved successfully!");
+            const [res, gkRes] = await Promise.all([settingsPromise, gkPromise]);
+            clearTimeout(timeoutId);
+
+            console.log("[SETTINGS] Response status:", res.status, gkRes.status);
+
+            if (!res.ok) throw new Error(`General Settings: ${res.statusText}`);
+            if (!gkRes.ok) throw new Error(`Connection Streams: ${gkRes.statusText}`);
+
+            setInitialSettings(JSON.parse(JSON.stringify(settings)));
+            setInitialGkSettings(JSON.parse(JSON.stringify(gkSettings)));
+
+            // Update localStorage to sync self-healing state across pages
+            const savedConfig = localStorage.getItem('pg_stability_config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                config.selfHealingEnabled = gkSettings.self_healing_enabled || false;
+                localStorage.setItem('pg_stability_config', JSON.stringify(config));
+            } else {
+                // Create new config if it doesn't exist
+                localStorage.setItem('pg_stability_config', JSON.stringify({
+                    selfHealingEnabled: gkSettings.self_healing_enabled || false
+                }));
+            }
+
+            toast.success("All settings saved successfully!");
+            setSaveMessage("Saved!");
             setTimeout(() => setSaveMessage(""), 3000);
-        } catch (error) {
-            console.error("Save failed:", error);
+        } catch (error: any) {
+            clearTimeout(timeoutId);
+            console.error("[SETTINGS] Save error:", error);
+
+            let errorMessage = error.message || "Failed to save settings";
+            if (error.name === 'AbortError' || error === 'TIMEOUT') {
+                errorMessage = "Request timed out (30s). The backend took too long to respond. Please check your network or Firebase connection.";
+            }
+
+            toast.error(errorMessage);
+            setSaveMessage("Retry Save");
         } finally {
             setIsSaving(false);
         }
@@ -769,11 +845,22 @@ export default function SettingsPage() {
                                 />
                                 <SettingsGroup>
                                     <div className="py-5 space-y-4">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-1.5 bg-blue-100 rounded text-blue-600">
-                                                <Zap className="h-3.5 w-3.5" />
+                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                                                    <Zap className="h-3.5 w-3.5" />
+                                                </div>
+                                                <Label className="text-base font-semibold">Stream 1: Upstream LLM</Label>
                                             </div>
-                                            <Label className="text-base font-semibold">Stream 1: Upstream LLM</Label>
+                                            {!gkSettings.stream1_url && (
+                                                <Button
+                                                    onClick={() => setShowSetupWizard(true)}
+                                                    size="sm"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                >
+                                                    Setup Wizard
+                                                </Button>
+                                            )}
                                         </div>
                                         <div className="grid gap-3">
                                             <div className="space-y-1.5">
@@ -832,6 +919,57 @@ export default function SettingsPage() {
                                 </SettingsGroup>
                             </div>
 
+                            <div id="self-healing-section">
+                                <GroupHeader
+                                    title="Self-Healing Lab (Optional)"
+                                    description="Enable autonomous vulnerability patching for your Stream 2 agent."
+                                />
+                                <SettingsGroup>
+                                    <SettingsRow>
+                                        <div className="space-y-0.5 flex-1">
+                                            <Label className="text-base font-medium">Enable Self-Healing</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Automatically detect and patch agent vulnerabilities
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={gkSettings.self_healing_enabled || false}
+                                            onCheckedChange={(checked) => {
+                                                setGkSettings(prev => ({ ...prev, self_healing_enabled: checked }));
+                                                if (checked) {
+                                                    setShowIntegrationModal(true);
+                                                }
+                                            }}
+                                        />
+                                    </SettingsRow>
+
+                                    {gkSettings.self_healing_enabled && (
+                                        <SettingsRow noDivider>
+                                            <div className="flex flex-col gap-3 w-full">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm text-green-600 font-medium flex items-center gap-2">
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        Self-Healing Active
+                                                    </span>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setShowIntegrationModal(true)}
+                                                        className="gap-2"
+                                                    >
+                                                        <Bot className="h-4 w-4" />
+                                                        View Integration Code
+                                                    </Button>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Your agent will receive automatic patches when vulnerabilities are detected.
+                                                </p>
+                                            </div>
+                                        </SettingsRow>
+                                    )}
+                                </SettingsGroup>
+                            </div>
+
                             <div>
                                 <GroupHeader title="Routing Strategy" />
                                 <SettingsGroup>
@@ -882,6 +1020,24 @@ export default function SettingsPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <IntegrationCodeModal
+                open={showIntegrationModal}
+                onClose={() => setShowIntegrationModal(false)}
+            />
+
+            <Stream1SetupWizard
+                open={showSetupWizard}
+                onClose={() => setShowSetupWizard(false)}
+                onComplete={(data) => {
+                    setGkSettings(prev => ({
+                        ...prev,
+                        stream1_url: data.stream1_url,
+                        stream1_key: data.stream1_key,
+                        self_healing_enabled: data.self_healing_enabled
+                    }));
+                }}
+            />
         </div >
     );
 }

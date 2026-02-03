@@ -32,6 +32,8 @@ class GatekeeperSettings(BaseModel):
     stream2_url: str = "http://localhost:8001" # Fin-Agent default
     stream2_key: str = ""
     routing_mode: str = "Failover" # Failover | Parallel | Semantic
+    self_healing_enabled: bool = False
+    self_healing_agent_url: str = ""
 
 class PolicySettings(BaseModel):
     domains: PolicyDomains = PolicyDomains()

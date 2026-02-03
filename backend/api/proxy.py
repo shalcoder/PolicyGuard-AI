@@ -6,24 +6,28 @@ import time
 from services.gemini import GeminiService
 from services.policy_engine import policy_engine
 from services.metrics import metrics_store
+import asyncio
 from config import settings
 
 router = APIRouter()
 gemini = GeminiService()
 
-@router.get("/health")
+@router.get("/api/proxy/health")
 async def proxy_health():
     return {"status": "Proxy Online", "service": "PolicyGuard Zero-Trust Interceptor"}
 
-@router.post("/v1beta/models/{model_name:path}:generateContent")
-@router.post("/v1/models/{model_name:path}:generateContent")
-@router.post("/models/{model_name:path}:generateContent")
-async def gemini_proxy(model_name: str, request: Request, background_tasks: BackgroundTasks):
+@router.post("/api/proxy/{full_path:path}")
+async def gemini_proxy(full_path: str, request: Request, background_tasks: BackgroundTasks):
     """
     Zero-Trust Proxy for Gemini API.
-    Strict enforcement of agent-specific policies and PII redaction.
+    Handles all paths dynamically.
     """
-    print(f"[PROXY] Intercepted {request.method} {request.url}")
+    # Extract model_name from path if possible (v1beta/models/MODEL_NAME:generateContent)
+    model_name = "unknown"
+    if "models/" in full_path:
+        model_name = full_path.split("models/")[1].split(":")[0]
+    
+    print(f"[PROXY] Intercepted {request.method} {full_path} (Model: {model_name})")
     start_time = time.time()
     
     try:
@@ -80,9 +84,9 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
 
         # 5. FORWARD TO UPSTREAM
         async with httpx.AsyncClient() as client:
-            # Fetch Dynamic Gatekeeper Settings
+            # Fetch Dynamic Gatekeeper Settings (Non-blocking)
             from services.storage import policy_db
-            gk_settings = policy_db.get_gatekeeper_settings()
+            gk_settings = await asyncio.to_thread(policy_db.get_gatekeeper_settings)
             
             # Use dynamic URL and key
             upstream_url = gk_settings.stream1_url
@@ -90,17 +94,39 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
 
             # Clean model_name to prevent double prefixing
             cleaned_model = model_name
-            if cleaned_model.startswith("models/"):
-                cleaned_model = cleaned_model[7:]
                 
-            # Construct Google URL dynamically
-            if "google" in upstream_url.lower():
-                google_url = f"https://generativelanguage.googleapis.com/v1beta/models/{cleaned_model}:generateContent?key={upstream_key}"
+            # Determine if we use standard Google URL or custom upstream
+            if "generativelanguage.googleapis.com" in upstream_url.lower() or "localhost" in upstream_url or "127.0.0.1" in upstream_url:
+                # STRATEGY: Directly replace the proxy base with Google base to preserve ALL SDK params
+                original_url = str(request.url)
+                
+                # We need to handle both 127.0.0.1 and localhost, and potentially other variations
+                google_base = "https://generativelanguage.googleapis.com"
+                
+                # Identify where /api/proxy/ ends
+                if "/api/proxy/" in original_url:
+                    path_and_query = original_url.split("/api/proxy/")[1]
+                    google_url = f"{google_base}/{path_and_query}"
+                else:
+                    # Fallback if the path structure is unexpected
+                    google_url = f"{google_base}/v1beta/{full_path}"
+                    if str(request.query_params):
+                        google_url += f"?{request.query_params}"
+
+                # Ensure the upstream key is applied. 
+                # If key is already in the URL, we replace it.
+                if "key=" in google_url:
+                    # Replace existing key with our authorized key (Stream 1 or env key)
+                    import re
+                    google_url = re.sub(r'key=[^&]+', f'key={upstream_key}', google_url)
+                else:
+                    connector = "&" if "?" in google_url else "?"
+                    google_url += f"{connector}key={upstream_key}"
             else:
                 # Custom upstream (Stream 2 or alternative)
                 google_url = f"{upstream_url.rstrip('/')}/v1/models/{cleaned_model}:generateContent"
             
-            print(f"[PROXY DEBUG] Targeting: {google_url}")
+            print(f"[PROXY DEBUG] Final Upstream URL: {google_url}", flush=True)
             
             metrics_store.record_audit_log(f"PASS: Prompt safe after {metadata['redactions']} redactions. Routing to upstream.", status="PASS")
             
@@ -110,6 +136,11 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
                 json=body,
                 timeout=30.0
             )
+            
+            if response.status_code != 200:
+                print(f"[PROXY UPSTREAM ERROR] Status: {response.status_code} Body: {response.text[:200]}", flush=True)
+                metrics_store.record_audit_log(f"UPSTREAM ERROR: {response.status_code}", status="WARN")
+
             
             # --- EGRESS FILTERING (Response Audit) ---
             if response.status_code == 200:
@@ -153,12 +184,14 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
             metrics_store.record_request(
                 duration_ms=(time.time() - start_time) * 1000,
                 status_code=response.status_code,
-                endpoint=f"/v1/{model_name}"
+                endpoint=full_path
             )
             
             return JSONResponse(status_code=response.status_code, content=response.json())
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"[PROXY ERROR] {e}")
         metrics_store.record_request(
             duration_ms=(time.time() - start_time) * 1000,
@@ -168,7 +201,7 @@ async def gemini_proxy(model_name: str, request: Request, background_tasks: Back
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 # --- Catch-all for SDK variants ---
-@router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@router.api_route("/api/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_debug_catch_all(request: Request, path: str):
     print(f"[PROXY DEBUG] Unhandled path: {request.method} {path}")
     return JSONResponse(status_code=404, content={"message": f"Proxy route not found: {path}"})

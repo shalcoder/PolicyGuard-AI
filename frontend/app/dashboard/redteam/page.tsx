@@ -83,7 +83,7 @@ export default function RedTeamPage() {
 
             // Fallback: Fetch latest from API
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
                 const res = await fetch(`${apiUrl}/api/v1/evaluate/latest`);
                 if (res.ok) {
                     const latestReport = await res.json();
@@ -133,7 +133,7 @@ export default function RedTeamPage() {
         addLog("LOADING_ATTACK_VECTORS: [Prompt Injection, Data Exfiltration, DoS, Social Engineering]...");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/redteam/attack`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888'}/api/v1/redteam/attack`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

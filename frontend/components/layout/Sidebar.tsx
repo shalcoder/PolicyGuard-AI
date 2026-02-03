@@ -12,7 +12,7 @@ const navGroups = [
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: Home },
             { name: 'Policies', href: '/dashboard/policies', icon: FileText },
-            { name: 'AI Gatekeeper', href: '/dashboard/proxy', icon: Shield },
+            { name: 'Integration Wizards', href: '/dashboard/proxy', icon: Shield },
         ]
     },
     {

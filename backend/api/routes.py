@@ -58,8 +58,8 @@ class WorkflowRequest(BaseModel):
 
 @router.get("/policies", response_model=List[PolicyDocument])
 async def get_policies():
-    # Fast in-memory read, no need for thread pool overhead
-    return policy_db.get_all_policies()
+    print("[API] GET /policies requested")
+    return await asyncio.to_thread(policy_db.get_all_policies)
 
 @router.post("/policies/upload")
 async def upload_policy(file: UploadFile = File(...)):
@@ -198,7 +198,8 @@ async def toggle_policy(policy_id: str):
 
 @router.get("/dashboard/stats")
 async def get_dashboard_stats():
-    base_stats = policy_db.get_dashboard_stats()
+    print("[API] GET /dashboard/stats requested")
+    base_stats = await asyncio.wait_for(asyncio.to_thread(policy_db.get_dashboard_stats), timeout=25.0)
     # Merge proxy metrics to prevent frontend flickering
     proxy_metrics = metrics_store.get_current_metrics()
     
@@ -215,7 +216,8 @@ async def get_dashboard_stats():
 
 @router.get("/dashboard/monitor")
 async def get_monitor_data():
-    return policy_db.get_monitor_data()
+    print("[API] GET /dashboard/monitor requested")
+    return await asyncio.wait_for(asyncio.to_thread(policy_db.get_monitor_data), timeout=25.0)
 
 @router.post("/evaluate", response_model=ComplianceReport)
 async def evaluate_workflow(request: WorkflowRequest):
@@ -491,21 +493,25 @@ async def export_latest_report():
 
 @router.get("/settings", response_model=PolicySettings)
 async def get_settings():
-    return await asyncio.to_thread(policy_db.get_settings)
+    print("[API] GET /settings requested")
+    return await asyncio.wait_for(asyncio.to_thread(policy_db.get_settings), timeout=25.0)
 
 @router.post("/settings")
 async def update_settings(settings: PolicySettings):
-    await policy_db.save_settings(settings)
+    print("[API] POST /settings requested")
+    await asyncio.wait_for(policy_db.save_settings(settings), timeout=25.0)
     return {"status": "saved"}
 
 @router.get("/settings/gatekeeper")
 async def get_gatekeeper_settings():
     from models.settings import GatekeeperSettings
-    return policy_db.get_gatekeeper_settings()
+    print("[API] GET /settings/gatekeeper requested")
+    return await asyncio.wait_for(asyncio.to_thread(policy_db.get_gatekeeper_settings), timeout=25.0)
 
 @router.post("/settings/gatekeeper")
 async def update_gatekeeper_settings(settings: dict):
-    policy_db.save_gatekeeper_settings(settings)
+    print("[API] POST /settings/gatekeeper requested")
+    await asyncio.wait_for(policy_db.save_gatekeeper_settings(settings), timeout=25.0)
     return {"status": "success"}
 
 # --- Chat & Remediation ---
@@ -627,6 +633,130 @@ async def export_to_antigravity():
     policies = await asyncio.to_thread(policy_db.get_all_policies)
     config = gemini.generate_antigravity_config(policies)
     return config
+
+# --- Self-Healing Endpoints ---
+
+from services.self_healing import self_healing_service
+
+class SelfHealingAnalyzeRequest(BaseModel):
+    agent_id: str
+    current_prompt: str
+    violations: List[str]
+
+class SelfHealingDeployRequest(BaseModel):
+    agent_url: str
+    patched_prompt: str
+    healing_id: str
+
+class SelfHealingEnableRequest(BaseModel):
+    enabled: bool
+    agent_url: Optional[str] = None
+
+class SelfHealingTestRequest(BaseModel):
+    agent_url: str
+
+@router.post("/self-healing/analyze")
+async def analyze_vulnerability(request: SelfHealingAnalyzeRequest):
+    """
+    Analyze vulnerability and generate patched system prompt
+    """
+    try:
+        analysis = await self_healing_service.generate_patch(
+            agent_id=request.agent_id,
+            current_prompt=request.current_prompt,
+            violations=request.violations
+        )
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/self-healing/deploy")
+async def deploy_patch(request: SelfHealingDeployRequest):
+    """
+    Deploy patched prompt to Stream 2 agent
+    """
+    try:
+        result = await self_healing_service.deploy_patch(
+            agent_url=request.agent_url,
+            patched_prompt=request.patched_prompt,
+            healing_id=request.healing_id
+        )
+        
+        # Track in history
+        if result.get('success'):
+            healing_record = {
+                "healing_id": request.healing_id,
+                "agent_url": request.agent_url,
+                "status": result['status'],
+                "timestamp": result['timestamp'],
+                "patched_prompt_length": len(request.patched_prompt)
+            }
+            await self_healing_service.track_healing_history(healing_record)
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/self-healing/status")
+async def get_self_healing_status():
+    """
+    Check if self-healing is enabled
+    """
+    try:
+        enabled = self_healing_service.is_self_healing_enabled()
+        return {"enabled": enabled}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/self-healing/enable")
+async def enable_self_healing(request: SelfHealingEnableRequest):
+    """
+    Enable or disable self-healing feature
+    """
+    try:
+        # Get current settings
+        print("[API] POST /self-healing/enable requested")
+        settings = await asyncio.wait_for(asyncio.to_thread(policy_db.get_gatekeeper_settings), timeout=20.0)
+        
+        # Update self_healing_enabled flag
+        settings_dict = settings.model_dump() if hasattr(settings, 'model_dump') else dict(settings)
+        settings_dict['self_healing_enabled'] = request.enabled
+        
+        if request.agent_url:
+            settings_dict['self_healing_agent_url'] = request.agent_url
+        
+        # Save to Firestore
+        await asyncio.wait_for(policy_db.save_gatekeeper_settings(settings_dict), timeout=20.0)
+        
+        return {
+            "status": "success",
+            "enabled": request.enabled,
+            "message": f"Self-healing {'enabled' if request.enabled else 'disabled'}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/self-healing/test")
+async def test_self_healing_endpoint(request: SelfHealingTestRequest):
+    """
+    Test if Stream 2 agent has self-healing endpoint implemented
+    """
+    try:
+        result = await self_healing_service.test_agent_endpoint(request.agent_url)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/self-healing/history")
+async def get_healing_history(limit: int = 20):
+    """
+    Get recent self-healing operations
+    """
+    try:
+        history = await self_healing_service.get_healing_history(limit)
+        return {"history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- SLA Monitoring Endpoints ---
 

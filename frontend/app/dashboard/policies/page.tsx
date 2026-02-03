@@ -28,7 +28,7 @@ export default function PoliciesPage() {
     const fetchPolicies = async () => {
         try {
             setLoading(true);
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
 
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
@@ -67,7 +67,7 @@ export default function PoliciesPage() {
         if (!confirm(`Are you sure you want to delete policy: ${name}?`)) return;
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
             const res = await fetch(`${apiUrl}/api/v1/policies/${id}`, {
                 method: 'DELETE',
             });
@@ -88,7 +88,7 @@ export default function PoliciesPage() {
             p.id === id ? { ...p, is_active: !currentStatus } : p
         ));
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
         try {
             const url = `${apiUrl}/api/v1/policies/${id}/toggle`;
             const res = await fetch(url, {

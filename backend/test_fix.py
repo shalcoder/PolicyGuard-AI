@@ -1,17 +1,13 @@
-import google.generativeai as genai
+from fastapi import FastAPI
+import uvicorn
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+app = FastAPI()
 
-api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    print("GOOGLE_API_KEY not found in .env")
-else:
-    genai.configure(api_key=api_key)
-    try:
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content("Hello, are you working correctly?")
-        print(f"Response from gemini-2.0-flash: {response.text}")
-    except Exception as e:
-        print(f"Error calling gemini-2.0-flash: {e}")
+@app.get("/")
+async def root():
+    return {"status": "minimal_server_ok", "pid": os.getpid()}
+
+if __name__ == "__main__":
+    print("Starting minimal test server on port 8000...")
+    uvicorn.run(app, host="0.0.0.0", port=8000)

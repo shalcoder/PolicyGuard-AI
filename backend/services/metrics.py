@@ -4,6 +4,8 @@ from dataclasses import dataclass, asdict
 from collections import deque
 import statistics
 import json
+import threading
+import os
 
 @dataclass
 class RequestMetric:
@@ -35,16 +37,22 @@ class MetricsStore:
         self.start_time = datetime.now()
         self.total_downtime_seconds = 0.0  # Track total downtime for uptime calculations
         self.db = None
-        try:
-             from services.storage import policy_db
-             self.db = policy_db.db
-             print(f"[METRICS] DB Connection attached: {self.db is not None}")
-        except Exception as e:
-             print(f"[METRICS] ❌ DB Attachment Failed: {e}")
+    def set_db(self, db):
+        """Manually attach database client to avoid circular imports"""
+        self.db = db
+        print(f"[METRICS] DB Connection attached: {self.db is not None}")
+        if self.db:
+             threading.Thread(target=self._hydrate_history, daemon=True).start()
         
-        # Hydrate history
-        import threading
-        threading.Thread(target=self._hydrate_history, daemon=True).start()
+        # Persistence and Hydration handled after set_db or on first use in local mode
+        self._dirty = False # Flag for local periodic save
+        self._stop_event = threading.Event()
+        
+        # If in local mode, we can hydrate immediately
+        from config import settings
+        if not settings.USE_FIREBASE:
+             threading.Thread(target=self._hydrate_history, daemon=True).start()
+             threading.Thread(target=self._periodic_save_loop, daemon=True).start()
         
     def _hydrate_history(self):
         """Load history from persistent store (Firebase or Local)"""
@@ -54,9 +62,8 @@ class MetricsStore:
         if self.db:
             self._load_history_from_firebase()
         else:
-            print("[METRICS] ⚠️ No DB connection for hydration - History will be empty")
-            # Future: Local JSON load
-            pass
+            print("[METRICS] Hydrating history from local file...")
+            self._load_history_from_local()
 
     def _load_history_from_firebase(self):
         try:
@@ -88,9 +95,9 @@ class MetricsStore:
             for m in reversed(loaded):
                 self.requests.append(m)
                 
-            print(f"[METRICS] ✅ Hydrated {len(loaded)} historical requests")
+            print(f"[METRICS] SUCCESS: Hydrated {len(loaded)} historical requests")
         except Exception as e:
-            print(f"[METRICS] ⚠️ History hydration failed: {e}")
+            print(f"[METRICS] WARNING: History hydration failed: {e}")
         
     def record_request(
         self,
@@ -112,19 +119,26 @@ class MetricsStore:
         )
         self.requests.append(metric)
         
-        # Persist to Firebase if available
+        # Persist metrics
         if self.db:
-            try:
-                self.db.collection('proxy_metrics').add({
-                    "timestamp": metric.timestamp.isoformat(),
-                    "duration_ms": duration_ms,
-                    "status_code": status_code,
-                    "pii_detected": pii_detected,
-                    "policy_violation": policy_violation,
-                    "endpoint": endpoint
-                })
-            except Exception as e:
-                print(f"Failed to persist metric: {e}")
+            def _persist():
+                try:
+                    self.db.collection('proxy_metrics').add({
+                        "timestamp": metric.timestamp.isoformat(),
+                        "duration_ms": duration_ms,
+                        "status_code": status_code,
+                        "pii_detected": pii_detected,
+                        "policy_violation": policy_violation,
+                        "endpoint": endpoint
+                    })
+                except Exception as e:
+                    print(f"[METRICS ERR] Failed to persist metric: {e}")
+            
+            import threading
+            threading.Thread(target=_persist, daemon=True).start()
+        else:
+            # Local mode: Mark dirty for debounced periodic save
+            self._dirty = True
 
     def record_audit_log(self, event: str, status: str = "INFO", details: Optional[str] = None):
         """Record a real-time audit event"""
@@ -137,12 +151,19 @@ class MetricsStore:
         )
         self.audit_logs.append(log)
         
-        # Persist to Firebase if available
+        # Persist audit logs
         if self.db:
-            try:
-                self.db.collection('proxy_logs').add(asdict(log))
-            except Exception as e:
-                 print(f"Failed to persist audit log: {e}")
+            def _persist_log():
+                try:
+                    self.db.collection('proxy_logs').add(asdict(log))
+                except Exception as e:
+                    print(f"[METRICS ERR] Failed to persist audit log: {e}")
+            
+            import threading
+            threading.Thread(target=_persist_log, daemon=True).start()
+        else:
+            # Local mode: Mark dirty for debounced periodic save
+            self._dirty = True
 
     def get_audit_logs(self) -> List[Dict]:
         """Get recent audit logs"""
@@ -278,6 +299,57 @@ class MetricsStore:
     def record_downtime(self, duration_seconds: float):
         """Record a downtime event"""
         self.total_downtime_seconds += duration_seconds
+
+    def _load_history_from_local(self):
+        """Load history from local metrics_store.json"""
+        if os.path.exists("metrics_store.json"):
+            try:
+                with open("metrics_store.json", "r") as f:
+                    data = json.load(f)
+                    loaded_requests = data.get('requests', [])
+                    for d in loaded_requests:
+                        self.requests.append(RequestMetric(
+                            timestamp=datetime.fromisoformat(d['timestamp']),
+                            duration_ms=d.get('duration_ms', 0),
+                            status_code=d.get('status_code', 200),
+                            pii_detected=d.get('pii_detected', False),
+                            policy_violation=d.get('policy_violation', False),
+                            endpoint=d.get('endpoint', 'unknown')
+                        ))
+                    
+                    loaded_logs = data.get('audit_logs', [])
+                    for d in loaded_logs:
+                        self.audit_logs.append(AuditLog(**d))
+                    
+                print(f"[METRICS] SUCCESS: Loaded {len(loaded_requests)} requests and {len(loaded_logs)} logs from disk")
+            except Exception as e:
+                print(f"[METRICS] ERROR: Failed to load local history: {e}")
+
+    def _save_to_local(self):
+        """Save current in-memory metrics to local disk"""
+        try:
+            data = {
+                "requests": [
+                    {
+                        **asdict(r),
+                        "timestamp": r.timestamp.isoformat()
+                    } for r in self.requests
+                ],
+                "audit_logs": [asdict(l) for l in self.audit_logs]
+            }
+            with open("metrics_store.json", "w") as f:
+                json.dump(data, f)
+            self._dirty = False
+        except Exception as e:
+            print(f"[METRICS] ERROR: Failed to save local history: {e}")
+
+    def _periodic_save_loop(self):
+        """Background loop to save dirty metrics every 10 seconds"""
+        import time
+        while not self._stop_event.is_set():
+            if self._dirty:
+                self._save_to_local()
+            time.sleep(10)
 
 # Global metrics instance
 metrics_store = MetricsStore()

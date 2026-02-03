@@ -1,5 +1,7 @@
 import json
 import os
+import asyncio
+import threading
 from typing import List
 from models.policy import PolicyDocument
 from models.settings import PolicySettings, GatekeeperSettings
@@ -18,8 +20,8 @@ class PolicyStorage:
         self._local_vector_path = "vectors.json"
         self._local_store_path = "policy_store.json"
         self._use_firebase = settings.USE_FIREBASE
-        import threading
         self._lock = threading.Lock()
+        self._local_settings = PolicySettings() # Initialize default settings
         
         if self._use_firebase:
             # Init Firebase
@@ -43,7 +45,6 @@ class PolicyStorage:
                 print("[OK] Connected to Firebase Firestore (Production Mode)")
                 
                 # Load data in background thread to avoid blocking requests
-                import threading
                 loading_thread = threading.Thread(target=self._load_from_firebase_background, daemon=True)
                 loading_thread.start()
                 print("[BUSY] Loading Firebase data in background...")
@@ -54,8 +55,6 @@ class PolicyStorage:
                 print("  FIREBASE CONNECTION FAILED")
                 print("  1. Place 'serviceAccountKey.json' in /backend")
                 print("  2. OR set FIREBASE_CREDENTIALS env var with the JSON string")
-                print("  3. Run 'python migrate_to_firebase.py' after connecting")
-                print("!"*60 + "\n")
                 print("  3. Run 'python migrate_to_firebase.py' after connecting")
                 print("!"*60 + "\n")
                 print("Application running in CRIPPLED state -> FALLING BACK TO LOCAL STORAGE.")
@@ -107,19 +106,23 @@ class PolicyStorage:
             self._load_from_firebase()
     
     def _load_from_local_json(self):
-        """Load policies from local JSON file (fast, no network overhead)"""
+        """Load data from local JSON files (fast, no network overhead)"""
         try:
+            # 1. Load Policies
             if os.path.exists(self._local_store_path):
                 with open(self._local_store_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    # Only load policies, not evaluations (to save RAM)
                     policies_data = data.get('policies', [])
                     self._policies = [PolicyDocument(**p) for p in policies_data]
-                    self._initialized = True
-            else:
-                print(f"⚠️ {self._local_store_path} not found, starting with empty storage")
-                self._policies = []
-                self._initialized = True
+                    print(f"[STORAGE] Loaded {len(self._policies)} policies from {self._local_store_path}")
+            
+            # 2. Load General Settings
+            if os.path.exists("settings_store.json"):
+                with open("settings_store.json", "r") as f:
+                    self._local_settings = PolicySettings(**json.load(f))
+                    print("[STORAGE] Loaded general settings from settings_store.json")
+            
+            self._initialized = True
         except Exception as e:
             print(f"Error loading from local JSON: {e}")
             self._policies = []
@@ -193,9 +196,9 @@ class PolicyStorage:
         try:
             with open(self._local_vector_path, 'w') as f:
                 json.dump(self._vector_store, f)
-            print(f"💾 Saved {len(self._vector_store)} vectors to local disk")
+            print(f"[STORAGE] Saved {len(self._vector_store)} vectors to local disk")
         except Exception as e:
-            print(f"❌ Failed to save local vectors: {e}")
+            print(f"[STORAGE] ERROR: Failed to save local vectors: {e}")
 
     def _load_vectors_from_disk(self):
         """Load vectors from local JSON"""
@@ -205,9 +208,9 @@ class PolicyStorage:
                     data = json.load(f)
                     if isinstance(data, list):
                         self._vector_store = data
-                        print(f"📂 Loaded {len(self._vector_store)} vectors from local disk")
+                        print(f"[STORAGE] Loaded {len(self._vector_store)} vectors from local disk")
             except Exception as e:
-                print(f"❌ Failed to load local vectors: {e}")
+                print(f"[STORAGE] ERROR: Failed to load local vectors: {e}")
 
     def _load_vectors(self):
         self._vector_store = []
@@ -218,7 +221,7 @@ class PolicyStorage:
                     vecs = p.reference.collection('vectors').stream()
                     for v in vecs:
                         self._vector_store.append(v.to_dict())
-                print(f"✅ Loaded {len(self._vector_store)} policy vector chunks from Firebase")
+                print(f"[STORAGE] SUCCESS: Loaded {len(self._vector_store)} policy vector chunks from Firebase")
             except Exception as e:
                 print(f"Firebase Vector Load Error: {e}")
         
@@ -313,11 +316,9 @@ class PolicyStorage:
             except Exception as e: print(f"Firebase Add Error: {e}")
 
     def get_dashboard_stats(self):
+        # Return whatever is current (background thread handles loading)
         if not self._initialized:
-            with self._lock:
-                if not self._initialized:
-                    self._load_from_firebase()
-                    self._load_vectors()
+            print("[STORAGE] get_dashboard_stats: Data not yet initialized, returning empty stats")
             
         active_policies = len([p for p in self._policies if p.is_active])
         total_evaluations = len(self._evaluations)
@@ -477,7 +478,7 @@ class PolicyStorage:
 
     # --- Settings Management ---
     def get_settings(self) -> PolicySettings:
-        # Check cache/local first if needed, but for now fetch from DB
+        print("[STORAGE] Fetching global policy settings...")
         if self._use_firebase:
             try:
                 doc = self.db.collection('settings').document('global').get()
@@ -553,6 +554,7 @@ class PolicyStorage:
 
     def get_gatekeeper_settings(self) -> GatekeeperSettings:
         """Fetch Gatekeeper configuration from Firebase"""
+        print("[STORAGE] get_gatekeeper_settings requested")
         if self._use_firebase:
             try:
                 doc = self.db.collection('settings').document('gatekeeper').get()
@@ -562,22 +564,90 @@ class PolicyStorage:
                 print(f"[STORAGE] Failed to fetch Gatekeeper settings: {e}")
         
         # Default fallback
+        if os.path.exists("gatekeeper_settings.json"):
+            try:
+                with open("gatekeeper_settings.json", "r") as f:
+                    return GatekeeperSettings(**json.load(f))
+            except: pass
         return GatekeeperSettings()
 
-    def save_gatekeeper_settings(self, settings_data: dict):
+    async def save_gatekeeper_settings(self, settings_data: dict):
         """Save Gatekeeper configuration to Firebase"""
+        def _save():
+            if self._use_firebase:
+                try:
+                    self.db.collection('settings').document('gatekeeper').set(settings_data)
+                    return True
+                except Exception as e:
+                    print(f"[STORAGE] Failed to save Gatekeeper settings: {e}")
+                    return False
+            else:
+                # Save locally
+                try:
+                    with open("gatekeeper_settings.json", "w") as f:
+                        json.dump(settings_data, f, indent=2)
+                    print("[STORAGE] Saved Gatekeeper settings to local JSON")
+                    return True
+                except Exception as e:
+                    print(f"[STORAGE] Failed to save local Gatekeeper settings: {e}")
+                    return False
+        
+        return await asyncio.to_thread(_save)
+    
+    # --- Self-Healing History ---
+    
+    async def add_healing_record(self, healing_record: dict):
+        """Save self-healing operation to history"""
         if self._use_firebase:
             try:
-                self.db.collection('settings').document('gatekeeper').set(settings_data)
-            except Exception as e:
-                print(f"[STORAGE] Failed to save Gatekeeper settings: {e}")
+                if "timestamp" not in healing_record:
+                    import datetime
+                    healing_record["timestamp"] = datetime.datetime.now().isoformat()
                 
-    def save_settings(self, settings: PolicySettings):
-        if self.db:
-            try:
-                self.db.collection('settings').document('global').set(settings.model_dump())
+                self.db.collection('healing_history').add(healing_record)
+                print(f"[STORAGE] Saved healing record: {healing_record.get('healing_id')}")
             except Exception as e:
-                print(f"Failed to save settings to Firebase: {e}")
+                print(f"[STORAGE] Failed to save healing record: {e}")
+    
+    async def get_healing_history(self, limit: int = 20) -> list:
+        """Get recent self-healing operations"""
+        history = []
+        if self._use_firebase:
+            try:
+                from firebase_admin import firestore
+                docs = self.db.collection('healing_history')\
+                    .order_by('timestamp', direction=firestore.Query.DESCENDING)\
+                    .limit(limit).stream()
+                
+                for doc in docs:
+                    history.append(doc.to_dict())
+            except Exception as e:
+                print(f"[STORAGE] Failed to fetch healing history: {e}")
+        
+        return history
+                
+    async def save_settings(self, settings: PolicySettings):
+        print("[STORAGE] save_settings requested")
+        def _save():
+            print("[STORAGE] Internal _save (global) starting...")
+            if self.db:
+                try:
+                    self.db.collection('settings').document('global').set(settings.model_dump())
+                    return True
+                except Exception as e:
+                    print(f"Failed to save settings to Firebase: {e}")
+                    return False
+            else:
+                # Local fallback for general settings
+                try:
+                    with open("settings_store.json", "w") as f:
+                        json.dump(settings.model_dump(), f, indent=2)
+                    return True
+                except Exception as e:
+                    print(f"Failed to save local settings: {e}")
+                    return False
+        
+        return await asyncio.to_thread(_save)
 
 # Global instance
 policy_db = PolicyStorage()

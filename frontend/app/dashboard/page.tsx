@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 interface DashboardStats {
     traces_analyzed: number;
@@ -66,9 +67,8 @@ interface LogEntry {
 
 export default function OverviewPage() {
     const { isJudge } = useAuth();
-    // Removed useRouter as it was unused
+    const router = useRouter();
     const { theme: currentTheme, setTheme } = useTheme();
-    // Removed viewMode state in favor of activeTab
     const [mounted, setMounted] = useState(false);
     const [shieldActive, setShieldActive] = useState({
         hallucination_deflector: true,
@@ -92,7 +92,7 @@ export default function OverviewPage() {
         setHealingStatus({ active: true, agent, stage: 'analyzing' });
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
             const res = await fetch(`${apiUrl}/api/v1/remediate/patch`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -145,7 +145,7 @@ export default function OverviewPage() {
 
         // API call to update backend freeze matrix
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
             const res = await fetch(`${apiUrl}/api/v1/system/freeze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -198,7 +198,7 @@ export default function OverviewPage() {
             formData.append('profile', governanceProfile);
             formData.append('context', "Visual Governance Audit for Agentic Systems");
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
             const res = await fetch(`${apiUrl}/api/v1/visual/scan`, {
                 method: 'POST',
                 body: formData
@@ -225,13 +225,13 @@ export default function OverviewPage() {
     };
 
     const handleAntigravityExport = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
         window.open(`${apiUrl}/api/v1/export/antigravity`, '_blank');
     };
 
     const handleHITLFeedback = async (id: string, verdict: 'APPROVE' | 'DENY') => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
             const res = await fetch(`${apiUrl}/api/v1/hitl/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -277,7 +277,7 @@ export default function OverviewPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
 
                 // 1. Fetch Stats
                 const statsRes = await fetch(`${apiUrl}/api/v1/dashboard/stats`);
@@ -634,7 +634,7 @@ export default function OverviewPage() {
                                                 size="sm"
                                                 className="gap-2"
                                                 onClick={() => {
-                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
                                                     window.open(`${apiUrl}${report.download_url}`, '_blank');
                                                 }}
                                             >
@@ -866,54 +866,6 @@ export default function OverviewPage() {
                         </Card>
 
                         {/* Self-Healing Lab (Active Demo) */}
-                        {healingStatus.active && (
-                            <Card className={`${theme.card} border-2 border-emerald-500/30 bg-emerald-50/5 dark:bg-emerald-950/10 overflow-hidden animate-in zoom-in-95 duration-500`}>
-                                <div className="p-4 bg-emerald-500/20 flex items-center justify-between border-b border-emerald-500/30">
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-emerald-600" />
-                                        <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">Self-Healing Lab: Curative Remediation</h3>
-                                    </div>
-                                    <Badge variant="outline" className="bg-emerald-500 text-white border-none text-[10px] animate-pulse">HOT-PATCHING IN PROGRESS</Badge>
-                                </div>
-                                <CardContent className="p-5 space-y-4">
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {[
-                                            { id: 'analyzing', label: 'ANALYZE DRIFT', icon: <Eye className="w-4 h-4" /> },
-                                            { id: 'patching', label: 'GEMINI PATCH', icon: <Wrench className="w-4 h-4" /> },
-                                            { id: 'verified', label: 'DEPLOY FIXED', icon: <Check className="w-4 h-4" /> }
-                                        ].map((step, i) => (
-                                            <div key={step.id} className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-500 ${healingStatus.stage === step.id ? 'border-emerald-500 bg-emerald-500/10 scale-105' :
-                                                (i < ['analyzing', 'patching', 'verified', 'idle'].indexOf(healingStatus.stage) ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20 grayscale-0' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 grayscale opacity-50')
-                                                }`}>
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${healingStatus.stage === step.id ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>
-                                                    {step.icon}
-                                                </div>
-                                                <span className="text-[10px] font-bold text-center leading-tight uppercase tracking-widest">{step.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {healingStatus.stage === 'verified' && (
-                                        <div className="mt-4 animate-in slide-in-from-bottom-4 duration-500">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Core Patch Successful</span>
-                                                    <span className="text-[10px] text-slate-500">Target: {healingStatus.agent} (System Prompt)</span>
-                                                </div>
-                                                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setHealingStatus({ active: false, agent: '', stage: 'idle' })}>Dismiss</Button>
-                                            </div>
-                                            <div className="p-3 bg-slate-900 rounded-lg border border-emerald-500/30 overflow-hidden">
-                                                <pre className="text-[10px] text-emerald-400 font-mono leading-relaxed max-h-[150px] overflow-y-auto whitespace-pre-wrap">
-                                                    {healingStatus.patchedPrompt}
-                                                </pre>
-                                            </div>
-                                            <p className="text-[9px] text-slate-500 mt-2 italic font-medium">* This agent has been autonomously hardened against future disclosure of internal IP addresses.</p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        )}
-
                         {/* Visual Shield Modal/Panel */}
                         {visualAudit.active && (
                             <Card className={`${theme.card} border-2 border-blue-500/30 overflow-hidden animate-in slide-in-from-top-4 duration-500 mb-6 shadow-2xl backdrop-blur-sm`}>
@@ -1106,7 +1058,7 @@ export default function OverviewPage() {
                                                             size="sm"
                                                             variant="ghost"
                                                             className="h-6 px-2 text-[9px] text-amber-600 hover:text-amber-700 hover:bg-amber-50 gap-1"
-                                                            onClick={() => handleHotPatch(item.agent || 'Target Agent', ['Disclosure of internal IP addresses', 'PII Leakage'])}
+                                                            onClick={() => router.push('/dashboard/monitor')}
                                                         >
                                                             <Stethoscope className="w-3 h-3" /> HEAL AGENT
                                                         </Button>
