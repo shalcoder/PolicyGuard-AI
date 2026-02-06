@@ -83,7 +83,7 @@ export default function RedTeamPage() {
 
             // Fallback: Fetch latest from API
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
                 const res = await fetch(`${apiUrl}/api/v1/evaluate/latest`);
                 if (res.ok) {
                     const latestReport = await res.json();

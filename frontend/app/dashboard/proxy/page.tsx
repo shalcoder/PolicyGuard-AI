@@ -18,7 +18,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function ProxyPage() {
     const [selectedLang, setSelectedLang] = useState('python');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const proxyUrl = `${apiUrl}/api/proxy`;
     const router = useRouter();
     const { isJudge } = useAuth();

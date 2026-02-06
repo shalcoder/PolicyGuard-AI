@@ -173,7 +173,7 @@ export default function SettingsPage() {
     const [initialSettings, setInitialSettings] = useState<PolicySettings>(defaultSettings);
     const [initialGkSettings, setInitialGkSettings] = useState(gkSettings);
     const [isDirty, setIsDirty] = useState(false);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
     useEffect(() => {
         const fetchSettings = async () => {

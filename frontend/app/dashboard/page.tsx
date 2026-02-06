@@ -97,7 +97,7 @@ export default function OverviewPage() {
         setHealingStatus({ active: true, agent, stage: 'analyzing' });
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const res = await fetch(`${apiUrl}/api/v1/remediate/patch`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -150,7 +150,7 @@ export default function OverviewPage() {
 
         // API call to update backend freeze matrix
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const res = await fetch(`${apiUrl}/api/v1/system/freeze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -203,7 +203,7 @@ export default function OverviewPage() {
             formData.append('profile', governanceProfile);
             formData.append('context', "Visual Governance Audit for Agentic Systems");
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const res = await fetch(`${apiUrl}/api/v1/visual/scan`, {
                 method: 'POST',
                 body: formData
@@ -230,13 +230,14 @@ export default function OverviewPage() {
     };
 
     const handleAntigravityExport = async () => {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+        toast.info("Exporting Governance Constitution to Antigravity Ecosystem...");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
         window.open(`${apiUrl}/api/v1/export/antigravity`, '_blank');
     };
 
     const handleHITLFeedback = async (id: string, verdict: 'APPROVE' | 'DENY') => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
             const res = await fetch(`${apiUrl}/api/v1/hitl/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -316,7 +317,14 @@ export default function OverviewPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
+                // 0. Check Integration Status (Stream 1 & 2)
+                const savedConfig = localStorage.getItem('pg_stability_config');
+                const config = savedConfig ? JSON.parse(savedConfig) : null;
+                const isStream1Active = config?.isGatekeeperConnected || false;
+                const isStream2Active = config?.isSlaConnected || false;
+                const isAnyStreamActive = isStream1Active || isStream2Active;
 
                 // 1. Fetch Stats
                 const statsRes = await fetch(`${apiUrl}/api/v1/dashboard/stats`);
@@ -332,63 +340,72 @@ export default function OverviewPage() {
                     setPolicies(data);
                 }
 
-                // 3. Fetch SLA History
-                const slaRes = await fetch(`${apiUrl}/api/v1/sla/history`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hours: 1 })
-                });
-                if (slaRes.ok) {
-                    const data = await slaRes.json();
-                    setSlaHistory((data.data_points || []).slice(-30));
+                if (isStream2Active || isJudge) {
+                    // 3. Fetch SLA History
+                    const slaRes = await fetch(`${apiUrl}/api/v1/sla/history`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ hours: 1 })
+                    });
+                    if (slaRes.ok) {
+                        const data = await slaRes.json();
+                        setSlaHistory((data.data_points || []).slice(-30));
+                    }
                 }
 
-                // 4. Fetch Reports (Live)
-                const reportsRes = await fetch(`${apiUrl}/api/v1/compliance/reports`);
-                if (reportsRes.ok) {
-                    const data = await reportsRes.json();
-                    setReports(data);
+                if (isAnyStreamActive || isJudge) {
+                    // 4. Fetch Reports (Live)
+                    const reportsRes = await fetch(`${apiUrl}/api/v1/compliance/reports`);
+                    if (reportsRes.ok) {
+                        const data = await reportsRes.json();
+                        setReports(data);
+                    }
+
+                    // 5. Fetch HITL Queue
+                    const hitlRes = await fetch(`${apiUrl}/api/v1/hitl/queue`);
+                    if (hitlRes.ok) {
+                        const data = await hitlRes.json();
+                        setHitlQueue(data || []);
+                    }
                 }
 
-                // 5. Fetch HITL Queue
-                const hitlRes = await fetch(`${apiUrl}/api/v1/hitl/queue`);
-                if (hitlRes.ok) {
-                    const data = await hitlRes.json();
-                    setHitlQueue(data || []);
+                let evaluationTraces: any[] = [];
+                let proxyLogs: any[] = [];
+
+                if (isAnyStreamActive || isJudge) {
+                    // 5. Fetch Monitor Data (for logs)
+                    const monitorRes = await fetch(`${apiUrl}/api/v1/dashboard/monitor`);
+                    if (monitorRes.ok) {
+                        const data = await monitorRes.json();
+                        evaluationTraces = (data.traces || []).map((t: any) => ({
+                            id: t.id,
+                            timestamp: t.timestamp,
+                            level: t.status === 'block' ? 'ERROR' : t.status === 'warn' ? 'WARN' : 'INFO',
+                            service: 'RedTeam',
+                            message: `[SCAN] ${t.agent}: ${t.details}`,
+                            latency: 0,
+                            agent: t.agent,
+                            status: t.status
+                        }));
+                    }
                 }
 
-                // 5. Fetch Monitor Data (for logs)
-                const monitorRes = await fetch(`${apiUrl}/api/v1/dashboard/monitor`);
-                let evaluationTraces = [];
-                if (monitorRes.ok) {
-                    const data = await monitorRes.json();
-                    evaluationTraces = (data.traces || []).map((t: any) => ({
-                        id: t.id,
-                        timestamp: t.timestamp,
-                        level: t.status === 'block' ? 'ERROR' : t.status === 'warn' ? 'WARN' : 'INFO',
-                        service: 'RedTeam',
-                        message: `[SCAN] ${t.agent}: ${t.details}`,
-                        latency: 0,
-                        agent: t.agent,
-                        status: t.status
-                    }));
-                }
-
-                // 5. Fetch Proxy Logs (Live)
-                const proxyLogsRes = await fetch(`${apiUrl}/api/v1/proxy/logs`);
-                let proxyLogs = [];
-                if (proxyLogsRes.ok) {
-                    const data = await proxyLogsRes.json();
-                    proxyLogs = data.map((l: any) => ({
-                        id: l.id,
-                        timestamp: l.timestamp,
-                        level: l.status === 'BLOCK' ? 'ERROR' : l.status === 'WARN' ? 'WARN' : 'INFO',
-                        service: 'Proxy',
-                        message: `[GATEKEEPER] ${l.event}`,
-                        latency: 0,
-                        agent: 'PolicyGuard-Proxy',
-                        status: l.status.toLowerCase() as any
-                    }));
+                if (isStream1Active || isJudge) {
+                    // 5. Fetch Proxy Logs (Live)
+                    const proxyLogsRes = await fetch(`${apiUrl}/api/v1/proxy/logs`);
+                    if (proxyLogsRes.ok) {
+                        const data = await proxyLogsRes.json();
+                        proxyLogs = data.map((l: any) => ({
+                            id: l.id,
+                            timestamp: l.timestamp,
+                            level: l.status === 'BLOCK' ? 'ERROR' : l.status === 'WARN' ? 'WARN' : 'INFO',
+                            service: 'Proxy',
+                            message: `[GATEKEEPER] ${l.event}`,
+                            latency: 0,
+                            agent: 'PolicyGuard-Proxy',
+                            status: l.status.toLowerCase() as any
+                        }));
+                    }
                 }
 
                 // Sort Logs (Newest First)
@@ -574,7 +591,10 @@ export default function OverviewPage() {
 
                         <Button
                             className="bg-blue-600 hover:bg-blue-700 text-white"
-                            onClick={handleAntigravityExport}
+                            onClick={() => {
+                                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+                                window.open(`${apiUrl}/api/v1/evaluate/export/latest`, '_blank');
+                            }}
                         >
                             <Download className="w-4 h-4 mr-2" /> Download Report
                         </Button>
@@ -718,7 +738,7 @@ export default function OverviewPage() {
                                                 size="sm"
                                                 className="gap-2"
                                                 onClick={() => {
-                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
+                                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
                                                     window.open(`${apiUrl}${report.download_url}`, '_blank');
                                                 }}
                                             >

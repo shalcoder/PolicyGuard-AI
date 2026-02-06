@@ -411,9 +411,12 @@ async def export_latest_report():
     pdf.set_line_width(0.5)
     pdf.rect(15, 15, 267, 180)
     
-    # -- Header --
-    pdf.image('https://cdn-icons-png.flaticon.com/512/9631/9631206.png', x=135, y=25, w=25) # Shield Icon Placeholder
-    pdf.ln(35)
+    # -- Header (Using text as fallback for icon to ensure stability) --
+    pdf.set_font("helvetica", "B", 20)
+    pdf.set_text_color(50, 100, 255)
+    pdf.set_y(25)
+    pdf.cell(0, 10, "STRICT GOVERNANCE PROTOCOL ACTIVE", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(15)
     
     pdf.set_font("helvetica", "B", 36)
     pdf.set_text_color(20, 30, 70)
@@ -469,19 +472,12 @@ async def export_latest_report():
     # Let's use the .output(dest='S').encode('latin-1') trick common with py-fpdf, or bytearray if available.
     
     # 3. Output
-    # Handling different FPDF versions safely
     try:
-        # FPDF2 often returns bytearray with dest='S' or no dest
-        val = pdf.output(dest='S')
-        if isinstance(val, (bytes, bytearray)):
-            pdf_bytes = val
-        else:
-            # Older versions return latin-1 string
-            pdf_bytes = val.encode('latin-1')
+        # FPDF2 returns bytes directly from output()
+        pdf_bytes = pdf.output()
     except Exception as e:
         print(f"PDF Generation Error: {e}")
-        # Fallback to internal error bytes
-        pdf_bytes = b"Error generating PDF"
+        pdf_bytes = b"Error generating compliance certificate PDF"
 
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
@@ -632,7 +628,13 @@ async def export_to_antigravity():
     """
     policies = await asyncio.to_thread(policy_db.get_all_policies)
     config = gemini.generate_antigravity_config(policies)
-    return config
+    
+    # Return as JSON download
+    return StreamingResponse(
+        iter([json.dumps(config, indent=2)]),
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=policyguard_antigravity_config.json"}
+    )
 
 # --- Self-Healing Endpoints ---
 
@@ -1059,14 +1061,12 @@ async def download_report(report_id: str):
             pdf.set_font("courier", "", 10)
             pdf.multi_cell(0, 6, "Digital Signature: " + uuid.uuid4().hex)
             
-            # Output to buffer
-            pdf_buffer = io.BytesIO()
-            pdf.output(pdf_buffer)
-            pdf_buffer.seek(0)
+            # Output as bytes for fpdf2
+            pdf_bytes = pdf.output()
             
             filename = f"{report_id}.pdf"
             return StreamingResponse(
-                pdf_buffer,
+                io.BytesIO(pdf_bytes),
                 media_type="application/pdf",
                 headers={"Content-Disposition": f"attachment; filename={filename}"}
             )
