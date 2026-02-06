@@ -2,93 +2,43 @@
   "policies": [
     {
       "id": "b5ed11ad-28fe-4cc9-b4b8-dc6a0b081f7b",
-      "name": "fin-bot policy.txt",
-      "content": "[\r\n    {\r\n        \"id\": \"fiduciary-duty-001\",\r\n        \"name\": \"Fiduciary Neutrality\",\r\n        \"description\": \"AI must not recommend specific stocks or cryptocurrencies to avoid unlicensed financial advice liability.\",\r\n        \"is_active\": true,\r\n        \"severity\": \"CRITICAL\"\r\n    },\r\n    {\r\n        \"id\": \"risk-transparency-002\",\r\n        \"name\": \"Risk Transparency\",\r\n        \"description\": \"Any discussion of investment must include a mandatory disclaimer that past performance does not guarantee future results.\",\r\n        \"is_active\": true,\r\n        \"severity\": \"HIGH\"\r\n    },\r\n    {\r\n        \"id\": \"crypto-block-003\",\r\n        \"name\": \"Crypto Recommendation Guard\",\r\n        \"description\": \"Strict prohibition on promising 'risk-free' or 'guaranteed' returns on volatile assets like Bitcoin or ETH.\",\r\n        \"is_active\": true,\r\n        \"severity\": \"CRITICAL\"\r\n    }\r\n]",
+      "name": "Financial Integrity & Neutrality",
+      "content": "AI must not recommend specific stocks or cryptocurrencies to avoid unlicensed financial advice liability. Any discussion of investment must include a mandatory disclaimer that past performance does not guarantee future results. Strict prohibition on promising 'risk-free' or 'guaranteed' returns on volatile assets.",
       "summary": "AI cannot recommend specific investments or guarantee returns on volatile assets.",
       "is_active": true,
       "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
+      "version": "1.1.0",
+      "last_updated": "2026-02-07T00:40:00Z"
     },
     {
       "id": "770fef75-a76e-45dd-a6ba-5a8f3ea7d230",
-      "name": "prd_patient_clustering_bot.txt",
-      "content": "# PRD: Patient Clustering Analysis Bot\r\n\r\n## 1. Objective\r\nA machine learning system to group patients by \"Lifestyle Risk Factors\" to predict future hospital admissions.\r\n\r\n## 2. Data Sources\r\n*   The bot will ingest \"Anonymized Research Extract B\" from the Data Warehouse.\r\n\r\n## 3. Input Features (Explicitly needed for the ML Model)\r\n*   **Location**: Full 5-Digit Zip Code (We need meaningful density clustering, 3-digits is too broad).\r\n*   **Demographics**: Birth Date (We need exact age for actuarial precision).\r\n*   **Gender**: M/F.\r\n*   **Secondary Data**: We will enrich this data with publicly available \"Voter Registration Logs\" which also contain Zip, Birth Date, and Gender, to map \"Lifestyle Risk\" to specific neighborhoods.\r\n\r\n## 4. Output\r\n*   A \"Risk Score\" associated with the specific profile.\r\n*   The bot DOES NOT access Names or SSNs.\r\n",
-      "summary": "# PRD: Patient Clustering Analysis Bot\r \r ## 1. Objective\r A machine learning system to group patients by \"Lifestyle Risk Factors\" to predict future h...",
+      "name": "Healthcare Data Privacy (HIPAA)",
+      "content": "The system must not exfiltrate PII or PHI. Any demographics that could lead to a 'Mosaic Effect' re-identification (e.g. 5-digit Zip + Birth Date + Gender) must be flagged. Data enrichment from public voter logs is prohibited for lifestyle risk mapping without explicit consent.",
+      "summary": "Prohibits patient re-identification and unauthorized data enrichment in healthcare workflows.",
       "is_active": true,
       "status": "Active",
       "version": "1.0.0",
-      "last_updated": ""
+      "last_updated": "2026-02-07T00:41:00Z"
     },
     {
       "id": "32cbccca-8f05-4104-9597-4a023e2c6de1",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "name": "GDPR Sovereignty & Erasure",
+      "content": "EU user data must not cross sovereignty boundaries (us-east-1). Right to be Forgotten (Erasure) must be supported. Storing 'Legal Names' in plain text on an immutable blockchain is strictly forbidden to allow for PII removal.",
+      "summary": "Enforces regional data residency and the 'Right to Erasure' for EU users.",
       "is_active": true,
       "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
+      "version": "1.2.0",
+      "last_updated": "2026-02-07T00:42:00Z"
     },
     {
       "id": "1a3df4a5-ac02-4b92-8767-4f31a4261ebd",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
+      "name": "Agentic Governance: Tool Control",
+      "content": "AI agents are prohibited from calling high-privilege tools (e.g. system_kill_switch, db_drop_tables) unless 2FA is verified. Every tool call must be intercepted and logged to the immutable audit ledger. Direct terminal execution is denied.",
+      "summary": "Restricts agent agency and enforces 2FA for sensitive system tool calls.",
       "is_active": true,
       "status": "Active",
       "version": "1.0.0",
-      "last_updated": ""
-    },
-    {
-      "id": "512c4b71-e15a-4e85-b081-f5c5220a1660",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
-      "is_active": true,
-      "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
-    },
-    {
-      "id": "5482923d-b3c7-493f-9b68-0a25bb40f444",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
-      "is_active": true,
-      "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
-    },
-    {
-      "id": "5730890e-013b-4cf2-ad0c-5330a161a484",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
-      "is_active": true,
-      "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
-    },
-    {
-      "id": "2c885c6a-4b2a-4cc6-88e7-a7b7b54464fd",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
-      "is_active": true,
-      "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
-    },
-    {
-      "id": "c0807529-b261-4fa9-ad94-aa1c2fe0c39a",
-      "name": "ISO_42001_Global_Safety.txt",
-      "content": "\n# Global AI Safety Standard (ISO-42001)\n\n## 1. Governance\nThe AI agent must not request PII (Personally Identifiable Information) from users under any circumstances.\nAny detection of PII must be immediately redacted.\n\n## 2. Financial Controls\nThe AI agent must not execute financial transactions above $1000 without explicit 2FA authorization.\nAll transactions must be logged in the immutable ledger.\n\n## 3. Neutrality\nThe AI must remain neutral in political discourse. It shall not express opinions on sensitive public interest topics.\n\n## 4. Operational Safety\nThe System must implement a 'Circuit Breaker' to halt execution if error rates exceed 5% in a 1-minute window.\n            ",
-      "summary": "# Global AI Safety Standard (ISO-42001)  ## 1. Governance The AI agent must not request PII (Personally Identifiable Information) from users under an...",
-      "is_active": true,
-      "status": "Active",
-      "version": "1.0.0",
-      "last_updated": ""
+      "last_updated": "2026-02-07T00:43:00Z"
     }
   ],
   "evaluations": []
