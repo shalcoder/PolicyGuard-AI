@@ -54,10 +54,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             <div className="flex h-16 items-center px-6 mb-2">
                 <Shield className="h-6 w-6 text-blue-600 dark:text-blue-500 mr-2 drop-shadow-sm" />
                 <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white mr-2">PolicyGuard AI</span>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 ml-auto">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[8px] font-black text-emerald-500 uppercase tracking-tighter">Safe</span>
-                </div>
+
             </div>
 
             {/* Scrollable Nav Area */}
