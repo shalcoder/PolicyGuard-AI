@@ -7,9 +7,11 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies (if any needed for future extensions)
+# Install system dependencies
+# gcc and others might be needed for some python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -17,21 +19,26 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Create a non-root user for Hugging Face Spaces security
-RUN useradd -m -u 1000 user
-USER user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# Create a non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-WORKDIR $HOME/app
+# Copy application code
+COPY . .
 
-# Copy application code with correct ownership
-COPY --chown=user . $HOME/app
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
 
-# Hugging Face Spaces requires port 7860
-ENV PORT=7860
-EXPOSE 7860
+# Switch to non-root user
+USER appuser
 
-# Production execution with Gunicorn
-# Using 7860 for HF Spaces compatibility
-CMD ["gunicorn", "main:app", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:7860", "--timeout", "120"]
+# Set default port to 10000 (Render default), but allow override
+ENV PORT=10000
+EXPOSE $PORT
+
+# Run with Gunicorn using Uvicorn workers
+# Binds to 0.0.0.0 and uses the PORT environment variable
+CMD exec gunicorn main:app \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:$PORT \
+    --timeout 120
