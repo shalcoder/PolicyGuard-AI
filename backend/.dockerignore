@@ -1,12 +1,36 @@
+# Python
 __pycache__
-venv
-.git
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.pytest_cache/
+
+# Git
+.git/
+.gitignore
+
+# Environment & Secrets (CRITICAL)
 .env
-.pytest_cache
-*.pyc
-*.pyo
-*.pyd
-.DS_Store
+.env.*
+serviceAccountKey.json
+gatekeeper_settings.json
+
+# Local Storage/State
 policy_store.json
-evaluations_store.json
+evaluations.json
+vectors.json
+metrics_store.json
 settings_store.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+.dockerignore
