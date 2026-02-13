@@ -32,12 +32,12 @@ export function ReadinessScorecard({ report, onDownload }: ReadinessScorecardPro
     };
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Compliant': return 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50';
-            case 'Partial Compliance': return 'text-amber-400 bg-amber-950/30 border-amber-900/50';
-            case 'At Risk': return 'text-orange-400 bg-orange-950/30 border-orange-900/50';
-            case 'Non-Compliant': return 'text-red-400 bg-red-950/30 border-red-900/50';
-            case 'Cannot Be Assessed': return 'text-slate-400 bg-slate-900 border-slate-700';
-            default: return 'text-slate-400 bg-slate-900 border-slate-800';
+            case 'Compliant': return 'text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-900/50';
+            case 'Partial Compliance': return 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/30 border-amber-300 dark:border-amber-900/50';
+            case 'At Risk': return 'text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-950/30 border-orange-300 dark:border-orange-900/50';
+            case 'Non-Compliant': return 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/30 border-red-300 dark:border-red-900/50';
+            case 'Cannot Be Assessed': return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700';
+            default: return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-800';
         }
     };
 

@@ -37,7 +37,7 @@ We don't use Gemini as a simple wrapper. It is the **Cognitive Engine** of our a
 
 ---
 
-## 🚀 Judge's Quick Start
+## 🚀 Deployment Guide
 
 ### 🐳 Option A: Docker (Recommended)
 The most stable way to run the full stack (Frontend + Backend + Firebase Persistence).
@@ -69,5 +69,5 @@ Test the system's reasoning with these curated samples in `/samples`:
 
 ---
 
-Built with ❤️ by **Tharun Venkatesh and Vishal M** for the **Gemini 3 Hackathon**. 
-*Utilizing Gemini 3 Pro/Flash modules for advanced agentic reasoning.*
+Built for **Enterprise AI Governance and Agentic Safety**.
+*Utilizing Gemini Pro/Flash modules for advanced agentic reasoning.*

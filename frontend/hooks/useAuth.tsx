@@ -16,8 +16,8 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     signup: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
-    loginAsGuest: () => Promise<void>;
-    isJudge: boolean;
+    loginAsAuditor: () => Promise<void>;
+    isAuditor: boolean;
     isLoading: boolean;
 }
 
@@ -26,8 +26,8 @@ const AuthContext = createContext<AuthContextType>({
     login: async () => { },
     signup: async () => { },
     logout: async () => { },
-    loginAsGuest: async () => { },
-    isJudge: false,
+    loginAsAuditor: async () => { },
+    isAuditor: false,
     isLoading: true,
 });
 
@@ -102,16 +102,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const safetyTimeout = setTimeout(() => {
             setIsLoading((prev) => {
                 if (prev) {
-                    console.warn("Auth check timed out - defaulting to Guest Mode (Offline Fallback)");
-                    const mockUser: any = {
-                        uid: 'guest_fallback',
-                        email: 'guest@offline.com',
-                        displayName: 'Guest User',
+                    console.warn("Auth check timed out - defaulting to Sandbox Mode (Offline Fallback)");
+                    const sandboxUser: any = {
+                        uid: 'sandbox_fallback',
+                        email: 'auditor@sandbox.ai',
+                        displayName: 'Sandbox Auditor',
                         emailVerified: true,
                         isAnonymous: true,
                     };
-                    setUser(mockUser);
-                    localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
+                    setUser(sandboxUser);
+                    localStorage.setItem('pg_auth_user', JSON.stringify(sandboxUser));
                     return false;
                 }
                 return prev;
@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!auth) {
             // Support a mock login for testing even in local mode (Universal Access)
             const mockUser: any = {
-                uid: `mock_${email.split('@')[0]}`,
+                uid: `auth_${email.split('@')[0]}`,
                 email: email,
                 displayName: email.split('@')[0],
                 emailVerified: true,
@@ -144,18 +144,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         router.push('/dashboard');
     };
 
-    const loginAsGuest = async () => {
-        // Mock User for Hackathon Test Mode
-        const mockUser: any = {
-            uid: 'guest_judge_1',
-            email: 'judge@hackathon.com',
-            displayName: 'Hackathon Judge',
+    const loginAsAuditor = async () => {
+        // Sandboxed Access for Evaluation and Testing
+        const auditorUser: any = {
+            uid: 'auditor_sandbox_1',
+            email: 'auditor@governance.ai',
+            displayName: 'Compliance Auditor',
             emailVerified: true,
             isAnonymous: true,
         };
-        setUser(mockUser);
-        localStorage.setItem('pg_auth_user', JSON.stringify(mockUser));
-        localStorage.setItem('pg_is_judge', 'true');
+        setUser(auditorUser);
+        localStorage.setItem('pg_auth_user', JSON.stringify(auditorUser));
+        localStorage.setItem('pg_is_auditor', 'true');
 
         // Give state time to propagate
         await new Promise(r => setTimeout(r, 150));
@@ -188,14 +188,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         localStorage.removeItem('pg_auth_user');
         localStorage.removeItem('pg_tour_active');
-        localStorage.removeItem('pg_is_judge');
+        localStorage.removeItem('pg_is_auditor');
         router.push('/login');
     };
 
-    const isJudge = !!user && (typeof window !== 'undefined' && localStorage.getItem('pg_is_judge') === 'true');
+    const isAuditor = !!user && (typeof window !== 'undefined' && localStorage.getItem('pg_is_auditor') === 'true');
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, isLoading, loginAsGuest, isJudge }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, isLoading, loginAsAuditor, isAuditor }}>
             {children}
         </AuthContext.Provider>
     );

@@ -67,7 +67,7 @@ interface LogEntry {
 
 
 export default function OverviewPage() {
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
     const router = useRouter();
     const { theme: currentTheme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -340,7 +340,7 @@ export default function OverviewPage() {
                     setPolicies(data);
                 }
 
-                if (isStream2Active || isJudge) {
+                if (isStream2Active || isAuditor) {
                     // 3. Fetch SLA History
                     const slaRes = await fetch(`${apiUrl}/api/v1/sla/history`, {
                         method: 'POST',
@@ -353,7 +353,7 @@ export default function OverviewPage() {
                     }
                 }
 
-                if (isAnyStreamActive || isJudge) {
+                if (isAnyStreamActive || isAuditor) {
                     // 4. Fetch Reports (Live)
                     const reportsRes = await fetch(`${apiUrl}/api/v1/compliance/reports`);
                     if (reportsRes.ok) {
@@ -372,7 +372,7 @@ export default function OverviewPage() {
                 let evaluationTraces: any[] = [];
                 let proxyLogs: any[] = [];
 
-                if (isAnyStreamActive || isJudge) {
+                if (isAnyStreamActive || isAuditor) {
                     // 5. Fetch Monitor Data (for logs)
                     const monitorRes = await fetch(`${apiUrl}/api/v1/dashboard/monitor`);
                     if (monitorRes.ok) {
@@ -390,7 +390,7 @@ export default function OverviewPage() {
                     }
                 }
 
-                if (isStream1Active || isJudge) {
+                if (isStream1Active || isAuditor) {
                     // 5. Fetch Proxy Logs (Live)
                     const proxyLogsRes = await fetch(`${apiUrl}/api/v1/proxy/logs`);
                     if (proxyLogsRes.ok) {
@@ -453,7 +453,7 @@ export default function OverviewPage() {
                 // We keep this call if we need it for other parts, but we remove the setStats from here
                 // to prevent flickering.
 
-                if (isJudge && allLogs.length === 0) {
+                if (isAuditor && allLogs.length === 0) {
                     const mockLogs: LogEntry[] = [
                         { id: 'M-1', timestamp: new Date().toISOString(), level: 'WARN', service: 'Proxy', message: '[SCAN] PII Leak detected in stream 1 - Suppressed', latency: 42 },
                         { id: 'M-2', timestamp: new Date(Date.now() - 5000).toISOString(), level: 'INFO', service: 'Evaluate', message: 'Mission Critical Audit Complete - No critical failures', latency: 1200 },
@@ -462,7 +462,7 @@ export default function OverviewPage() {
                     setLogs(mockLogs);
                 }
 
-                if (isJudge && stats.traces_analyzed === 0) {
+                if (isAuditor && stats.traces_analyzed === 0) {
                     setStats({
                         traces_analyzed: 12450,
                         violations: 142,

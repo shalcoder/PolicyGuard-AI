@@ -21,7 +21,7 @@ export default function ProxyPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
     const proxyUrl = `${apiUrl}/api/proxy`;
     const router = useRouter();
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
 
     // View State
     const [activeStream, setActiveStream] = useState<'stream1' | 'stream2'>('stream1');
@@ -82,7 +82,7 @@ export default function ProxyPage() {
                 if (initialConfig.isGatekeeperConnected !== undefined) setIsGatekeeperConnected(initialConfig.isGatekeeperConnected);
                 if (initialConfig.gatekeeperStep) setGatekeeperStep(initialConfig.gatekeeperStep);
                 if (initialConfig.gatewayId) setGatewayId(initialConfig.gatewayId);
-            } else if (isJudge) {
+            } else if (isAuditor) {
                 // Pre-fill for judges if no previous config
                 setIsSlaConnected(true);
                 setIsGatekeeperConnected(true);

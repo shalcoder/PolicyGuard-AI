@@ -10,7 +10,7 @@ import { Shield, ArrowRight, Activity, CheckCircle2, Terminal, Lock, Fingerprint
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
-    const { login, loginAsGuest, user, isLoading } = useAuth() as any;
+    const { login, loginAsAuditor, user, isLoading } = useAuth() as any;
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -26,14 +26,14 @@ export default function LoginPage() {
         }
     }, [user, isLoading, router]);
 
-    const triggerGuestLogin = async () => {
+    const triggerAuditorLogin = async () => {
         setDemoSequence(true);
-        // Simulate Terminal Sequence
+        // Simulate Infrastructure Sequence
         const lines = [
-            "Initializing Test Protocol...",
-            "Bypassing SSO...",
-            "Granting 'Judge' Permissions...",
-            "ACCESS_GRANTED: Welcome to PolicyGuard AI."
+            "Initializing Compliance Protocol...",
+            "Verifying Organizational Identity...",
+            "Syncing Governance Policies...",
+            "SUCCESS: Session authorized for Governance Audit."
         ];
 
         for (const line of lines) {
@@ -48,8 +48,8 @@ export default function LoginPage() {
         window.dispatchEvent(new CustomEvent('pg-start-tour'));
 
         // Login
-        loginAsGuest();
-        // loginAsGuest internal router.push will take over
+        loginAsAuditor();
+        // loginAsAuditor internal router.push will take over
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +81,7 @@ export default function LoginPage() {
                         <div className="w-full max-w-lg space-y-4">
                             <div className="flex items-center gap-2 text-white mb-6 border-b border-white/10 pb-4">
                                 <Terminal className="w-6 h-6" />
-                                <span className="text-xl font-bold tracking-widest">JUDGE_TERMINAL_V1.0</span>
+                                <span className="text-xl font-bold tracking-widest">GOVERNANCE_TERMINAL_V1.1</span>
                             </div>
 
                             <div className="space-y-2">
@@ -106,22 +106,22 @@ export default function LoginPage() {
             </AnimatePresence>
 
             {/* Left Side - Visuals */}
-            <div className="hidden w-1/2 bg-[#0B0F19] lg:flex flex-col justify-between p-12 relative overflow-hidden">
+            <div className="hidden w-1/2 bg-slate-50 dark:bg-[#0B0F19] lg:flex flex-col justify-between p-12 relative overflow-hidden border-r border-slate-200 dark:border-white/5">
                 {/* Background Gradients */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2"></div>
 
                 <div className="z-10">
-                    <div className="flex items-center gap-2 text-white font-bold text-xl tracking-tight mb-8">
+                    <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-xl tracking-tight mb-8">
                         <Shield className="w-8 h-8 text-cyan-500" />
                         PolicyGuard AI
                     </div>
 
-                    <h1 className="text-5xl font-bold text-white leading-tight mb-6">
+                    <h1 className="text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-6">
                         AI Governance,<br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-cyan-600">Solved.</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-cyan-500 dark:from-cyan-400 dark:to-cyan-600">Solved.</span>
                     </h1>
-                    <p className="text-gray-400 text-lg max-w-md">
+                    <p className="text-slate-500 dark:text-gray-400 text-lg max-w-md">
                         The automated control plane for enterprise agents. Red Team, Remediate, and Monitor in one unified platform.
                     </p>
                 </div>
@@ -132,44 +132,44 @@ export default function LoginPage() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-4 p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors shadow-sm"
                     >
                         <div className="p-3 bg-green-500/20 rounded-lg">
                             <CheckCircle2 className="w-5 h-5 text-green-500" />
                         </div>
                         <div>
-                            <h4 className="text-white font-medium">Compliance Audit</h4>
-                            <p className="text-sm text-gray-500">Passed: HIPAA, GDPR, SOC2</p>
+                            <h4 className="text-slate-900 dark:text-white font-medium">Compliance Audit</h4>
+                            <p className="text-sm text-slate-500 dark:text-gray-500">Passed: HIPAA, GDPR, SOC2</p>
                         </div>
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-4 p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors shadow-sm"
                     >
                         <div className="p-3 bg-cyan-500/20 rounded-lg">
                             <Activity className="w-5 h-5 text-cyan-500" />
                         </div>
                         <div>
-                            <h4 className="text-white font-medium">Latency Guardrails</h4>
-                            <p className="text-sm text-gray-500">Global Avg: 84ms</p>
+                            <h4 className="text-slate-900 dark:text-white font-medium">Latency Guardrails</h4>
+                            <p className="text-sm text-slate-500 dark:text-gray-500">Global Avg: 84ms</p>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex w-full items-center justify-center lg:w-1/2 bg-[#080C14] border-l border-white/5">
+            <div className="flex w-full items-center justify-center lg:w-1/2 bg-white dark:bg-[#080C14] border-l border-slate-200 dark:border-white/5">
                 <div className="w-full max-w-md space-y-8 px-4 sm:px-6">
                     <div className="text-center lg:text-left">
-                        <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Welcome back</h2>
-                        <p className="text-gray-400">Sign in to access your compliance dashboard</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">Welcome back</h2>
+                        <p className="text-slate-500 dark:text-gray-400">Sign in to access your compliance dashboard</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-gray-300">Email</Label>
+                            <Label htmlFor="email" className="text-slate-700 dark:text-gray-300">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -177,18 +177,18 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500 transition-colors"
+                                className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 focus:border-cyan-500 transition-colors"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-gray-300">Password</Label>
+                            <Label htmlFor="password" className="text-slate-700 dark:text-gray-300">Password</Label>
                             <Input
                                 id="password"
                                 type="password"
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="h-12 bg-white/5 border-white/10 text-white focus:border-cyan-500 transition-colors"
+                                className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:border-cyan-500 transition-colors"
                             />
                         </div>
 
@@ -206,8 +206,8 @@ export default function LoginPage() {
                             {isSubmitting ? "Authing..." : "Sign In"}
                         </Button>
                         <div className="text-center text-sm">
-                            <span className="text-gray-400">Don't have an account? </span>
-                            <a href="/signup" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
+                            <span className="text-slate-500 dark:text-gray-400">Don't have an account? </span>
+                            <a href="/signup" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300 font-medium transition-colors">
                                 Sign up
                             </a>
                         </div>
@@ -218,15 +218,15 @@ export default function LoginPage() {
                             <span className="w-full border-t border-white/10" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-[#080C14] px-2 text-gray-500 font-mono">For Hackathon Judges</span>
+                            <span className="bg-white dark:bg-[#080C14] px-2 text-slate-400 dark:text-gray-500 font-mono">For Evaluation & Compliance</span>
                         </div>
                     </div>
 
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={triggerGuestLogin}
-                        className="w-full h-16 relative overflow-hidden group rounded-xl bg-gradient-to-r from-cyan-900/40 to-cyan-800/40 border border-cyan-500/30 p-1"
+                        onClick={triggerAuditorLogin}
+                        className="w-full h-16 relative overflow-hidden group rounded-xl bg-gradient-to-r from-slate-100 to-slate-200 dark:from-cyan-900/40 dark:to-cyan-800/40 border border-slate-200 dark:border-cyan-500/30 p-1"
                     >
                         <div className="absolute inset-0 bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors"></div>
                         <div className="relative h-full flex items-center justify-between px-6">
@@ -235,8 +235,8 @@ export default function LoginPage() {
                                     <Fingerprint className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-bold text-white text-sm">One-Click Test Access</h3>
-                                    <p className="text-xs text-cyan-300">Instant Sandbox Environment</p>
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">One-Click Auditor Access</h3>
+                                    <p className="text-xs text-cyan-600 dark:text-cyan-300">Instant Compliance Sandbox</p>
                                 </div>
                             </div>
                             <ArrowRight className="w-5 h-5 text-cyan-400 group-hover:translate-x-1 transition-transform" />

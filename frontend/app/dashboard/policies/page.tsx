@@ -21,7 +21,7 @@ type Policy = {
 }
 
 export default function PoliciesPage() {
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -41,11 +41,11 @@ export default function PoliciesPage() {
             if (res.ok) {
                 const data = await res.json();
                 setPolicies(data);
-                if (isJudge && data.length === 0) {
+                if (isAuditor && data.length === 0) {
                     loadSamplePolicy();
                 }
-            } else if (isJudge) {
-                // If fetch fails but we're a judge, still show something
+            } else if (isAuditor) {
+                // If fetch fails but we're an auditor, still show something
                 loadSamplePolicy();
             }
         } catch (error: any) {

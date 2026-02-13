@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function SignUpPage() {
-    const { signup, loginAsGuest } = useAuth() as any;
+    const { signup, loginAsAuditor } = useAuth() as any;
     const { updateProfile } = useUser();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -23,14 +23,14 @@ export default function SignUpPage() {
     const [demoSequence, setDemoSequence] = useState(false);
     const [terminalLines, setTerminalLines] = useState<string[]>([]);
 
-    const triggerGuestLogin = async () => {
+    const triggerAuditorLogin = async () => {
         setDemoSequence(true);
-        // Simulate Terminal Sequence
+        // Simulate Infrastructure Sequence
         const lines = [
-            "Initializing Test Protocol...",
-            "Bypassing SSO...",
-            "Granting 'Judge' Permissions...",
-            "ACCESS_GRANTED: Welcome to PolicyGuard AI."
+            "Initializing Compliance Protocol...",
+            "Verifying Organizational Identity...",
+            "Syncing Governance Policies...",
+            "SUCCESS: Session authorized for Governance Audit."
         ];
 
         for (const line of lines) {
@@ -45,7 +45,7 @@ export default function SignUpPage() {
         window.dispatchEvent(new CustomEvent('pg-start-tour'));
 
         // Login
-        loginAsGuest();
+        loginAsAuditor();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +89,7 @@ export default function SignUpPage() {
                         <div className="w-full max-w-lg space-y-4">
                             <div className="flex items-center gap-2 text-white mb-6 border-b border-white/10 pb-4">
                                 <Terminal className="w-6 h-6" />
-                                <span className="text-xl font-bold tracking-widest">JUDGE_TERMINAL_V1.0</span>
+                                <span className="text-xl font-bold tracking-widest">GOVERNANCE_TERMINAL_V1.1</span>
                             </div>
 
                             <div className="space-y-2">
@@ -113,22 +113,22 @@ export default function SignUpPage() {
                 )}
             </AnimatePresence>
             {/* Left Side - Visuals */}
-            <div className="hidden w-1/2 bg-gray-900 lg:flex flex-col justify-between p-12 relative overflow-hidden">
+            <div className="hidden w-1/2 bg-slate-50 dark:bg-gray-900 lg:flex flex-col justify-between p-12 relative overflow-hidden border-r border-slate-200 dark:border-white/10">
                 {/* Background Gradients */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
                 <div className="z-10">
-                    <div className="flex items-center gap-2 text-white/90 font-bold text-xl tracking-tight mb-8">
+                    <div className="flex items-center gap-2 text-slate-900 dark:text-white/90 font-bold text-xl tracking-tight mb-8">
                         <Shield className="w-8 h-8 text-blue-500" />
                         PolicyGuard AI
                     </div>
 
-                    <h1 className="text-5xl font-bold text-white leading-tight mb-6">
+                    <h1 className="text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-6">
                         Join the future of<br />
-                        <span className="text-blue-500">AI Governance.</span>
+                        <span className="text-blue-600 dark:text-blue-500">AI Governance.</span>
                     </h1>
-                    <p className="text-gray-400 text-lg max-w-md">
+                    <p className="text-slate-500 dark:text-gray-400 text-lg max-w-md">
                         Create an account to start auditing your AI workflows with enterprise-grade precision.
                     </p>
                 </div>
@@ -139,25 +139,25 @@ export default function SignUpPage() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
-                        className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10"
+                        className="flex items-center gap-4 p-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-lg border border-slate-200 dark:border-white/10 shadow-sm"
                     >
                         <div className="p-2 bg-indigo-500/20 rounded-full">
                             <UserPlus className="w-5 h-5 text-indigo-400" />
                         </div>
                         <div>
-                            <h4 className="text-white font-medium">Team Collaboration</h4>
-                            <p className="text-sm text-gray-500">Invite compliance officers & devs</p>
+                            <h4 className="text-slate-900 dark:text-white font-medium">Team Collaboration</h4>
+                            <p className="text-sm text-slate-500 dark:text-gray-500">Invite compliance officers & devs</p>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex w-full items-center justify-center lg:w-1/2 bg-white dark:bg-zinc-950">
+            <div className="flex w-full items-center justify-center lg:w-1/2 bg-white dark:bg-zinc-950 border-l border-slate-200 dark:border-white/10">
                 <div className="w-full max-w-md space-y-8 px-4 sm:px-6">
                     <div className="space-y-2 text-center lg:text-left">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Create Account</h2>
-                        <p className="text-gray-500 dark:text-gray-400">Get started with PolicyGuard AI today</p>
+                        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Create Account</h2>
+                        <p className="text-slate-500 dark:text-gray-400">Get started with PolicyGuard AI today</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -255,8 +255,8 @@ export default function SignUpPage() {
                         </Button>
                     </form>
 
-                    <p className="text-center text-sm text-gray-500">
-                        Already have an account? <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">Sign in</Link>
+                    <p className="text-center text-sm text-slate-500 dark:text-gray-500">
+                        Already have an account? <Link href="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">Sign in</Link>
                     </p>
 
                     <div className="relative py-4">
@@ -264,15 +264,15 @@ export default function SignUpPage() {
                             <span className="w-full border-t border-white/10" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white dark:bg-zinc-950 px-2 text-gray-500 font-mono">For Hackathon Judges</span>
+                            <span className="bg-white dark:bg-zinc-950 px-2 text-gray-500 font-mono">For Evaluation & Compliance</span>
                         </div>
                     </div>
 
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={triggerGuestLogin}
-                        className="w-full h-16 relative overflow-hidden group rounded-xl bg-gradient-to-r from-cyan-900/10 to-cyan-800/10 border border-cyan-500/30 p-1"
+                        onClick={triggerAuditorLogin}
+                        className="w-full h-16 relative overflow-hidden group rounded-xl bg-gradient-to-r from-slate-100 to-slate-200 dark:from-cyan-900/10 dark:to-cyan-800/10 border border-slate-200 dark:border-cyan-500/30 p-1"
                     >
                         <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
                         <div className="relative h-full flex items-center justify-between px-6">
@@ -281,8 +281,8 @@ export default function SignUpPage() {
                                     <Fingerprint className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-left">
-                                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">One-Click Test Access</h3>
-                                    <p className="text-xs text-cyan-600 dark:text-cyan-400">Instant Sandbox Environment</p>
+                                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">One-Click Auditor Access</h3>
+                                    <p className="text-xs text-cyan-600 dark:text-cyan-400">Instant Compliance Sandbox</p>
                                 </div>
                             </div>
                             <ArrowRight className="w-5 h-5 text-cyan-600 dark:text-cyan-400 group-hover:translate-x-1 transition-transform" />

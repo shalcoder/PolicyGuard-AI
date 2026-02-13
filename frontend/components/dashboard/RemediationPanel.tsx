@@ -63,7 +63,7 @@ interface RemediationPanelProps {
 }
 
 export function RemediationPanel({ originalText, violations, policySummary, report, autoStart = false }: RemediationPanelProps) {
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
     const [isOpen, setIsOpen] = useState(autoStart);
     const [activeTab, setActiveTab] = useState("detail");
     const [isFixing, setIsFixing] = useState(false);
@@ -90,7 +90,7 @@ export function RemediationPanel({ originalText, violations, policySummary, repo
     const effectiveReport = report || reportData;
 
     const handleAutoRemediate = async () => {
-        if (isJudge) {
+        if (isAuditor) {
             loadSampleRemediation();
             return;
         }

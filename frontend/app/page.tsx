@@ -43,7 +43,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function LandingPage() {
     const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
-    const { loginAsGuest } = useAuth() as any;
+    const { loginAsAuditor } = useAuth() as any;
     const [demoSequence, setDemoSequence] = useState(false);
     const [terminalLines, setTerminalLines] = useState<string[]>([]);
 
@@ -69,7 +69,7 @@ export default function LandingPage() {
         window.dispatchEvent(new CustomEvent('pg-start-tour'));
 
         // Login
-        loginAsGuest();
+        loginAsAuditor();
     };
 
     useEffect(() => {
@@ -79,7 +79,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="bg-[#020202] text-white min-h-screen font-outfit selection:bg-blue-500/30">
+        <div className="bg-white dark:bg-[#020202] text-slate-900 dark:text-white min-h-screen font-outfit selection:bg-blue-500/30">
             {/* Demo Sequence Overlay */}
             <AnimatePresence>
                 {demoSequence && (
@@ -116,16 +116,16 @@ export default function LandingPage() {
                 )}
             </AnimatePresence>
             {/* Nav */}
-            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-black/60 backdrop-blur-xl border-b border-white/5' : 'py-8 bg-transparent'}`}>
+            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8 bg-transparent'}`}>
                 <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
                     <div className="flex flex-col items-start gap-1">
                         <div className="flex items-center gap-3 group cursor-pointer">
                             <div className="w-10 h-10 bg-cyan-600 flex items-center justify-center rounded-none border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.4)] group-hover:scale-110 transition-transform">
                                 <Shield className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-black uppercase tracking-tighter">Policy<span className="text-cyan-500">Guard</span> AI</span>
+                            <span className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Policy<span className="text-cyan-500">Guard</span> AI</span>
                         </div>
-                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-400 backdrop-blur-md">
+                        <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400 backdrop-blur-md">
                             <span className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.8)]"></span>
                             AI Governance Framework
                         </div>
@@ -138,7 +138,7 @@ export default function LandingPage() {
                             { name: 'Pricing', href: '/pricing' },
                             { name: 'Team', href: '/team' }
                         ].map((item) => (
-                            <Link key={item.name} href={item.href} className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-white transition-colors relative group">
+                            <Link key={item.name} href={item.href} className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-white transition-colors relative group">
                                 {item.name}
                                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-cyan-500 transition-all group-hover:w-full"></span>
                             </Link>
@@ -174,11 +174,11 @@ export default function LandingPage() {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase">
+                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase text-slate-900 dark:text-white">
                                 THE <span className="text-cyan-600">CONTROL LAYER</span><br />
-                                <span className="text-zinc-400">FOR AI AGENTS.</span>
+                                <span className="text-slate-400 dark:text-zinc-400">FOR AI AGENTS.</span>
                             </h1>
-                            <p className="text-lg md:text-xl text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
+                            <p className="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
                                 A policy-driven governance framework for continuous, live-stream observability of autonomous agent workflows.
                                 Secure your AI fleet with proactive, real-time intervention.
                             </p>
@@ -190,7 +190,7 @@ export default function LandingPage() {
                                     Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Button size="lg" variant="outline" onClick={triggerGuestLogin} className="h-16 px-10 border-cyan-500/30 text-white font-black uppercase tracking-widest hover:bg-cyan-500/10 bg-black/40 rounded-none relative group overflow-hidden">
+                            <Button size="lg" variant="outline" onClick={triggerGuestLogin} className="h-16 px-10 border-cyan-500/30 text-slate-700 dark:text-white font-black uppercase tracking-widest hover:bg-cyan-500/10 bg-slate-100/40 dark:bg-black/40 rounded-none relative group overflow-hidden">
                                 <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors"></div>
                                 <span className="relative flex items-center gap-3">
                                     <Fingerprint className="w-5 h-5 text-cyan-500" />
@@ -207,9 +207,9 @@ export default function LandingPage() {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="row-span-1 bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/10 p-6 rounded-[2rem] flex flex-col justify-center"
+                                className="row-span-1 bg-slate-100/80 dark:bg-[#0A0A0A]/80 backdrop-blur-3xl border border-slate-200 dark:border-white/10 p-6 rounded-[2rem] flex flex-col justify-center shadow-xl shadow-slate-200/50 dark:shadow-none"
                             >
-                                <div className="text-4xl font-black text-white tracking-tighter">500+</div>
+                                <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">500+</div>
                                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Threat Vectors Scanned</div>
                             </motion.div>
 
@@ -218,7 +218,7 @@ export default function LandingPage() {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.5, duration: 0.8 }}
-                                className="row-span-4 col-start-2 bg-[#050505] border border-white/5 p-10 rounded-[3rem] flex flex-col justify-between relative overflow-hidden shadow-2xl"
+                                className="row-span-4 col-start-2 bg-slate-50 dark:bg-[#050505] border border-slate-200 dark:border-white/5 p-10 rounded-[3rem] flex flex-col justify-between relative overflow-hidden shadow-2xl dark:shadow-none"
                             >
                                 <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-cyan-600/10 via-purple-600/5 to-transparent"></div>
                                 {/* Iridescent Line Pattern */}
@@ -227,7 +227,7 @@ export default function LandingPage() {
                                 </div>
 
                                 <div className="relative z-10">
-                                    <div className="text-7xl font-black text-white tracking-tighter leading-none">100%</div>
+                                    <div className="text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">100%</div>
                                     <div className="text-xs font-black uppercase tracking-[0.3em] text-cyan-500 mt-4">Audit Transparency</div>
                                 </div>
                                 <div className="relative flex justify-center py-10">
@@ -246,12 +246,12 @@ export default function LandingPage() {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.7 }}
-                                className="row-span-2 bg-[#0A0A0A]/40 backdrop-blur-3xl border border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-center overflow-hidden group"
+                                className="row-span-2 bg-slate-100/40 dark:bg-[#0A0A0A]/40 backdrop-blur-3xl border border-slate-200 dark:border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-center overflow-hidden group shadow-xl shadow-slate-200/20 dark:shadow-none"
                             >
-                                <div className="text-5xl font-black text-white tracking-tighter leading-none">30+</div>
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-3">Governance Policies</div>
+                                <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">30+</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-500 mt-3">Governance Policies</div>
                                 <div className="mt-8 relative h-16">
-                                    <Atom className="w-16 h-16 text-zinc-800 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-cyan-500/20 transition-colors" />
+                                    <Atom className="w-16 h-16 text-slate-200 dark:text-zinc-800 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-cyan-500/20 transition-colors" />
                                 </div>
                             </motion.div>
 
@@ -283,7 +283,7 @@ export default function LandingPage() {
 
 
             {/* Section 3: The Architecture Pillars */}
-            <section className="py-32 bg-[#020202]">
+            <section className="py-32 bg-slate-50 dark:bg-[#020202]">
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="grid lg:grid-cols-3 gap-8">
                         {/* Pillar 1 */}
@@ -294,7 +294,7 @@ export default function LandingPage() {
                             <div className="w-16 h-16 bg-cyan-600/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-cyan-600 group-hover:text-white transition-all">
                                 <ShieldAlert className="w-8 h-8 text-cyan-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase text-white mb-6">Hallucination <br />Deflector</h3>
+                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">Hallucination <br />Deflector</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Real-time semantic comparison between agent output and verified knowledge base to intercept false claims before they reach the user.
                             </p>
@@ -303,12 +303,12 @@ export default function LandingPage() {
                         {/* Pillar 2 */}
                         <motion.div
                             whileHover={{ y: -10 }}
-                            className="p-12 bg-zinc-900/20 border border-white/5 rounded-[3rem] group"
+                            className="p-12 bg-white dark:bg-zinc-900/20 border border-slate-200 dark:border-white/5 rounded-[3rem] group shadow-xl shadow-slate-200/50 dark:shadow-none"
                         >
                             <div className="w-16 h-16 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-emerald-600 group-hover:text-white transition-all">
                                 <Lock className="w-8 h-8 text-emerald-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase text-white mb-6">Autonomous <br />SLA Guard</h3>
+                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">Autonomous <br />SLA Guard</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Hard latency and reliability constraints enforced at the proxy layer. If the agent exceeds parameters, the system executes failover protocols.
                             </p>
@@ -317,12 +317,12 @@ export default function LandingPage() {
                         {/* Pillar 3 */}
                         <motion.div
                             whileHover={{ y: -10 }}
-                            className="p-12 bg-zinc-900/20 border border-white/5 rounded-[3rem] group"
+                            className="p-12 bg-white dark:bg-zinc-900/20 border border-slate-200 dark:border-white/5 rounded-[3rem] group shadow-xl shadow-slate-200/50 dark:shadow-none"
                         >
                             <div className="w-16 h-16 bg-purple-600/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-purple-600 group-hover:text-white transition-all">
                                 <Target className="w-8 h-8 text-purple-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase text-white mb-6">PII Redaction <br />Engines</h3>
+                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">PII Redaction <br />Engines</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
                                 Multi-layered scanning for secrets, crypto-keys, and sensitive personal data within agent trace logs and live response streams.
                             </p>
@@ -332,11 +332,11 @@ export default function LandingPage() {
             </section>
 
             {/* Section 4: Global Standards Grid */}
-            <section className="py-32 bg-[#050505] relative">
+            <section className="py-32 bg-white dark:bg-[#050505] relative">
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-600/5 blur-[120px] rounded-full pointer-events-none"></div>
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-6">Built for <span className="text-cyan-500">Compliance.</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-6 text-slate-900 dark:text-white">Built for <span className="text-cyan-500">Compliance.</span></h2>
                         <p className="text-zinc-500 text-lg font-medium max-w-2xl mx-auto">PolicyGuard mapped to the world's most rigorous security frameworks.</p>
                     </div>
 
@@ -349,12 +349,12 @@ export default function LandingPage() {
                             { name: "NIST AI RMF", level: "L1", icon: Brain },
                             { name: "PCI DSS", level: "L2", icon: CreditCard }
                         ].map((std) => (
-                            <div key={std.name} className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl group hover:border-blue-500/30 transition-all text-center flex flex-col items-center">
+                            <div key={std.name} className="p-6 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-white/5 rounded-3xl group hover:border-blue-500/30 transition-all text-center flex flex-col items-center">
                                 <div className="mb-5 p-4 bg-zinc-800/30 rounded-2xl group-hover:bg-cyan-500/10 group-hover:scale-110 transition-all duration-300">
                                     <std.icon className="w-6 h-6 text-zinc-500 group-hover:text-cyan-500 transition-colors" />
                                 </div>
                                 <div className="text-[10px] font-black tracking-widest text-cyan-500 mb-2 uppercase">Protocol_{std.level}</div>
-                                <div className="text-xs font-black uppercase text-zinc-300 group-hover:text-white transition-colors">{std.name}</div>
+                                <div className="text-xs font-black uppercase text-slate-600 dark:text-zinc-300 group-hover:text-blue-600 dark:group-hover:text-white transition-colors">{std.name}</div>
                             </div>
                         ))}
                     </div>
@@ -362,15 +362,15 @@ export default function LandingPage() {
             </section>
 
             {/* Section 5: The Invisible Shield (Value Statement) */}
-            <section className="py-40 bg-black relative">
+            <section className="py-40 bg-white dark:bg-black relative">
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="bg-gradient-to-r from-cyan-600/20 to-purple-600/20 rounded-[4rem] p-20 border border-white/10 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-10 opacity-20">
                             <ShieldCheck className="w-64 h-64 text-white" />
                         </div>
                         <div className="max-w-2xl relative z-10">
-                            <h2 className="text-5xl md:text-7xl font-outfit font-black uppercase tracking-tighter mb-10 leading-none">
-                                THE <span className="text-white">INVISIBLE SHIELD</span> <br />
+                            <h2 className="text-5xl md:text-7xl font-outfit font-black uppercase tracking-tighter mb-10 leading-none text-slate-800 dark:text-white/90">
+                                THE <span className="text-slate-900 dark:text-white font-black">INVISIBLE SHIELD</span> <br />
                                 <span className="text-cyan-500">BETWEEN AI & APPS.</span>
                             </h2>
                             <p className="text-zinc-400 text-xl font-medium leading-relaxed mb-12">
@@ -379,12 +379,12 @@ export default function LandingPage() {
                             </p>
                             <div className="flex gap-10">
                                 <div>
-                                    <div className="text-4xl font-black text-white">8ms</div>
+                                    <div className="text-4xl font-black text-slate-900 dark:text-white">8ms</div>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">Avg Overhead</div>
                                 </div>
-                                <div className="w-px h-12 bg-zinc-800"></div>
+                                <div className="w-px h-12 bg-slate-200 dark:bg-zinc-800"></div>
                                 <div>
-                                    <div className="text-4xl font-black text-white">99.9%</div>
+                                    <div className="text-4xl font-black text-slate-900 dark:text-white">99.9%</div>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">Uptime Verifier</div>
                                 </div>
                             </div>
@@ -394,9 +394,9 @@ export default function LandingPage() {
             </section>
 
             {/* CTA Final */}
-            <section className="py-20 bg-black text-center border-t border-white/5">
+            <section className="py-20 bg-slate-50 dark:bg-black text-center border-t border-slate-200 dark:border-white/5">
                 <div className="max-w-4xl mx-auto px-6">
-                    <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-10 tracking-tighter">Ready to secure your fleet?</h2>
+                    <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-10 tracking-tighter text-slate-900 dark:text-white">Ready to secure your fleet?</h2>
                     <Button size="lg" onClick={() => router.push('/login')} className="h-16 px-12 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest rounded-none">
                         Establish Protocol
                     </Button>
@@ -404,12 +404,12 @@ export default function LandingPage() {
             </section>
 
             {/* Footer */}
-            <footer className="py-20 border-t border-white/5 bg-[#020202] relative z-20">
+            <footer className="py-20 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-[#020202] relative z-20">
                 <div className="max-w-[1400px] mx-auto px-6 grid md:grid-cols-4 gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-3 mb-8">
                             <Shield className="w-8 h-8 text-cyan-500" />
-                            <span className="text-xl font-black uppercase tracking-tighter">PolicyGuard AI</span>
+                            <span className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">PolicyGuard AI</span>
                         </div>
                         <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
                             A specialized observability and governance core for securing
@@ -417,7 +417,7 @@ export default function LandingPage() {
                         </p>
                     </div>
                     <div>
-                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Platform</h4>
+                        <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs mb-8">Platform</h4>
                         <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase transition-colors">
                             <Link href="/features" className="hover:text-white cursor-pointer transition-colors block">Risk Core</Link>
                             <Link href="/governance" className="hover:text-white cursor-pointer transition-colors block">Proxy Hub</Link>
@@ -426,7 +426,7 @@ export default function LandingPage() {
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-8">Company</h4>
+                        <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs mb-8">Company</h4>
                         <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase transition-colors">
                             <li className="hover:text-white cursor-pointer transition-colors">Research</li>
                             <li className="hover:text-white cursor-pointer transition-colors">Security</li>

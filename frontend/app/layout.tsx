@@ -33,7 +33,7 @@ export default function RootLayout({
             <body className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-background bg-grid-cyber`} suppressHydrationWarning>
                 <ThemeProvider
                     attribute="class"
-                    defaultTheme="dark"
+                    defaultTheme="light"
                     enableSystem
                     disableTransitionOnChange
                 >

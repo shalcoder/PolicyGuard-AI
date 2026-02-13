@@ -20,7 +20,7 @@ export default function RemediatePage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { addToast } = useToast();
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
 
     const [violations, setViolations] = useState<Violation[]>([]);
     const [workflowName, setWorkflowName] = useState<string>('');
@@ -105,7 +105,7 @@ export default function RemediatePage() {
                     }
                 } catch (e) {
                     console.error("Failed to fetch latest report:", e);
-                    if (isJudge) {
+                    if (isAuditor) {
                         setWorkflowName("Investment Advisor Bot v2");
                         setWorkflowDescription("Automated retail investment advice based on risk profile.");
                         setViolations([
@@ -114,7 +114,7 @@ export default function RemediatePage() {
                         ]);
                     }
                 }
-            } else if (isJudge && violations.length === 0) {
+            } else if (isAuditor && violations.length === 0) {
                 setWorkflowName("Investment Advisor Bot v2");
                 setWorkflowDescription("Automated retail investment advice based on risk profile.");
                 setViolations([

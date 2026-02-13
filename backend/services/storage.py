@@ -57,12 +57,12 @@ class PolicyStorage:
                 print("  2. OR set FIREBASE_CREDENTIALS env var with the JSON string")
                 print("  3. Run 'python migrate_to_firebase.py' after connecting")
                 print("!"*60 + "\n")
-                print("Application running in CRIPPLED state -> FALLING BACK TO LOCAL STORAGE.")
+                print("Application running in OFFLINE state -> FALLING BACK TO LOCAL STORAGE.")
                 self._use_firebase = False
                 self._load_from_local_json() # Load local data immediately
         else:
-            # Use local JSON storage (fast, no network)
-            print("[START] Using LOCAL JSON storage (Development Mode - Fast)")
+            # Use local JSON storage (Deterministic Persistence)
+            print("[START] Using LOCAL JSON storage (Enterprise Resilience Mode)")
             self._load_from_local_json()
             print(f"[OK] Loaded {len(self._policies)} policies from {self._local_store_path}")
 

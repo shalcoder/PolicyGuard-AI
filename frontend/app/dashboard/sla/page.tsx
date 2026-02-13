@@ -76,7 +76,7 @@ export default function SLAMonitorPage() {
     const [analyzing, setAnalyzing] = useState(false);
     const [logs, setLogs] = useState<ProxyLog[]>([]);
     const [mounted, setMounted] = useState(false);
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
 
     useEffect(() => {
         const timer = setTimeout(() => setMounted(true), 100);
@@ -192,7 +192,7 @@ export default function SLAMonitorPage() {
 
         // Run AI analysis initially
         const aiTimer = setTimeout(() => {
-            if (isJudge) {
+            if (isAuditor) {
                 loadSampleSLA();
             } else {
                 runAIAnalysis();
@@ -201,7 +201,7 @@ export default function SLAMonitorPage() {
 
         // Poll AI Analysis every 12 seconds
         const aiInterval = setInterval(() => {
-            if (!isJudge) runAIAnalysis();
+            if (!isAuditor) runAIAnalysis();
         }, 12000);
 
         return () => {

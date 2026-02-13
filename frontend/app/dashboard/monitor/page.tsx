@@ -27,7 +27,7 @@ interface MonitorData {
 }
 
 export default function MonitorPage() {
-    const { isJudge } = useAuth();
+    const { isAuditor } = useAuth();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
     const [data, setData] = useState<MonitorData>({ traces_per_min: 0, blocking_rate: 0, active_policies: 0, traces: [] });
     const [selfHealingEnabled, setSelfHealingEnabled] = useState(false);
@@ -204,7 +204,7 @@ export default function MonitorPage() {
         fetchMonitor();
         const interval = setInterval(fetchMonitor, 3000);
         return () => clearInterval(interval);
-    }, [isJudge]);
+    }, [isAuditor]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-20">
