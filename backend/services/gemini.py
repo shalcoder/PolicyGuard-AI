@@ -41,12 +41,12 @@ class GeminiService:
             "gemini-1.5-flash-8b",            # Lightweight flash
         ]
         
-        # Model preference for different task types
+        # Model preference for different task types - Updated Feb 2026
         self.task_to_models = {
-            "deep_audit": ["gemini-2.0-flash-thinking-exp-01-21", "gemini-exp-1206", "gemini-1.5-pro-latest"],
-            "sla_forecasting": ["gemini-2.0-flash-thinking-exp-01-21", "gemini-1.5-pro-latest"],
-            "remediation": ["gemini-2.0-flash-exp", "gemini-1.5-flash-latest"],
-            "inline_filter": ["gemini-2.0-flash-exp", "gemini-1.5-flash-8b"],
+            "deep_audit": ["gemini-3-pro-preview", "gemini-2.5-pro", "gemini-2.0-flash-thinking-exp-01-21"],
+            "sla_forecasting": ["gemini-3-pro-preview", "gemini-2.5-pro", "gemini-2.0-flash-thinking-exp-01-21"],
+            "remediation": ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash-exp"],
+            "inline_filter": ["gemini-2.5-flash-lite", "gemini-2.0-flash-exp", "gemini-1.5-flash-latest"],
         }
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
@@ -157,19 +157,22 @@ class GeminiService:
                     last_error = e
                     
                     # Identify error type
+                    is_auth_error = "401" in error_str or "403" in error_str or "unauthorized" in error_str.lower()
                     is_rate_limit = "429" in error_str or "RESOURCE_EXHAUSTED" in error_str
                     is_not_found = "404" in error_str or "NOT_FOUND" in error_str or "models/" in error_str.lower()
                     is_quota = "QUOTA" in error_str.upper() or "quota" in error_str.lower()
                     
                     # Log the specific error
-                    if is_rate_limit:
+                    if is_auth_error:
+                        print(f"🔑 AUTH ERROR on Key[{key_idx+1}]: Ensure your API key is valid.")
+                    elif is_rate_limit:
                         print(f"⏱️  Rate limit on Model[{model_name}] × Key[{key_idx+1}]")
                     elif is_not_found:
-                        print(f"❌ Model {model_name} not available on Key[{key_idx+1}]")
+                        print(f"❌ Model {model_name} not available or name mismatch on Key[{key_idx+1}]")
                     elif is_quota:
                         print(f"📊 Quota exceeded on Model[{model_name}] × Key[{key_idx+1}]")
                     else:
-                        print(f"⚠️  Error on Model[{model_name}] × Key[{key_idx+1}]: {error_str[:100]}")
+                        print(f"⚠️  Detailed Error on Model[{model_name}] × Key[{key_idx+1}]: {error_str}")
                     
                     # Continue to next key (or next model if all keys exhausted)
                     continue
