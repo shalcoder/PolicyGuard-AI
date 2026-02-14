@@ -28,12 +28,12 @@ class GeminiService:
             "gemini-pro-latest",
         ]
         
-        # Model preference for different task types - Optimized for confirmed working models
+        # Model preference for different task types - Optimized for High Quota models first
         self.task_to_models = {
-            "deep_audit": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.0-flash"],
-            "sla_forecasting": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.0-flash"],
-            "remediation": ["gemini-2.0-flash", "gemini-2.5-flash-lite", "gemini-exp-1206"],
-            "inline_filter": ["gemini-2.0-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash"],
+            "deep_audit": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.5-flash-lite"],
+            "sla_forecasting": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.5-flash-lite"],
+            "remediation": ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-exp-1206"],
+            "inline_filter": ["gemini-2.0-flash-lite", "gemini-2.5-flash-lite", "gemini-2.0-flash"],
         }
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
@@ -112,9 +112,9 @@ class GeminiService:
         total_attempts = 0
         
         for model_name in models_to_try:
-            # Check if we should even try this model
+            # Only stop if ALL keys are completely dead (Auth/Project Quota)
+            # We don't stop just because one model hit a limit
             if len(exhausted_keys) >= len(self.clients):
-                print(f"🛑 ALL KEYS EXHAUSTED. Stopping cascade early.")
                 break
 
             for key_idx in range(len(self.clients)):
@@ -126,10 +126,10 @@ class GeminiService:
                 key_snip = self.api_keys[key_idx][:5] + "..."
                 
                 try:
-                    # Small delay if we are retrying to avoid "flood" flags
+                    # Small delay to prevent flood detection
                     if total_attempts > 1: await asyncio.sleep(0.5)
                     
-                    print(f"🔄 Attempting {model_name} with Key {key_idx+1} ({key_snip})")
+                    print(f"🔄 Trying {model_name} | Key {key_idx+1}")
                     
                     response = await client.aio.models.generate_content(
                         model=model_name,
@@ -137,33 +137,39 @@ class GeminiService:
                         config=base_config
                     )
                     
-                    print(f"✅ Success with {model_name} (Attempt {total_attempts})")
+                    print(f"✅ Success with {model_name}")
                     return response
 
                 except Exception as e:
                     error_str = str(e).upper()
                     last_error = e
                     
-                    # Quota / Rate Limit
-                    if any(x in error_str for x in ["429", "RESOURCE_EXHAUSTED", "QUOTA"]):
-                        print(f"📊 Key {key_idx+1} is OUT OF QUOTA. Blacklisting.")
+                    # 1. Project-Wide / Global Quota (Blacklist Key for this request)
+                    if "PROJECT" in error_str or "USER" in error_str or "DAILY" in error_str:
+                        print(f"📊 Key {key_idx+1} GLOBAL QUOTA EXHAUSTED.")
                         exhausted_keys.add(key_idx)
                         continue
-                        
-                    # Model not available (404)
-                    if any(x in error_str for x in ["404", "NOT_FOUND", "MODEL"]):
-                        print(f"❌ Model {model_name} not found on Key {key_idx+1}. Skipping model.")
-                        # If the preferred model is not found, it's likely not found on other keys
-                        break # Break inner loop to try next model
                     
-                    # Auth error
+                    # 2. Model-Specific Quota (Continue to next Key for same model)
+                    if "MODEL" in error_str and ("429" in error_str or "QUOTA" in error_str):
+                        print(f"⏱️  {model_name} is busy on Key {key_idx+1}. Trying next key...")
+                        continue
+                        
+                    # 3. Model not supported at all (404)
+                    if any(x in error_str for x in ["404", "NOT_FOUND"]):
+                        print(f"❌ {model_name} not available on this key. Skipping model.")
+                        break # Try next model
+                    
+                    # 4. Auth error (Blacklist Key)
                     if any(x in error_str for x in ["401", "403", "UNAUTHORIZED"]):
-                        print(f"🔑 Key {key_idx+1} AUTH FAILED. Blacklisting.")
+                        print(f"🔑 Key {key_idx+1} AUTH FAILED.")
                         exhausted_keys.add(key_idx)
                         continue
                         
-                    print(f"⚠️  {model_name} Error: {str(e)[:100]}")
+                    print(f"⚠️  Error: {str(e)[:100]}")
                     continue
+
+        raise Exception(f"Cascade exhausted. Last error: {last_error}")
 
         raise Exception(f"API cascade exhausted after {total_attempts} attempts. Last error: {last_error}")
 
