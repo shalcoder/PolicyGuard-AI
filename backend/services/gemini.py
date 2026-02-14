@@ -13,36 +13,26 @@ class GeminiService:
         self.clients = [genai.Client(api_key=key) for key in self.api_keys]
         self.current_key_index = 0
         
-        # Cascading Model Fallback Chain - VERIFIED for your Keys (Feb 2026)
-        # Your keys are restricted to the 2.0, 2.5, and 3 series. We've removed 1.5 models to prevent 404s.
+        # Cascading Model Fallback Chain - STICKING STRICTLY TO YOUR AVAILABLE MODELS
         self.model_cascade = [
-            # 1. Gemini 3 Series (Flagship)
-            "gemini-3-pro-preview",
-            "gemini-3-flash-preview", 
-            "gemini-3-experimental",
-            
-            # 2. Gemini 2.5 Series (High Stability)
-            "gemini-2.5-pro",
-            "gemini-2.5-flash",
-            "gemini-2.5-flash-lite",
-            
-            # 3. Gemini 2.0 Series
-            "gemini-2.0-flash-thinking-exp-01-21",
             "gemini-2.0-flash",
-            "gemini-2.0-flash-001",
-            "gemini-2.0-flash-exp",
-            
-            # 4. Experimental Fallbacks
+            "gemini-2.5-pro",
+            "gemini-3-pro-preview",
             "gemini-exp-1206",
-            "gemini-2.5-pro-experimental",
+            "gemini-2.0-flash-001",
+            "gemini-2.0-flash-lite",
+            "gemini-2.5-flash-lite",
+            "gemini-3-flash-preview",
+            "gemini-flash-latest",
+            "gemini-pro-latest",
         ]
         
-        # Model preference for different task types - Updated Feb 2026
+        # Model preference for different task types - Optimized for confirmed working models
         self.task_to_models = {
-            "deep_audit": ["gemini-3-pro-preview", "gemini-2.5-pro", "gemini-2.0-flash-thinking-exp-01-21"],
-            "sla_forecasting": ["gemini-3-pro-preview", "gemini-2.5-pro", "gemini-2.0-flash-thinking-exp-01-21"],
-            "remediation": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-3-flash-preview"],
-            "inline_filter": ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-3-flash-preview"],
+            "deep_audit": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.0-flash"],
+            "sla_forecasting": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.0-flash"],
+            "remediation": ["gemini-2.0-flash", "gemini-2.5-flash-lite", "gemini-exp-1206"],
+            "inline_filter": ["gemini-2.0-flash-lite", "gemini-flash-lite-latest", "gemini-2.0-flash"],
         }
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
