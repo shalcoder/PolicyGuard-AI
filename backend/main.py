@@ -54,6 +54,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 from api.routes import router as api_router
 from api.proxy import router as proxy_router
+from api.test_region import router as test_region_router
 from services.storage import policy_db
 from services.metrics import metrics_store
 
@@ -62,6 +63,7 @@ metrics_store.set_db(policy_db.db)
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(proxy_router)
+app.include_router(test_region_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
