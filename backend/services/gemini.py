@@ -13,19 +13,21 @@ class GeminiService:
         self.clients = [genai.Client(api_key=key) for key in self.api_keys]
         self.current_key_index = 0
         
-        # Cascading Model Fallback Chain - CONFIRMED AVAILABLE FOR INDIA (Feb 2026)
+        # Cascading Model Fallback Chain - UNIVERSAL AVAILABILITY (Works in US West + India)
+        # Using Gemini 1.5 series as they have the widest geographic support
         self.model_cascade = [
-            "gemini-2.5-flash-lite", # Best Quota + Works in India
-            "gemini-2.5-flash",      # Works in India
-            "gemini-3-flash-preview", # Works in India
+            "gemini-1.5-flash",       # Most widely available, works globally
+            "gemini-1.5-flash-latest", # Stable version
+            "gemini-1.5-pro",          # For complex reasoning
+            "gemini-1.5-pro-latest",   # Stable Pro version
         ]
         
-        # Model preference - Optimized strictly for location-available models
+        # Model preference - Optimized for universal availability
         self.task_to_models = {
-            "deep_audit": ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
-            "sla_forecasting": ["gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-lite"],
-            "remediation": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3-flash-preview"],
-            "inline_filter": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3-flash-preview"],
+            "deep_audit": ["gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash"],
+            "sla_forecasting": ["gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash"],
+            "remediation": ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"],
+            "inline_filter": ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"],
         }
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
