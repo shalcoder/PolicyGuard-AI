@@ -13,21 +13,22 @@ class GeminiService:
         self.clients = [genai.Client(api_key=key) for key in self.api_keys]
         self.current_key_index = 0
         
-        # Cascading Model Fallback Chain - UNIVERSAL AVAILABILITY (Works in US West + India)
-        # Using Gemini 1.5 series as they have the widest geographic support
+        # Cascading Model Fallback Chain - US EAST (Full Model Support)
         self.model_cascade = [
-            "gemini-1.5-flash",       # Most widely available, works globally
-            "gemini-1.5-flash-latest", # Stable version
-            "gemini-1.5-pro",          # For complex reasoning
-            "gemini-1.5-pro-latest",   # Stable Pro version
+            "gemini-2.5-flash-lite",    # Highest quota (1500 RPD)
+            "gemini-2.5-flash",         # Fast + smart
+            "gemini-2.0-flash",         # Universal fallback
+            "gemini-3-flash-preview",   # Latest Flash
+            "gemini-2.5-pro",           # Deep reasoning
+            "gemini-3-pro-preview",     # Latest Pro
         ]
         
-        # Model preference - Optimized for universal availability
+        # Model preference - Lite first to preserve quota
         self.task_to_models = {
-            "deep_audit": ["gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash"],
-            "sla_forecasting": ["gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash"],
-            "remediation": ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"],
-            "inline_filter": ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"],
+            "deep_audit": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.5-flash"],
+            "sla_forecasting": ["gemini-2.5-pro", "gemini-3-pro-preview", "gemini-2.5-flash"],
+            "remediation": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"],
+            "inline_filter": ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"],
         }
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
