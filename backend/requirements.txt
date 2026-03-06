@@ -6,10 +6,19 @@ python-multipart
 python-dotenv
 httpx
 
-
 numpy
 fpdf2
 firebase-admin
 pypdf
 python-docx
 gunicorn
+
+# Enterprise Features (Phase 2)
+networkx>=3.0          # GraphRAG: in-memory knowledge graph
+PyGithub>=2.4.0        # GitHub PR auto-generation
+langchain-core>=0.3.0  # LangGraph closed-loop evaluation
+langgraph>=0.2.0       # LangGraph closed-loop evaluation
+
+# Optional: Unstructured.io for smart document parsing (large install ~200MB)
+# Uncomment if your Render plan allows larger slugs:
+# unstructured[pdf,docx]>=0.15.0

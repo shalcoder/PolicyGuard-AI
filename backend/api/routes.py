@@ -10,6 +10,10 @@ from models.redteam import ThreatReport
 from services.ingest import PolicyIngestor
 from services.gemini import GeminiService
 from services.storage import policy_db
+from services.graph_rag import graph_service
+from services.mitre_atlas import atlas_mapper
+from services.langgraph_loop import run_loop
+from services.github_service import github_service
 import json
 import uuid
 import datetime
@@ -574,6 +578,102 @@ async def hot_patch_agent(request: PatchRequest):
     """
     patched_prompt = await gemini.hot_patch_system_prompt(request.current_prompt, request.violations)
     return {"patched_prompt": patched_prompt}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENTERPRISE FEATURES: GraphRAG, MITRE ATLAS, LangGraph Loop, GitHub PR
+# ─────────────────────────────────────────────────────────────────────────────
+
+class GraphAuditRequest(BaseModel):
+    policy_texts: List[str]
+    policy_names: Optional[List[str]] = None
+
+@router.post("/audit/graph")
+async def graph_audit(request: GraphAuditRequest):
+    """
+    GraphRAG: Build a knowledge graph from multiple policy documents
+    and return detected cross-document conflicts.
+    """
+    try:
+        summary = graph_service.build_graph(request.policy_texts, request.policy_names)
+        conflicts = graph_service.find_conflicts()
+        graph_json = graph_service.get_graph_json()
+        return {
+            "summary": summary,
+            "conflicts": conflicts,
+            "conflict_count": len(conflicts),
+            "graph": graph_json
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class AtlasReportRequest(BaseModel):
+    threats: List[dict]
+    report_id: Optional[str] = None
+
+@router.post("/redteam/atlas-report")
+async def get_atlas_report(request: AtlasReportRequest):
+    """
+    MITRE ATLAS: Convert a PolicyGuard threat list to an ATLAS-structured report.
+    """
+    try:
+        report_id = request.report_id or str(uuid.uuid4())[:8].upper()
+        report = atlas_mapper.build_full_report(request.threats, report_id)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class LoopRequest(BaseModel):
+    current_prompt: str
+    violations: List[str]
+
+@router.post("/remediate/loop")
+async def remediation_loop(request: LoopRequest):
+    """
+    LangGraph Closed-Loop: Red Team → Remediation → Eval Agent.
+    Iterates up to 3 times until the patch passes evaluation (score ≥ 7/10).
+    """
+    try:
+        state = await run_loop(request.current_prompt, request.violations)
+        return {
+            "patched_prompt": state["patched_prompt"],
+            "eval_score": state["eval_score"],
+            "eval_passed": state["eval_passed"],
+            "iterations": state["iteration"],
+            "history": state["history"],
+            "attack_attempts": state["attack_attempts"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class CreatePRRequest(BaseModel):
+    guardrail_code: str
+    violation_summary: str
+    language: str = "python"
+    healing_id: Optional[str] = None
+
+@router.post("/remediate/create-pr")
+async def create_guardrail_pr(request: CreatePRRequest):
+    """
+    GitHub PR Generation: Commits guardrail code to a new branch
+    and opens a Draft PR for human review.
+    Requires GITHUB_TOKEN and GITHUB_REPO environment variables.
+    """
+    try:
+        healing_id = request.healing_id or f"HEAL-{str(uuid.uuid4())[:8].upper()}"
+        result = github_service.create_guardrail_pr(
+            guardrail_code=request.guardrail_code,
+            violation_summary=request.violation_summary,
+            language=request.language,
+            healing_id=healing_id
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/system/freeze")
 async def system_kill_switch(state: dict = Body(...)):

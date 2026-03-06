@@ -1,0 +1,99 @@
+name: "🛡️ PolicyGuard AI Policy Gate"
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "**/*.md"
+      - "samples/**"
+
+jobs:
+  policy-compliance-check:
+    name: "Policy Compliance Audit"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Changed Policy Files
+        id: changed-files
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.md' 'docs/**' 'samples/**' | head -10)
+          echo "FILES<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "Changed policy files:"
+          echo "$CHANGED"
+
+      - name: Run PolicyGuard AI Audit
+        id: audit
+        if: steps.changed-files.outputs.FILES != ''
+        env:
+          POLICYGUARD_URL: ${{ secrets.POLICYGUARD_URL || 'https://policyguard-ai-1.onrender.com' }}
+        run: |
+          VIOLATIONS=""
+          REPORT_MD="## 🛡️ PolicyGuard AI - Compliance Audit Report\n\n"
+
+          for FILE in ${{ steps.changed-files.outputs.FILES }}; do
+            if [ -f "$FILE" ]; then
+              echo "Auditing: $FILE"
+              CONTENT=$(cat "$FILE" | head -c 8000)
+
+              RESPONSE=$(curl -s -X POST \
+                "$POLICYGUARD_URL/api/v1/evaluate" \
+                -H "Content-Type: application/json" \
+                -d "{\"text\": $(echo "$CONTENT" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'), \"doc_type\": \"PRD\"}" \
+                --max-time 60)
+
+              if echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); exit(0 if len(d.get('violations',[])) == 0 else 1)" 2>/dev/null; then
+                REPORT_MD="${REPORT_MD}### ✅ \`$FILE\` — PASSED\n\n"
+              else
+                VIOLATION_COUNT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('violations',[])))" 2>/dev/null || echo "unknown")
+                REPORT_MD="${REPORT_MD}### ❌ \`$FILE\` — **$VIOLATION_COUNT violation(s) found**\n\n"
+                DETAIL=$(echo "$RESPONSE" | python3 -c "
+          import sys,json
+          d=json.load(sys.stdin)
+          for v in d.get('violations', [])[:5]:
+              print(f'- **{v.get(\"type\",\"UNKNOWN\")}** ({v.get(\"severity\",\"?\")}): {v.get(\"description\",\"\")[:120]}')
+          " 2>/dev/null || echo "Could not parse violations.")
+                REPORT_MD="${REPORT_MD}${DETAIL}\n\n"
+                VIOLATIONS="${VIOLATIONS} ${FILE}"
+              fi
+            fi
+          done
+
+          echo "REPORT_MD<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$REPORT_MD" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -n "$VIOLATIONS" ]; then
+            echo "FAILED=true" >> $GITHUB_OUTPUT
+          else
+            echo "FAILED=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post PR Comment
+        if: steps.changed-files.outputs.FILES != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: policyguard-audit
+          message: |
+            ${{ steps.audit.outputs.REPORT_MD }}
+
+            ---
+            *Powered by [PolicyGuard AI](https://policyguard-ai-1.onrender.com) • [View Dashboard](https://policyguard-ai-1.onrender.com/dashboard)*
+
+      - name: Fail if Violations Found
+        if: steps.audit.outputs.FAILED == 'true'
+        run: |
+          echo "❌ PolicyGuard found policy violations in changed files."
+          echo "Please review the PR comment for details and remediate before merging."
+          exit 1
+
+      - name: Skip if No Policy Files Changed
+        if: steps.changed-files.outputs.FILES == ''
+        run: |
+          echo "✅ No policy files changed. Skipping PolicyGuard audit."
