@@ -1,4 +1,4 @@
-# PolicyGuard AI v2.0 🛡️
+# PolicyGuard AI 🛡️
 
 > **The Autonomous Governance & Trust Layer for Enterprise Agentic Systems.**
 > *Built on Google Gemini 3 Pro & Flash — The world's most capable reasoning models.*
