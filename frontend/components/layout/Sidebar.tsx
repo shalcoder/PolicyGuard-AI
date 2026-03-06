@@ -8,6 +8,13 @@ import { useAuth } from '@/hooks/useAuth';
 // Grouped Navigation Configuration
 const navGroups = [
     {
+        label: "Executive Overview",
+        items: [
+            { name: 'Dashboard', href: '/dashboard', icon: Home },
+            { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        ]
+    },
+    {
         label: "", 
         items: [
             { name: 'Policies', href: '/dashboard/policies', icon: FileText },
@@ -32,13 +39,6 @@ const navGroups = [
         items: [
             { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
             { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
-        ]
-    },
-    {
-        label: "Executive Overview",
-        items: [
-            { name: 'Dashboard', href: '/dashboard', icon: Home },
-            { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         ]
     }
 ];

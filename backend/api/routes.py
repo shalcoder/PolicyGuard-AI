@@ -528,7 +528,7 @@ def _build_audit_pdf(report_data: dict, eval_record: dict = None) -> bytes:
         pdf.set_font("helvetica", "", 9)
         for c in conditions:
             pdf.set_x(30)
-            pdf.cell(5, 7, u"\u2022")
+            pdf.cell(5, 7, "-")
             pdf.cell(0, 7, str(c), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 

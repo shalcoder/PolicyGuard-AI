@@ -510,148 +510,7 @@ class GeminiService:
         )
         return self.clean_json_text(response.text)
 
-    async def chat_compliance(self, query: str, context: str, history: list = []) -> str:
-        """
-        Answers a user question based on RAG context, falling back to general knowledge if needed.
-        """
-        
-        # Format history for context
-        conversation_context = ""
-        if history:
-            conversation_context = "PREVIOUS CONVERSATION:\n" + "\n".join([f"{msg.role}: {msg.content}" for msg in history[-3:]]) + "\n\n"
 
-        # Determine if we have context
-        context_section = ""
-        if context:
-            context_section = f"--- RELEVANT POLICY EXCERPTS (Primary Source) ---\n{context}"
-        else:
-            context_section = "--- NO RELEVANT POLICY SECTIONS FOUND ---"
-
-        prompt = f"""
-        Role: Compliance AI Helper.
-        Task: Answer briefly using context.
-        
-        {context_section}
-        {conversation_context}
-        User: {query}
-        """
-        
-        try:
-            response = await self._generate_with_retry(
-                contents=prompt,
-                task_type="inline_filter",
-                retries=1,
-                config={
-                    'max_output_tokens': 300,
-                    'temperature': 0.5
-                }
-            )
-            return response.text
-            
-        except ValueError:
-            # Captures "model output must contain..." errors from SDK
-            return "The model was unable to generate a response for this query (Empty Output)."
-        except Exception as e:
-            print(f"Gemini Chat CRITICAL FAILURE: {e}")
-            
-            # Intelligent Fallback Mode (Offline)
-            q_lower = query.lower()
-            
-            # 1. Greetings
-            if "hi" in q_lower or "hello" in q_lower:
-                return "Hello! I am your Policy Guard AI. I'm currently operating in offline mode due to high traffic, but I can still help you find active policies."
-            
-            # 2. Keyword matching for common topics
-            if "gdpr" in q_lower:
-                return "**[OFFLINE MODE] GDPR Policy Summary:**\n\n1. **Consent**: Explicit, opt-in consent is required.\n2. **Right to Erasure**: Users can request data deletion.\n3. **Data Residency**: Store data within EU/EEA where possible.\n4. **Breach Notification**: Must notify within 72 hours."
-            
-            if "hipaa" in q_lower:
-                return "**[OFFLINE MODE] HIPAA Policy Summary:**\n\n1. **Encryption**: AES-256 for data at rest, TLS 1.2+ for transit.\n2. **Access**: Minimum necessary access principle.\n3. **BAA**: Business Associate Agreements required for vendors."
-            
-            if "soc2" in q_lower or "soc 2" in q_lower:
-                return "**[OFFLINE MODE] SOC 2 Controls:**\n\n1. **Security**: MFA, Firewalls, Intrusion Detection.\n2. **Availability**: Performance monitoring and disaster recovery.\n3. **Confidentiality**: Data classification and access reviews."
-            
-            if "password" in q_lower or "encrypt" in q_lower:
-                return "**[OFFLINE MODE] Security Best Practices:**\n\n- Use strong, unique passwords.\n- Enabled Multi-Factor Authentication (MFA).\n- Encrypt all sensitive data at rest and in transit."
-
-            # 3. Contextual Fallback (if RAG context exists)
-            if context and len(context) > 20:
-                snippet = context[:200].replace('\n', ' ')
-                return f"**[OFFLINE MODE]** I couldn't process your specific question due to high traffic, but here is a relevant policy excerpt I found:\n\n> *{snippet}...*\n\nPlease try asking again in a few moments."
-
-            return "I apologize, but I am currently experiencing very high traffic. Please try asking your question again in about 30 seconds."
-
-    async def agentic_chat(self, query: str, context: str, history: list = [], live_context: dict = {}, agent_mode: str = "ask") -> dict:
-        """
-        Answers questions AND triggers actions based on live_context, user commands, and selected mode.
-        Returns a dictionary: { "answer": str, "action_type": str|null, "action_params": dict|null }
-        """
-        conversation_context = ""
-        if history:
-            conversation_context = "PREVIOUS CONVERSATION:\n" + "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]]) + "\n\n"
-
-        context_section = f"--- RAG POLICY EXCERPTS ---\n{context}" if context else "--- NO SPECIFIC RAG EXCERPTS ---"
-        live_section = f"--- LIVE SYSTEM CONTEXT ---\n{json.dumps(live_context, indent=2, default=str)}"
-
-        mode_instruction = ""
-        if agent_mode == "action":
-            mode_instruction = """
-        [MODE: AGENT/ACTION MODE]
-        1. The user explicitly wants you to take an automated action. 
-        2. If the user asks to DO something (navigate, audit, download, clear), YOU MUST extract and return the matching action configuration.
-        3. Keep your natural language answer extremely brief, like "Navigating you to the Red Team dashboard now."
-            """
-        else:
-            mode_instruction = """
-        [MODE: ASK MODE]
-        1. The user is asking a question about the LIVE SYSTEM CONTEXT or RAG POLICY EXCERPTS.
-        2. DO NOT return any action_type unless the user explicitly commands it inside Ask Mode. Your primary goal is to answer comprehensively using the live metrics and logs.
-        3. If summarizing logs or metrics, be clear and present the data nicely.
-            """
-
-        prompt = f"""
-        Role: Guardian AI — The Agentic Policy Assistant.
-        You are directly managing the PolicyGuard system. You have access to live metrics, recent violations, and active policies.
-        
-        {live_section}
-        
-        {context_section}
-        
-        {conversation_context}
-        User Command/Question: {query}
-        
-        Instructions:
-        {mode_instruction}
-        
-        Supported actions (if needed): 'navigate', 'trigger_audit', 'download_report', 'show_metrics', 'clear_violations', 'freeze_system'.
-        If navigating, action_params should be {{"page": "/dashboard/redteam"}} or similar valid routes.
-        
-        Output **ONLY** a valid JSON object matching this schema:
-        {{
-            "answer": "Your natural language response...",
-            "action_type": "string or null",
-            "action_params": {{}} // Any necessary parameters for the action, or null
-        }}
-        """
-        
-        try:
-            response = await self._generate_with_retry(
-                contents=prompt,
-                task_type="inline_filter", # Keep it fast
-                retries=2,
-                config={
-                    'response_mime_type': 'application/json',
-                    'temperature': 0.1
-                }
-            )
-            return json.loads(self.clean_json_text(response.text))
-        except Exception as e:
-            print(f"Agentic Chat Error: {e}")
-            return {
-                "answer": "I encountered an error trying to process that command. The system might be overloaded.",
-                "action_type": None,
-                "action_params": None
-            }
 
     async def generate_threat_model(self, workflow_context: str) -> str:
         prompt = f"""
@@ -1176,7 +1035,7 @@ class GeminiService:
             # Use unified retry logic even for multimodal
             contents = [
                 types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
-                prompt
+                types.Part.from_text(text=prompt)
             ]
             response = await self._generate_with_retry(
                 contents=contents,
@@ -1208,9 +1067,9 @@ class GeminiService:
         if history:
             for msg in history:
                 role = "user" if msg.get("role") == "user" else "model"
-                contents.append({"role": role, "parts": [msg.get("content", "")]})
+                contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
         
-        contents.append({"role": "user", "parts": [prompt]})
+        contents.append({"role": "user", "parts": [{"text": prompt}]})
         
         try:
             response = await self._generate_with_retry(
@@ -1258,9 +1117,9 @@ class GeminiService:
         if history:
             for msg in history:
                 role = "user" if msg.get("role") == "user" else "model"
-                contents.append({"role": role, "parts": [str(msg.get("content", ""))]})
+                contents.append({"role": role, "parts": [{"text": str(msg.get("content", ""))}]})
         
-        contents.append({"role": "user", "parts": [f"{system_prompt}\n\nUSER QUERY: {query}"]})
+        contents.append({"role": "user", "parts": [{"text": f"{system_prompt}\n\nUSER QUERY: {query}"}]})
         
         try:
             response = await self._generate_with_retry(
