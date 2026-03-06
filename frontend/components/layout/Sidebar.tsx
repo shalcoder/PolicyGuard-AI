@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 // Grouped Navigation Configuration
 const navGroups = [
     {
-        label: "", // Removed "Lifecycle Setup"
+        label: "", 
         items: [
             { name: 'Policies', href: '/dashboard/policies', icon: FileText },
             { name: 'Integration Wizards', href: '/dashboard/proxy', icon: Shield },
