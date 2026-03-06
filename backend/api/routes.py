@@ -390,106 +390,365 @@ async def get_latest_evaluation():
     
     raise HTTPException(status_code=404, detail="No evaluation history found.")
 
+def _build_audit_pdf(report_data: dict, eval_record: dict = None) -> bytes:
+    """
+    Generate a rich multi-page PolicyGuard Audit PDF from a compliance report dict.
+    """
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    # ─── COLORS ───────────────────────────────────────────────────────────────
+    DARK      = (15, 23, 42)      # slate-900
+    BLUE      = (37, 99, 235)     # blue-600
+    GREEN     = (22, 163, 74)     # green-600
+    RED       = (220, 38, 38)     # red-600
+    AMBER     = (217, 119, 6)     # amber-600
+    LIGHT_BG  = (248, 250, 252)   # slate-50
+    MID_GRAY  = (100, 116, 139)   # slate-500
+    BORDER    = (226, 232, 240)   # slate-200
+
+    def section_header(title: str, icon: str = ""):
+        pdf.set_fill_color(*LIGHT_BG)
+        pdf.set_draw_color(*BORDER)
+        pdf.set_font("helvetica", "B", 11)
+        pdf.set_text_color(*BLUE)
+        pdf.cell(0, 10, f"  {icon}  {title}", new_x="LMARGIN", new_y="NEXT", fill=True, border="B")
+        pdf.set_text_color(*DARK)
+        pdf.ln(3)
+
+    def kv_row(label: str, value: str, value_color=None):
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(55, 7, label.upper(), new_x="RIGHT", new_y="LAST")
+        pdf.set_font("helvetica", "", 9)
+        if value_color:
+            pdf.set_text_color(*value_color)
+        else:
+            pdf.set_text_color(*DARK)
+        pdf.multi_cell(0, 7, str(value) if value else "—")
+        pdf.set_text_color(*DARK)
+
+    def verdict_color(v: str):
+        v = (v or "").upper()
+        if "PASS" in v or "GO" in v:       return GREEN
+        if "FAIL" in v or "DENY" in v:     return RED
+        return AMBER
+
+    def rating_color(r: str):
+        r = (r or "").upper()
+        if r == "LOW":    return GREEN
+        if r == "HIGH":   return RED
+        return AMBER
+
+    # Extract fields
+    wf_name     = report_data.get("workflow_name", "Unknown Workflow")
+    report_id   = report_data.get("report_id", f"RPT-{uuid.uuid4().hex[:8].upper()}")
+    ts          = report_data.get("timestamp", datetime.datetime.now().isoformat())
+    try:
+        ts_fmt  = datetime.datetime.fromisoformat(ts).strftime("%B %d, %Y  %H:%M UTC")
+    except:
+        ts_fmt  = ts
+
+    system_spec     = report_data.get("system_spec", {})
+    risk            = report_data.get("risk_assessment", {})
+    business        = report_data.get("business_impact", {})
+    policy_matrix   = report_data.get("policy_matrix", [])
+    evidence_list   = report_data.get("evidence", [])
+    recommendations = report_data.get("recommendations", [])
+    verdict         = report_data.get("verdict", {})
+    forensic        = report_data.get("forensic_digest", {})
+
+    verdict_label   = verdict.get("status_label", "CONDITIONAL")
+    overall_score   = risk.get("overall_score", "—")
+    overall_rating  = risk.get("overall_rating", "Medium")
+    confidence      = risk.get("confidence_score", "—")
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PAGE 1 — COVER
+    # ═══════════════════════════════════════════════════════════════════════════
+    pdf.add_page()
+
+    # Top bar
+    pdf.set_fill_color(*BLUE)
+    pdf.rect(0, 0, 210, 22, style="F")
+    pdf.set_font("helvetica", "B", 10)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_y(6)
+    pdf.cell(0, 10, "  PolicyGuard AI  |  Autonomous Governance & Compliance Platform", align="L")
+
+    pdf.ln(28)
+    pdf.set_text_color(*DARK)
+    pdf.set_font("helvetica", "B", 26)
+    pdf.cell(0, 12, "AI Governance Audit Report", align="C", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_font("helvetica", "", 12)
+    pdf.set_text_color(*MID_GRAY)
+    pdf.cell(0, 8, wf_name, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(6)
+
+    # Verdict badge box
+    vc = verdict_color(verdict_label)
+    pdf.set_fill_color(*vc)
+    pdf.set_draw_color(*vc)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 14)
+    x = (210 - 80) / 2
+    pdf.set_x(x)
+    pdf.cell(80, 12, f"  VERDICT: {verdict_label}  ", align="C", fill=True, border=1, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*DARK)
+    pdf.ln(8)
+
+    # Meta table ─ centered block
+    pdf.set_font("helvetica", "", 10)
+    pdf.set_text_color(*MID_GRAY)
+    meta_items = [
+        ("Report ID",       report_id),
+        ("Generated",       ts_fmt),
+        ("Risk Score",      f"{overall_score} / 100  ({overall_rating} Risk)"),
+        ("Confidence",      str(confidence)),
+        ("Model",           forensic.get("model_version", "Gemini 3.1 Pro Preview")),
+    ]
+    for label, val in meta_items:
+        pdf.set_x(30)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(45, 7, label.upper())
+        pdf.set_font("helvetica", "", 9)
+        pdf.set_text_color(*DARK)
+        pdf.cell(0, 7, val, new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(8)
+
+    # Approval conditions
+    conditions = verdict.get("approval_conditions", [])
+    if conditions:
+        pdf.set_font("helvetica", "B", 10)
+        pdf.set_text_color(*AMBER)
+        pdf.cell(0, 8, "Required Before Deployment:", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(*DARK)
+        pdf.set_font("helvetica", "", 9)
+        for c in conditions:
+            pdf.set_x(30)
+            pdf.cell(5, 7, u"\u2022")
+            pdf.cell(0, 7, str(c), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+
+    # Bottom footer on cover
+    pdf.set_y(-30)
+    pdf.set_draw_color(*BORDER)
+    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
+    pdf.ln(3)
+    pdf.set_font("courier", "", 7)
+    pdf.set_text_color(*MID_GRAY)
+    pdf.cell(0, 5, f"PolicyGuard AI  |  report_id={report_id}  |  Powered by Gemini 3.1 Pro Preview", align="C")
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PAGE 2 — EXECUTIVE SUMMARY + SYSTEM SPEC
+    # ═══════════════════════════════════════════════════════════════════════════
+    pdf.add_page()
+    section_header("Executive Summary", "[1]")
+    summary_text = system_spec.get("summary") or f"{wf_name} was audited against active PolicyGuard governance rules."
+    pdf.set_font("helvetica", "", 9)
+    pdf.set_text_color(*DARK)
+    pdf.multi_cell(0, 6, summary_text)
+    pdf.ln(4)
+
+    section_header("System Specification", "[2]")
+    spec_fields = [
+        ("Agent Name",          system_spec.get("agent_name")),
+        ("Primary Purpose",     system_spec.get("primary_purpose")),
+        ("Decision Authority",  system_spec.get("decision_authority")),
+        ("Automation Level",    system_spec.get("automation_level")),
+        ("Deployment Stage",    system_spec.get("deployment_stage")),
+        ("Geographic Exposure", ", ".join(system_spec.get("geographic_exposure", [])) or "Global"),
+    ]
+    for lbl, val in spec_fields:
+        kv_row(lbl, val or "—")
+    pdf.ln(4)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PAGE 3 — POLICY COMPLIANCE MATRIX
+    # ═══════════════════════════════════════════════════════════════════════════
+    pdf.add_page()
+    section_header("Policy Compliance Matrix", "[3]")
+
+    # Table header
+    pdf.set_fill_color(*DARK)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 8)
+    pdf.cell(55, 8, "POLICY AREA", border=1, fill=True, new_x="RIGHT", new_y="LAST")
+    pdf.cell(30, 8, "STATUS", border=1, fill=True, new_x="RIGHT", new_y="LAST")
+    pdf.cell(0, 8, "REASON / FINDING", border=1, fill=True, new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_text_color(*DARK)
+    for i, pm in enumerate(policy_matrix):
+        fill_clr = (255, 255, 255) if i % 2 == 0 else (248, 250, 252)
+        pdf.set_fill_color(*fill_clr)
+        status = pm.get("status", "Unknown")
+        s_color = GREEN if "Compliant" == status else (RED if "Non" in status else AMBER)
+        area = str(pm.get("policy_area", ""))[:30]
+        reason = str(pm.get("reason", ""))[:120]
+
+        row_y = pdf.get_y()
+        pdf.set_font("helvetica", "", 8)
+        pdf.cell(55, 8, area, border=1, fill=True, new_x="RIGHT", new_y="LAST")
+        pdf.set_text_color(*s_color)
+        pdf.set_font("helvetica", "B", 8)
+        pdf.cell(30, 8, status, border=1, fill=True, new_x="RIGHT", new_y="LAST")
+        pdf.set_text_color(*DARK)
+        pdf.set_font("helvetica", "", 8)
+        pdf.multi_cell(0, 8, reason, border=1, fill=True)
+
+    if not policy_matrix:
+        pdf.set_font("helvetica", "I", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(0, 8, "No policy matrix data available.", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.ln(6)
+
+    # ─── RISK ASSESSMENT ──────────────────────────────────────────────────────
+    section_header("Risk Assessment", "[4]")
+    kv_row("Overall Score",    f"{overall_score} / 100")
+    kv_row("Overall Rating",   overall_rating, value_color=rating_color(overall_rating))
+    kv_row("Confidence",       str(confidence))
+    breakdown = risk.get("breakdown", {})
+    if breakdown:
+        pdf.ln(2)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(0, 7, "BREAKDOWN:", new_x="LMARGIN", new_y="NEXT")
+        for cat, rating in breakdown.items():
+            pdf.set_x(30)
+            pdf.set_font("helvetica", "", 9)
+            pdf.set_text_color(*DARK)
+            pdf.cell(50, 6, str(cat))
+            pdf.set_text_color(*rating_color(str(rating)))
+            pdf.set_font("helvetica", "B", 9)
+            pdf.cell(0, 6, str(rating), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_text_color(*DARK)
+    pdf.ln(4)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PAGE 4 — BUSINESS IMPACT + EVIDENCE
+    # ═══════════════════════════════════════════════════════════════════════════
+    pdf.add_page()
+    section_header("Business Impact Assessment", "[5]")
+    kv_row("Financial Exposure",    business.get("financial_exposure"),   value_color=RED)
+    kv_row("Regulatory Penalty",    business.get("regulatory_penalty"),   value_color=AMBER)
+    kv_row("Brand Reputation Risk", business.get("brand_reputation"))
+    kv_row("Estimated Daily Cost",  business.get("estimated_cost"),       value_color=RED)
+    pdf.ln(6)
+
+    section_header("Evidence Traces", "[6]")
+    for j, ev_item in enumerate(evidence_list):
+        sev = str(ev_item.get("severity", "Medium"))
+        sev_color = RED if sev == "High" or sev == "Critical" else (AMBER if sev == "Medium" else GREEN)
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(*DARK)
+        pdf.cell(0, 7, f"  Finding #{j+1}  [{ev_item.get('source_doc','')}]", new_x="LMARGIN", new_y="NEXT")
+        kv_row("Policy Section",  ev_item.get("policy_section"))
+        kv_row("Component",       ev_item.get("workflow_component"))
+        kv_row("Severity",        sev, value_color=sev_color)
+        kv_row("Finding",         ev_item.get("issue_description"))
+        if ev_item.get("snippet"):
+            pdf.set_x(55)
+            pdf.set_font("courier", "", 8)
+            pdf.set_text_color(*BLUE)
+            pdf.multi_cell(0, 6, f"  {ev_item['snippet']}")
+        pdf.set_text_color(*DARK)
+        pdf.ln(3)
+    if not evidence_list:
+        pdf.set_font("helvetica", "I", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(0, 8, "No evidence traces recorded.", new_x="LMARGIN", new_y="NEXT")
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PAGE 5 — RECOMMENDATIONS + FORENSIC FOOTER
+    # ═══════════════════════════════════════════════════════════════════════════
+    pdf.add_page()
+    section_header("Recommendations", "[7]")
+    for k, rec in enumerate(recommendations):
+        rtype = rec.get("type", "")
+        rtype_color = RED if rtype == "Blocking" else AMBER
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_text_color(*DARK)
+        pdf.cell(0, 7, f"  {k+1}. {rec.get('title', '')}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "I", 8)
+        pdf.set_text_color(*rtype_color)
+        pdf.cell(55, 6, "")
+        pdf.cell(0, 6, f"Type: {rtype}  |  Policy: {rec.get('related_policy','')}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "", 9)
+        pdf.set_text_color(*DARK)
+        pdf.set_x(20)
+        pdf.multi_cell(0, 6, rec.get("description", ""))
+        pdf.ln(3)
+    if not recommendations:
+        pdf.set_font("helvetica", "I", 9)
+        pdf.set_text_color(*MID_GRAY)
+        pdf.cell(0, 8, "No remediation actions required.", new_x="LMARGIN", new_y="NEXT")
+
+    # Forensic Footer block
+    pdf.ln(6)
+    pdf.set_fill_color(*DARK)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("helvetica", "B", 9)
+    pdf.cell(0, 8, "  Forensic Audit Chain", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_fill_color(*LIGHT_BG)
+    pdf.set_text_color(*DARK)
+    pdf.set_font("courier", "", 8)
+    forensic_rows = [
+        ("Report ID",      report_id),
+        ("Policy Hash",    forensic.get("policy_hash", "—")),
+        ("Workflow Hash",  forensic.get("workflow_hash", "—")),
+        ("Prompt Hash",    forensic.get("prompt_hash", "audit-v2.1")),
+        ("Combined Digest",forensic.get("combined_digest", "—")),
+        ("Model",          forensic.get("model_version", "Gemini 3.1 Pro Preview")),
+        ("Generated",      ts_fmt),
+    ]
+    for fl, fv in forensic_rows:
+        pdf.set_x(10)
+        pdf.cell(45, 6, fl + ":", fill=True)
+        pdf.cell(0, 6, str(fv), fill=True, new_x="LMARGIN", new_y="NEXT")
+
+    pdf.ln(4)
+    pdf.set_font("helvetica", "I", 7)
+    pdf.set_text_color(*MID_GRAY)
+    pdf.multi_cell(0, 5,
+        "This report was generated by PolicyGuard AI and reflects the system state at the time of audit. "
+        "It does not constitute legal advice. Compliance status is subject to change if policy documents or "
+        "workflows are modified after the audit timestamp."
+    )
+
+    return bytes(pdf.output())
+
+
 @router.get("/evaluate/export/latest")
 async def export_latest_report():
     """
-    Generates a formal PDF Certificate of Compliance for the latest audited workflow.
+    Generate and download a rich multi-page Audit PDF for the most recent evaluation.
     """
-    # 1. Get Latest Evaluation Data
-    latest_eval = {}
+    report_data = {}
+    eval_record = {}
     try:
         if hasattr(policy_db, '_evaluations') and policy_db._evaluations:
-            latest_eval = policy_db._evaluations[-1]
+            eval_record = policy_db._evaluations[-1]
+            report_data = eval_record.get('report', {})
     except:
         pass
 
-    workflow_name = latest_eval.get('workflow_name', 'PolicyGuard AI System')
-    report_id = latest_eval.get('report', {}).get('report_id', f"CERT-{uuid.uuid4().hex[:8].upper()}")
-    timestamp = datetime.datetime.now().strftime("%B %d, %Y")
-    
-    # 2. Generate PDF
-    pdf = FPDF(orientation='L', unit='mm', format='A4')
-    pdf.add_page()
-    
-    # -- Border --
-    pdf.set_line_width(1.5)
-    pdf.rect(10, 10, 277, 190)
-    pdf.set_line_width(0.5)
-    pdf.rect(15, 15, 267, 180)
-    
-    # -- Header (Using text as fallback for icon to ensure stability) --
-    pdf.set_font("helvetica", "B", 20)
-    pdf.set_text_color(50, 100, 255)
-    pdf.set_y(25)
-    pdf.cell(0, 10, "STRICT GOVERNANCE PROTOCOL ACTIVE", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(15)
-    
-    pdf.set_font("helvetica", "B", 36)
-    pdf.set_text_color(20, 30, 70)
-    pdf.cell(0, 15, "CERTIFICATE OF COMPLIANCE", align="C", new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.set_font("helvetica", "I", 14)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 10, "PolicyGuard AI Governance & Oversight", align="C", new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.ln(20)
-    
-    # -- Body --
-    pdf.set_font("helvetica", "", 16)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, "This officially certifies that the AI Workflow:", align="C", new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.set_font("helvetica", "B", 24)
-    pdf.set_text_color(30, 40, 80)
-    pdf.ln(5)
-    pdf.cell(0, 15, workflow_name.upper(), align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(5)
-    
-    pdf.set_font("helvetica", "", 16)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, "Has successfully completed the automated policy alignment audit.", align="C", new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.ln(20)
-    
-    # -- Footer Info --
-    pdf.set_draw_color(200, 200, 200)
-    pdf.line(40, 150, 120, 150)
-    pdf.line(177, 150, 257, 150)
-    
-    pdf.set_font("helvetica", "", 10)
-    pdf.set_y(152)
-    pdf.set_x(40)
-    pdf.cell(80, 5, "Authorized Signature", align="C")
-    
-    pdf.set_x(177)
-    pdf.cell(80, 5, f"Date: {timestamp}", align="C")
-    
-    # -- Verification Hash --
-    pdf.set_y(175)
-    pdf.set_font("courier", "", 8)
-    pdf.set_text_color(150, 150, 150)
-    pdf.cell(0, 5, f"Verification ID: {report_id} | Hash: {uuid.uuid4().hex}", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 5, "This certificate is generated by PolicyGuard AI and guarantees compliance at the time of audit only.", align="C")
-
-    # 3. Output
-    # FPDF output to string is deprecated/removed in some versions, outputting to bytearray is better
-    # output(dest='S') returns a string (latin-1 usually). We need bytes.
-    # The safest way compatible with most versions is to output to a weird string and encode it, OR use a temp file.
-    # Let's use the .output(dest='S').encode('latin-1') trick common with py-fpdf, or bytearray if available.
-    
-    # 3. Output
+    report_id = report_data.get('report_id', f"CERT-{uuid.uuid4().hex[:8].upper()}")
     try:
-        # FPDF2 returns bytes directly from output()
-        pdf_bytes = pdf.output()
+        pdf_bytes = _build_audit_pdf(report_data, eval_record)
     except Exception as e:
         print(f"PDF Generation Error: {e}")
-        pdf_bytes = b"Error generating compliance certificate PDF"
+        import traceback; traceback.print_exc()
+        pdf_bytes = b"Error generating audit PDF"
 
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=Certificate_{report_id}.pdf"}
+        headers={"Content-Disposition": f"attachment; filename=PolicyGuard_Audit_{report_id}.pdf"}
     )
+
 
 # --- Settings ---
 
@@ -1044,77 +1303,76 @@ async def get_uptime_stats():
 class ReportFile(BaseModel):
     id: str
     name: str
-    type: str  # PDF, CSV, JSON
+    type: str           # PDF, CSV, JSON
     size: str
     date: str
     download_url: str
+    verdict: Optional[str] = None     # PASS / CONDITIONAL / FAIL
+    risk: Optional[str] = None        # Low / Medium / High
+    workflow: Optional[str] = None
 
-@router.get("/compliance/reports", response_model=List[ReportFile])
+@router.get("/compliance/reports")
 async def get_compliance_reports():
     """
-    Get list of available compliance reports. 
-    Mixes static summary reports (simulated) with dynamic reports from evaluations.
+    Rich list of compliance reports — static scheduled + dynamic per-evaluation.
+    Each entry includes verdict, risk rating, and a direct PDF download URL.
     """
     reports = []
-    
-    # 1. Periodic Compliance Reports
-    # These represent scheduled aggregations from the governance core
     today_str = datetime.date.today().strftime("%b %d, %Y")
-    prev_month = (datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).strftime("%B")
-    
-    reports.append(ReportFile(
-        id="RPT-MONTHLY-001",
-        name=f"Monthly Compliance Audit - {prev_month}",
-        type="PDF",
-        size="2.4 MB",
-        date=today_str,
-        download_url="/api/v1/compliance/reports/RPT-MONTHLY-001/download"
-    ))
-    
-    reports.append(ReportFile(
-        id="RPT-INCIDENT-W4",
-        name="Incident Response Summary - Week 4",
-        type="CSV",
-        size="156 KB",
-        date=today_str,
-        download_url="/api/v1/compliance/reports/RPT-INCIDENT-W4/download"
-    ))
-    
-    reports.append(ReportFile(
-        id="RPT-SLA-Q1",
-        name="SLA Performance Review",
-        type="PDF",
-        size="1.2 MB",
-        date=today_str,
-        download_url="/api/v1/compliance/reports/RPT-SLA-Q1/download"
-    ))
 
-    # 2. Dynamic Reports from Recent Evaluations
-    # Convert recent evaluations into downloadable reports
+    # 1. Dynamic Reports from Recent Evaluations (most relevant, listed first)
     try:
-        # User internal access to avoid async recursion issues if any
-        # Accessing private attribute strictly for MVP speed, ideally use a service method
-        evals = policy_db._evaluations[-5:] 
-        for i, ev in enumerate(reversed(evals)):
+        evals = list(reversed(policy_db._evaluations[-10:]))
+        for i, ev in enumerate(evals):
             report_data = ev.get('report', {})
             rid = report_data.get('report_id', f"EVAL-{i}")
             name = report_data.get('workflow_name', f"Audit Report {rid}")
             ts = ev.get('timestamp', str(datetime.datetime.now()))
             try:
-                date_str = datetime.datetime.fromisoformat(ts).strftime("%b %d, %Y")
+                date_str = datetime.datetime.fromisoformat(ts).strftime("%b %d, %Y  %H:%M")
             except:
                 date_str = ts
-            
-            reports.append(ReportFile(
-                id=rid,
-                name=f"Audit: {name}",
-                type="JSON",
-                size="45 KB",
-                date=date_str,
-                download_url=f"/api/v1/compliance/reports/{rid}/download"
-            ))
+
+            verdict_raw = report_data.get('verdict', {}).get('status_label', 'CONDITIONAL')
+            risk_raw = report_data.get('risk_assessment', {}).get('overall_rating', 'Medium')
+
+            reports.append({
+                "id": rid,
+                "name": f"Audit: {name}",
+                "type": "PDF",
+                "size": "~48 KB",
+                "date": date_str,
+                "download_url": f"/api/v1/compliance/reports/{rid}/download",
+                "verdict": verdict_raw,
+                "risk": risk_raw,
+                "workflow": name
+            })
     except Exception as e:
         print(f"Error fetching dynamic reports: {e}")
+
+    # 2. Static / Scheduled placeholder reports
+    reports.append({
+        "id": "RPT-SLA-LATEST",
+        "name": "SLA Reliability Report — Latest",
+        "type": "PDF",
+        "size": "1.2 MB",
+        "date": today_str,
+        "download_url": "/api/v1/compliance/reports/RPT-SLA-LATEST/download",
+        "verdict": "PASS",
+        "risk": "Low",
+        "workflow": "SLA Monitoring"
+    })
+    reports.append({
+        "id": "RPT-PROXY-DAILY",
+        "name": "Proxy Intercept Log — Daily",
+        "type": "CSV",
+        "size": "156 KB",
+        "date": today_str,
+        "download_url": "/api/v1/compliance/reports/RPT-PROXY-DAILY/download",
+        "verdict": "PASS",
+        "risk": "Low",
+        "workflow": "Zero-Trust Proxy"
+    })
 
     return reports
 
@@ -1188,18 +1446,24 @@ async def download_report(report_id: str):
             headers={"Content-Disposition": f"attachment; filename={report_id}.txt"}
         )
 
-    # 2. Handle Dynamic Evaluation Reports (JSON by default, can wrap in PDF too if needed)
-    # Find in DB
+    # 2. Handle Dynamic Evaluation Reports — generate a real PDF
     eval_record = next((e for e in policy_db._evaluations if e.get('report', {}).get('report_id') == report_id), None)
-    
+
     if eval_record:
-        report_json = json.dumps(eval_record, indent=2, default=str)
-        filename = f"{report_id}.json"
+        report_data = eval_record.get('report', {})
+        try:
+            pdf_bytes = _build_audit_pdf(report_data, eval_record)
+        except Exception as e:
+            print(f"[DOWNLOAD] PDF generation failed: {e}")
+            import traceback; traceback.print_exc()
+            pdf_bytes = b"Error generating PDF"
+
         return StreamingResponse(
-            iter([report_json]),
-            media_type="application/json",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=PolicyGuard_Audit_{report_id}.pdf"}
         )
-            
+
     # Fallback
     raise HTTPException(status_code=404, detail="Report not found")
+
