@@ -176,7 +176,7 @@ export function ChatWidget() {
                                     <div className="flex items-center justify-between w-full">
                                         <div className="flex items-center">
                                             <div className="relative mr-3">
-                                                <ShieldCheck className="h-7 w-7 text-blue-400" />
+                                                <Bot className="h-7 w-7 text-blue-400" />
                                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-slate-900 rounded-full"></span>
                                             </div>
                                             <div>
@@ -361,15 +361,15 @@ export function ChatWidget() {
                         : "bg-slate-900 text-white hover:bg-blue-600 hover:shadow-blue-500/30"
                 )}
             >
-                {/* Ping animation when closed */}
+                {/* Continuous Pulse Animation */}
                 {!isOpen && (
-                    <span className="absolute inset-0 rounded-full border-2 border-blue-500 opacity-0 group-hover:animate-ping"></span>
+                    <span className="absolute inset-[-4px] rounded-full border-2 border-cyan-500/30 animate-ping" style={{ animationDuration: '3s' }}></span>
                 )}
                 
                 {isOpen ? (
                     <X className="h-5 w-5" />
                 ) : (
-                    <ShieldCheck className="h-7 w-7" />
+                    <Bot className="h-7 w-7 animate-bounce" style={{ animationDuration: '3s' }} />
                 )}
             </motion.button>
         </div>

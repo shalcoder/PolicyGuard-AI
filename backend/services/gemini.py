@@ -1192,6 +1192,88 @@ class GeminiService:
                 "findings": []
             })
 
+    async def chat_compliance(self, query: str, context: str, history: List[dict] = None) -> str:
+        prompt = f"""
+        You are Guardian AI, an expert AI governance system.
+        Answer the user's question using the provided context. 
+        If it cannot be answered from the context, rely on your general knowledge but be helpful and concise.
+        
+        CONTEXT:
+        {context}
+        
+        USER QUERY: {query}
+        """
+        
+        contents = []
+        if history:
+            for msg in history:
+                role = "user" if msg.get("role") == "user" else "model"
+                contents.append({"role": role, "parts": [msg.get("content", "")]})
+        
+        contents.append({"role": "user", "parts": [prompt]})
+        
+        try:
+            response = await self._generate_with_retry(
+                contents=contents,
+                task_type="chat"
+            )
+            return response.text
+        except Exception as e:
+            return f"Error connecting to brain: {str(e)}"
+
+    async def agentic_chat(self, query: str, context: str, history: List[dict] = None, live_context: dict = None, agent_mode: str = "ask") -> dict:
+        mode_instruction = ""
+        if agent_mode == "action":
+            mode_instruction = """
+            You are operating in AGENT MODE. Your priority is to execute the user's command by returning a structured action.
+            Supported action_types: 'navigate', 'trigger_audit', 'download_report', 'show_metrics', 'freeze_system', 'clear_violations'.
+            If the user asks a question, you can still answer it, but if they ask to DO something, return the appropriate action.
+            For 'navigate', provide `action_params: {"path": "/dashboard/redteam"}` (or other appropriate path).
+            """
+        else:
+            mode_instruction = """
+            You are operating in ASK MODE. Your priority is to answer questions about the system state or policies in a natural, personalized ChatGPT-like manner. 
+            Do NOT return actions unless explicitly asked to do something that requires an action.
+            """
+            
+        system_prompt = f"""
+        You are Guardian AI, an advanced governance command center and conversional agent.
+        {mode_instruction}
+        
+        LIVE CONTEXT (Current system state, metrics, logs, etc.):
+        {json.dumps(live_context or {}, indent=2)}
+        
+        POLICY RAG CONTEXT:
+        {context}
+        
+        Respond with a JSON object ONLY:
+        {{
+            "answer": "Your detailed, conversational response to the user. Acknowledge the conversation history and be helpful.",
+            "action_type": "One of the supported action types OR null",
+            "action_params": {{}} 
+        }}
+        """
+        
+        contents = []
+        if history:
+            for msg in history:
+                role = "user" if msg.get("role") == "user" else "model"
+                contents.append({"role": role, "parts": [str(msg.get("content", ""))]})
+        
+        contents.append({"role": "user", "parts": [f"{system_prompt}\n\nUSER QUERY: {query}"]})
+        
+        try:
+            response = await self._generate_with_retry(
+                contents=contents,
+                task_type="chat",
+                config={"response_mime_type": "application/json"}
+            )
+            data = json.loads(self.clean_json_text(response.text))
+            return data
+        except Exception as e:
+            print(f"Agentic Chat Error: {e}")
+            return {"answer": f"Error thinking: {str(e)}", "action_type": None}
+
     def generate_antigravity_config(self, policies: List[any]) -> dict:
         """
         Exports a HARDENED config with explicit constitutional limits, 

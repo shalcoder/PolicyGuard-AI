@@ -23,6 +23,7 @@ export default function EvaluatePage() {
     const [activeTab, setActiveTab] = useState("compliance");
     const toast = useToast();
     const router = useRouter();
+    const { isAuditor } = useAuth() as any;
 
 
     const [timelineSteps, setTimelineSteps] = useState([
@@ -99,6 +100,11 @@ export default function EvaluatePage() {
 
         // Reset Steps
         setTimelineSteps(prev => prev.map(s => ({ ...s, status: 'pending' as StepStatus })));
+
+        if (isAuditor) {
+            await loadSamplePRD();
+            return;
+        }
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
@@ -418,18 +424,18 @@ export default function EvaluatePage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-50 mb-2 md:mb-3 leading-tight">
-                                        Fiduciary Shield: High-Context Policy Reasoning
+                                        Evaluation Center
                                     </h3>
                                     <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-3">
                                         <Badge variant="outline" className="text-xs md:text-sm bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-slate-700 text-blue-700 dark:text-blue-300">
-                                            Gemini 3
+                                            v4.2.0-STABLE
                                         </Badge>
                                         <Badge className="text-xs md:text-sm bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-md shadow-blue-500/30">
-                                            ADVANCED_MODE
+                                            SECURE_AUDIT
                                         </Badge>
                                     </div>
                                     <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
-                                        Active Reasoning on policy edge cases
+                                        Deep semantic reasoning on policy edge cases
                                     </p>
                                 </div>
                             </div>

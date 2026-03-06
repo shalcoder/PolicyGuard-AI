@@ -34,7 +34,7 @@ import {
     Code,
     ShieldAlert,
     Link2,
-    Fingerprint
+    Fingerprint, MessageSquare, Bot
 } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -178,11 +178,11 @@ export default function LandingPage() {
                             transition={{ duration: 0.8 }}
                         >
                             <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase text-foreground">
-                                THE <span className="text-cyan-600">CONTROL LAYER</span><br />
-                                <span className="text-muted-foreground/40">FOR AI FLEETS.</span>
+                                AI GOVERNANCE <br /><span className="text-cyan-600">& OBSERVABILITY</span><br />
+                                <span className="text-muted-foreground/40">FOR ENTERPRISE.</span>
                             </h1>
                             <p className="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
-                                A dual-mode intelligent governance framework. Secure your autonomous systems with proactive, live-stream observability, and command operations instantly via the <strong>Guardian AI</strong> agent.
+                                A specialized security layer for autonomous agent fleets. Intercept non-compliant tokens, enforce hard SLA constraints, and govern your AI workflows in real-time. Now featuring <strong>Guardian AI</strong> for autonomous command.
                             </p>
                         </motion.div>
 
@@ -322,14 +322,70 @@ export default function LandingPage() {
                             className="p-12 bg-white dark:bg-zinc-900/20 border border-slate-200 dark:border-white/5 rounded-[3rem] group shadow-xl shadow-slate-200/50 dark:shadow-none"
                         >
                             <div className="w-16 h-16 bg-purple-600/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                                <Target className="w-8 h-8 text-purple-500 group-hover:text-white" />
+                                <Wrench className="w-8 h-8 text-purple-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">PII Redaction <br />Engines</h3>
+                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">Self-Healing <br />Remediation</h3>
                             <p className="text-zinc-500 leading-relaxed font-medium">
-                                Multi-layered scanning for secrets, crypto-keys, and sensitive personal data within agent trace logs and live response streams.
+                                Automatically patch policy violations in system specs and codebases. PolicyGuard identifies the conflict and generates corrective PRs instantly.
                             </p>
                         </motion.div>
                     </div>
+                </div>
+            </section>
+
+            {/* Section 3.5: Guardian AI Feature Highlight */}
+            <section className="py-24 bg-slate-50 dark:bg-zinc-950 border-y border-slate-200 dark:border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[100px] rounded-full"></div>
+                <div className="max-w-[1400px] mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="space-y-8"
+                    >
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                            New Feature: Agentic Ops
+                        </div>
+                        <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white">
+                            MEET <span className="text-blue-600">GUARDIAN AI</span>
+                        </h2>
+                        <p className="text-slate-600 dark:text-zinc-400 text-lg leading-relaxed font-medium">
+                            More than a dashboard. Guardian AI is your autonomous governance partner. 
+                            Switch between <strong>Ask Mode</strong> to query live system health and <strong>Agent Mode</strong> 
+                            to execute complex system commands through natural language.
+                        </p>
+                        <div className="grid grid-cols-2 gap-6 pt-4">
+                            <div className="p-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
+                                <MessageSquare className="w-8 h-8 text-blue-500 mb-4" />
+                                <h4 className="font-bold text-slate-900 dark:text-white uppercase text-sm mb-2">Ask Mode</h4>
+                                <p className="text-xs text-slate-500 dark:text-zinc-500">Query live logs, metrics, and policy status directly.</p>
+                            </div>
+                            <div className="p-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
+                                <Zap className="w-8 h-8 text-cyan-500 mb-4" />
+                                <h4 className="font-bold text-slate-900 dark:text-white uppercase text-sm mb-2">Agent Mode</h4>
+                                <p className="text-xs text-slate-500 dark:text-zinc-500">Execute audits, navigate, and remediate via commands.</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        className="relative"
+                    >
+                        <div className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full animate-pulse"></div>
+                        <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-4 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden aspect-video flex items-center justify-center">
+                             <div className="flex flex-col items-center gap-4">
+                                <div className="w-24 h-24 bg-blue-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-500/40 animate-bounce" style={{ animationDuration: '3s' }}>
+                                    <Bot className="w-12 h-12 text-white" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-500">Guardian AI Online</p>
+                                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mt-1 uppercase">Ready for Command</p>
+                                </div>
+                             </div>
+                        </div>
+                    </motion.div>
                 </div>
             </section>
 
