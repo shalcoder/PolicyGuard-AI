@@ -32,28 +32,26 @@ PolicyGuard AI is *not* a wrapper around a chatbot. It is an **intelligent gover
 
 ### How We Use Gemini 3 — And Why It Matters
 
-| Task | Model | Why Gemini 3? |
+| Task | Model | Why Gemini 3.1? |
 |---|---|---|
-| **Deep Policy Audit** | `Gemini 3 Pro` | Long-context (1M+ tokens), Constitutional Reasoning Chain |
-| **Red Team Attack Simulation** | `Gemini 3 Pro` | Advanced adversarial "thinking mode" for chained multi-step attacks |
-| **Real-time Proxy Interception** | `Gemini 3 Flash` | Sub-50ms semantic classification optimized for zero-latency proxy use |
-| **SLA Forecasting** | `Gemini 3 Flash` | Predictive analytics with high confidence score output |
-| **Self-Healing Patch Writing** | `Gemini 3 Pro` | "Thinking" mode to generate nuanced, context-aware system prompt patches |
+| **Deep Policy Audit** | `gemini-3.1-pro-preview` | Highest-context constitutional reasoning |
+| **Red Team Attack Simulation** | `gemini-3.1-pro-preview` | Most advanced adversarial "thinking mode" |
+| **LangGraph Agent Orchestration** | `gemini-3.1-pro-preview-customtools` | Native tool-calling for multi-agent loops |
+| **Real-time Proxy Interception** | `gemini-3.1-flash-lite-preview` | Sub-50ms semantic classification |
+| **SLA Forecasting** | `gemini-3.1-flash-lite-preview` | High-throughput predictive analytics |
 
 ### The Cascading Model Architecture (Key Innovation)
 
-Our `GeminiService` implements a proprietary **Cascading Fallback** so the system *never goes down*:
+Our `GeminiService` implements a **Cascading Fallback** across confirmed-available Gemini 3.1 models:
 
 ```
-     Gemini 3 Pro  →  Gemini 3 Flash
-          ↑                  ↑
-  Deep Reasoning        Speed + Scale
- (Audit / Red Team)  (Proxy / SLA / Eval)
+gemini-3.1-pro-preview  →  gemini-3.1-flash-lite-preview  →  gemini-3-flash-preview
+         ↑                             ↑                              ↑
+   Deep Reasoning               Speed & Scale                  3.0 Fallback
+ (Audit / Red Team)         (Proxy / SLA / Tools)          (If 3.1 is at quota)
 ```
 
-Both models are tried across **multiple API keys in rotation** before any user-facing error occurs.
-
-Additionally, each model level tries **all API keys in rotation** before failing over to the next model. A request to PolicyGuard will cycle through **up to 20 combinations** of model × API key before any user-facing error occurs.
+Each model is tried across **all 3 API keys** in rotation before moving to the next tier.
 
 ### Constitutional Reasoning Protocol (Powered by Gemini 3 Thinking)
 

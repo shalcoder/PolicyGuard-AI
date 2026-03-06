@@ -13,13 +13,14 @@ class GeminiService:
         self.clients = [genai.Client(api_key=key) for key in self.api_keys]
         self.current_key_index = 0
         
-        # Cascading Model Fallback - FREE TIER OPTIMIZED
-        # Logic: Model 1 → Key1,Key2,Key3,Key4,Key5 → Model 2 → Key1,Key2...
+        # Cascading Model Fallback - GEMINI 3.1 UPGRADED
+        # Logic: Model 1 → Key1, Key2, Key3 → Model 2 → Key1...
         self.model_cascade = [
-            "gemini-2.5-flash-lite",    # 1500 RPD - HIGHEST QUOTA
-            "gemini-2.0-flash",         # 1000 RPD
-            "gemini-2.5-flash",         # 500 RPD
-            "gemini-3-flash-preview",   # Preview
+            "gemini-3.1-pro-preview",       # PRIMARY: Best reasoning (3.1)
+            "gemini-3.1-flash-lite-preview", # Speed layer (3.1)
+            "gemini-3-flash-preview",        # Fallback: 3.0 Flash
+            "gemini-3-pro-preview",          # Fallback: 3.0 Pro
+            "gemini-2.5-flash",             # Last-resort: 2.5
         ]
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
@@ -631,12 +632,12 @@ class GeminiService:
         # We explicitly switch models here to ensure the Red Team task completes even if the primary Pro model is rate-limited.
         # Tiered Red Team Stack: From most advanced reasoning to fastest fallback
         red_team_stack = [
-            settings.MODEL_PRO,           # Gemini 3 Pro (Primary)
-            "gemini-3-flash-preview",     # Gemini 3 Flash
-            "gemini-2.5-pro",             # Fallback to 2.5 Pro (per user request)
-            "gemini-2.5-flash",           # Fallback to 2.5 Flash
-            "gemini-2.0-flash-thinking-exp-1219", # Experimental Thinking
-            "gemini-2.0-flash"            # Fast Fallback
+            "gemini-3.1-pro-preview",            # PRIMARY: Best adversarial reasoning
+            "gemini-3.1-pro-preview-customtools", # Tool-use variant
+            "gemini-3.1-flash-lite-preview",      # Fast fallback (3.1)
+            "gemini-3-pro-preview",               # Fallback: 3.0 Pro
+            "gemini-3-flash-preview",             # Fallback: 3.0 Flash
+            "gemini-2.5-flash",                  # Last-resort
         ]
 
         last_error = None

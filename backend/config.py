@@ -15,13 +15,14 @@ class Settings(BaseModel):
     GOOGLE_API_KEYS: list[str] = [k.strip() for k in os.getenv("GOOGLE_API_KEYS", "").split(",") if k.strip()]
     GOOGLE_API_KEY: str = GOOGLE_API_KEYS[0] if GOOGLE_API_KEYS else os.getenv("GOOGLE_API_KEY", "")
     
-    # Model Configuration - FREE TIER OPTIMIZED (No Pro - only 50 RPD!)
-    MODEL_FLASH: str = os.getenv("MODEL_FLASH", "gemini-2.5-flash-lite")
-    MODEL_PRO: str = os.getenv("MODEL_PRO", "gemini-2.5-flash")
+    # Model Configuration - GEMINI 3.1 UPGRADED
+    MODEL_FLASH: str = os.getenv("MODEL_FLASH", "gemini-3.1-flash-lite-preview")   # Proxy intercept, SLA, fast ops
+    MODEL_PRO: str = os.getenv("MODEL_PRO", "gemini-3.1-pro-preview")             # Deep audit, red team, remediation
+    MODEL_PRO_TOOLS: str = os.getenv("MODEL_PRO_TOOLS", "gemini-3.1-pro-preview-customtools")  # LangGraph agents
     
     # Unified Fallbacks
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", MODEL_FLASH)
-    SLA_MODEL: str = os.getenv("SLA_MODEL", MODEL_PRO)
+    SLA_MODEL: str = os.getenv("SLA_MODEL", MODEL_FLASH)
     
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-004")
     
