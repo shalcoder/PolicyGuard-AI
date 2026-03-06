@@ -799,6 +799,50 @@ async def chat_compliance(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class AgentChatRequest(BaseModel):
+    message: str
+    history: List[dict] = []
+    live_context: dict = {}
+    agent_mode: str = "ask" # "ask" or "action"
+
+@router.post("/agent/chat")
+async def agentic_chat_endpoint(request: AgentChatRequest):
+    """
+    Advanced agentic chat that takes live UI context and returns 
+    not just text, but structured action commands (e.g., 'navigate', 'trigger_audit').
+    """
+    try:
+        # 1. RAG Context
+        query_vec = await gemini.create_embedding(request.message)
+        relevant_chunks = await asyncio.to_thread(
+            policy_db.search_relevant_policies,
+            query_vec,
+            top_k=5
+        )
+        context = "\n\n".join([c['chunk_text'] for c in relevant_chunks])
+        citations = [c['chunk_text'][:200] + "..." for c in relevant_chunks]
+        
+        # 2. Call Agentic Gemini
+        agent_response = await gemini.agentic_chat(
+            query=request.message,
+            context=context,
+            history=request.history,
+            live_context=request.live_context,
+            agent_mode=request.agent_mode
+        )
+        
+        # 3. Return structured response
+        return {
+            "answer": agent_response.get("answer", "I processed your request."),
+            "action": {
+                "type": agent_response.get("action_type"),
+                "params": agent_response.get("action_params")
+            },
+            "citations": citations
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/remediate/doc")
 async def remediate_document(request: RemediationRequest):
     async def stream_wrapper():

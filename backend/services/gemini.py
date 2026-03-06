@@ -20,7 +20,9 @@ class GeminiService:
             "gemini-3.1-flash-lite-preview", # Speed layer (3.1)
             "gemini-3-flash-preview",        # Fallback: 3.0 Flash
             "gemini-3-pro-preview",          # Fallback: 3.0 Pro
-            "gemini-2.5-flash",             # Last-resort: 2.5
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash-lite"             # Last-resort: 2.5
         ]
         
         print(f"[INIT] GeminiService initialized with {len(self.api_keys)} API key(s)")
@@ -578,6 +580,78 @@ class GeminiService:
                 return f"**[OFFLINE MODE]** I couldn't process your specific question due to high traffic, but here is a relevant policy excerpt I found:\n\n> *{snippet}...*\n\nPlease try asking again in a few moments."
 
             return "I apologize, but I am currently experiencing very high traffic. Please try asking your question again in about 30 seconds."
+
+    async def agentic_chat(self, query: str, context: str, history: list = [], live_context: dict = {}, agent_mode: str = "ask") -> dict:
+        """
+        Answers questions AND triggers actions based on live_context, user commands, and selected mode.
+        Returns a dictionary: { "answer": str, "action_type": str|null, "action_params": dict|null }
+        """
+        conversation_context = ""
+        if history:
+            conversation_context = "PREVIOUS CONVERSATION:\n" + "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-3:]]) + "\n\n"
+
+        context_section = f"--- RAG POLICY EXCERPTS ---\n{context}" if context else "--- NO SPECIFIC RAG EXCERPTS ---"
+        live_section = f"--- LIVE SYSTEM CONTEXT ---\n{json.dumps(live_context, indent=2, default=str)}"
+
+        mode_instruction = ""
+        if agent_mode == "action":
+            mode_instruction = """
+        [MODE: AGENT/ACTION MODE]
+        1. The user explicitly wants you to take an automated action. 
+        2. If the user asks to DO something (navigate, audit, download, clear), YOU MUST extract and return the matching action configuration.
+        3. Keep your natural language answer extremely brief, like "Navigating you to the Red Team dashboard now."
+            """
+        else:
+            mode_instruction = """
+        [MODE: ASK MODE]
+        1. The user is asking a question about the LIVE SYSTEM CONTEXT or RAG POLICY EXCERPTS.
+        2. DO NOT return any action_type unless the user explicitly commands it inside Ask Mode. Your primary goal is to answer comprehensively using the live metrics and logs.
+        3. If summarizing logs or metrics, be clear and present the data nicely.
+            """
+
+        prompt = f"""
+        Role: Guardian AI — The Agentic Policy Assistant.
+        You are directly managing the PolicyGuard system. You have access to live metrics, recent violations, and active policies.
+        
+        {live_section}
+        
+        {context_section}
+        
+        {conversation_context}
+        User Command/Question: {query}
+        
+        Instructions:
+        {mode_instruction}
+        
+        Supported actions (if needed): 'navigate', 'trigger_audit', 'download_report', 'show_metrics', 'clear_violations', 'freeze_system'.
+        If navigating, action_params should be {{"page": "/dashboard/redteam"}} or similar valid routes.
+        
+        Output **ONLY** a valid JSON object matching this schema:
+        {{
+            "answer": "Your natural language response...",
+            "action_type": "string or null",
+            "action_params": {{}} // Any necessary parameters for the action, or null
+        }}
+        """
+        
+        try:
+            response = await self._generate_with_retry(
+                contents=prompt,
+                task_type="inline_filter", # Keep it fast
+                retries=2,
+                config={
+                    'response_mime_type': 'application/json',
+                    'temperature': 0.1
+                }
+            )
+            return json.loads(self.clean_json_text(response.text))
+        except Exception as e:
+            print(f"Agentic Chat Error: {e}")
+            return {
+                "answer": "I encountered an error trying to process that command. The system might be overloaded.",
+                "action_type": None,
+                "action_params": None
+            }
 
     async def generate_threat_model(self, workflow_context: str) -> str:
         prompt = f"""

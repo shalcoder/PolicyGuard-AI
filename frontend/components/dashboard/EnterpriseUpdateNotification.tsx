@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Sparkles, X, ChevronRight, Zap, Target, 
-    GitPullRequest, Cpu, ShieldCheck, Database
+    GitPullRequest, Cpu, ShieldCheck, Database, Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -25,12 +25,13 @@ export const EnterpriseUpdateNotification = () => {
     };
 
     const features = [
+        { icon: Bot, label: "Dual-Mode Agentic Chatbot", color: "text-indigo-400" },
         { icon: Database, label: "GraphRAG Policy Cognition", color: "text-blue-400" },
         { icon: Target, label: "MITRE ATLAS Threat Mapping", color: "text-red-400" },
-        { icon: Cpu, label: "LangGraph Closed-Loop Evaluation", color: "text-purple-400" },
-        { icon: GitPullRequest, label: "Autonomous GitHub PR Synthesis", color: "text-emerald-400" },
+        { icon: Cpu, label: "LangGraph Closed-Loop Eval", color: "text-purple-400" },
+        { icon: GitPullRequest, label: "Auto GitHub PR Synthesis", color: "text-emerald-400" },
         { icon: ShieldCheck, label: "CI/CD Policy Gate v1.0", color: "text-cyan-400" },
-        { icon: Zap, label: "Unstructured.io Doc Intelligence", color: "text-amber-400" },
+        { icon: Zap, label: "Unstructured.io Intelligence", color: "text-amber-400" },
     ];
 
     return (
@@ -57,7 +58,7 @@ export const EnterpriseUpdateNotification = () => {
                                 <span className="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">Enterprise Upgrade V2.0</span>
                             </h2>
                             <p className="max-w-xl text-xs font-bold uppercase tracking-[0.1em] text-cyan-500/80">
-                                6 Major Security Protocols Deployed:
+                                7 Major Security Protocols Deployed:
                             </p>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 pt-1">

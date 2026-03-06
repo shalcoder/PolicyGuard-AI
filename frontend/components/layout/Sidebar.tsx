@@ -8,26 +8,36 @@ import { useAuth } from '@/hooks/useAuth';
 // Grouped Navigation Configuration
 const navGroups = [
     {
-        label: "Governance Core",
+        label: "Lifecycle Setup",
         items: [
-            { name: 'Dashboard', href: '/dashboard', icon: Home },
             { name: 'Policies', href: '/dashboard/policies', icon: FileText },
             { name: 'Integration Wizards', href: '/dashboard/proxy', icon: Shield },
         ]
     },
     {
-        label: "Defense Operations",
+        label: "Adversarial Stress",
         items: [
-            { name: 'Live Monitor', href: '/dashboard/monitor', icon: BarChart3 },
             { name: 'Red Team', href: '/dashboard/redteam', icon: Flame },
-            { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
         ]
     },
     {
-        label: "Analytics & System",
+        label: "Runtime Shield",
         items: [
-            { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
+            { name: 'Live Monitor', href: '/dashboard/monitor', icon: BarChart3 },
             { name: 'SLA Monitoring', href: '/dashboard/sla', icon: Zap },
+        ]
+    },
+    {
+        label: "Self-Healing AI",
+        items: [
+            { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
+            { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
+        ]
+    },
+    {
+        label: "Executive Overview",
+        items: [
+            { name: 'Dashboard', href: '/dashboard', icon: Home },
             { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         ]
     }

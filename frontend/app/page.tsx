@@ -39,7 +39,6 @@ import {
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { EnterpriseUpdateNotification } from '@/components/dashboard/EnterpriseUpdateNotification';
 
 export default function LandingPage() {
     const router = useRouter();
@@ -170,7 +169,7 @@ export default function LandingPage() {
                     className="max-w-[1400px] mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative z-10"
                 >
                     <div className="space-y-10 lg:col-span-2">
-                         <EnterpriseUpdateNotification />
+                        {/* Notification Removed */}
                     </div>
                     <div className="space-y-10">
                         <motion.div
@@ -180,11 +179,11 @@ export default function LandingPage() {
                         >
                             <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase text-foreground">
                                 THE <span className="text-cyan-600">CONTROL LAYER</span><br />
-                                <span className="text-muted-foreground/40">FOR AI AGENTS.</span>
+                                <span className="text-muted-foreground/40">FOR AI FLEETS.</span>
                             </h1>
                             <p className="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
-                                A policy-driven governance framework for continuous, live-stream observability of autonomous agent workflows.
-                                Secure your AI fleet with proactive, real-time intervention.
+                                A dual-mode intelligent governance framework for continuous, live-stream observability of autonomous workflows.
+                                Secure your system with proactive intervention and execute active commands via our built-in Agentic Command Center.
                             </p>
                         </motion.div>
 
