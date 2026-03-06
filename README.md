@@ -10,83 +10,115 @@
 
 ---
 
-## 🚨 The Challenge: "Sovereignty in the Agentic Era"
-As AI agents move from "generating text" to "executing actions," the risk of non-deterministic harm skyrockets. **PolicyGuard AI v2.0** provides a production-grade, AI-native control plane that enforces corporate sovereignty across your entire agent fleet. 
+## 🏗️ System Architecture
+PolicyGuard AI is built as a multi-layered governance stack that sits between your enterprise applications and your LLM fleet.
 
-We bridge the gap between messy PDF policies and executable safety protocols using **Cognitive Governance**.
+```mermaid
+graph TD
+    subgraph "Frontend Layer (Next.js 14)"
+        UI[Glassmorphic Dashboard]
+        WS[Real-time WebSocket Logs]
+        Vis[GraphRAG Visualizer]
+    end
 
----
+    subgraph "Governance Gateway (FastAPI)"
+        Proxy[Zero-Trust Interceptor Proxy]
+        Auth[Firebase IAM]
+        API[Audit & Remediation Endpoints]
+    end
 
-## 🚀 New in V2.0: The Sovereignty Update
-PolicyGuard v2.0 introduces 6 major enterprise-grade innovations:
+    subgraph "AI Governance Core"
+        G25[Gemini 2.5 Pro/Flash]
+        Graph[GraphRAG Engine - NetworkX]
+        LG[LangGraph Multi-Agent Loop]
+        Red[Red Team Adversarial Engine]
+    end
 
-### 🕸️ 1. GraphRAG Policy Cognition
-Traditional RAG misses "Longitudinal Harm" (conflicts buried across multiple documents). We use **NetworkX-powered Knowledge Graphs** to map cross-document dependencies, identifying where a rule in the *IT Handbook* might contradict a process in the *Financial Charter*.
+    subgraph "Knowledge & Data"
+        Docs[Unstructured.io Doc Parser]
+        Vect[Vector Embeddings Store]
+        DB[Firestore / SQLite]
+    end
 
-### 🗺️ 2. MITRE ATLAS™ Threat Mapping
-Adversarial findings are no longer just "errors." Every vulnerability detected by our Red Team is automatically mapped to the **MITRE ATLAS (Adversarial Threat Landscape for AI Systems)** framework, providing CISOs with industry-standard telemetry.
+    subgraph "Enterprise Integrations"
+        GH[GitHub PR Synthesis]
+        MITRE[MITRE ATLAS Mapper]
+        CI[GitHub Actions Policy Gate]
+    end
 
-### 🔄 3. LangGraph Closed-Loop Evaluation
-Our "Self-Healing" engine is now verified by a multi-agent loop:
-1. **Red Team Agent**: Probes the patch with adversarial inputs.
-2. **Remediation Agent**: Refines the guardrail based on failures.
-3. **Eval Agent**: Scores the patch on safety vs. utility (Pass threshold: 7/10).
-
-### 🔀 4. Autonomous GitHub PR Synthesis
-Enterprise guardrails shouldn't be "black boxes." When a patch is generated, PolicyGuard auto-synthesizes a **GitHub Draft Pull Request**, allowing human admins to review, audit, and approve guardrail code before it ever touches production.
-
-### 📄 5. Unstructured.io Intelligence
-Policies aren't just text; they are tables, headers, and footnotes. We integrate **Unstructured.io** to extract high-fidelity document hierarchy, ensuring the AI understands the *structure* of your compliance.
-
-### ⚙️ 6. CI/CD Policy Gate (GitHub Action)
-Security starts in the IDE. Our custom **GitHub Action** audits PRDs (Product Requirement Docs) and Markdown policies on every commit, blocking merges that violate core safety protocols.
-
----
-
-## ⚖️ Core Features
-
-### ⚔️ Red Team Mode
-Powered by **Gemini 2.5**, our system simulates sophisticated attacks including Mosaic Attacks (PII correlation), Indirect Injections, and Role-Play Bypasses to stress-test your agents before deployment.
-
-### 🧠 Real-Time Governance Proxy
-Acts as a Zero-Trust intermediary. Every token is inspected via **Deep Semantic Interception**. If an agent attempts to leak a secret key or violate an SLA, the proxy executes a millisecond-level freeze.
-
-### ⚡ Smart API Resilience
-Optimized for the Gemini Free Tier using a **Smart Cascade** architecture. The system intelligently switches between 5+ API keys and multiple models (Flash/Pro/Lite) to ensure 99.9% uptime without quota exhaustion.
-
----
-
-## 🛠️ Technical Stack
-- **Frontend**: Next.js 14, Tailwind CSS, Framer Motion (Premium Glassmorphic UI)
-- **Backend**: FastAPI, LangGraph, NetworkX (Graph Analytics)
-- **AI Engine**: Google Gemini 2.5 (Pro/Flash/Lite)
-- **Security**: MITRE ATLAS Mapping, SHA-256 Integrity Checks
-- **Persistence**: Firebase/Firestore, SQLite (Render-optimized)
-
----
-
-## 🚀 Quick Start (Local)
-
-### 🐳 Docker (Recommended)
-```bash
-git clone https://github.com/shalcoder/PolicyGuard-AI.git
-cd PolicyGuard-AI
-# Add your GOOGLE_API_KEYS to backend/.env
-docker compose up --build
+    UI <--> API
+    API <--> G25
+    Proxy <--> G25
+    API --> Graph
+    API --> LG
+    LG --> Red
+    Docs --> Graph
+    API --> GH
+    API --> MITRE
 ```
 
-### 🛠️ Manual
-1. **Backend**: `cd backend && pip install -r requirements.txt && uvicorn main:app --reload`
-2. **Frontend**: `cd frontend && npm install && npm run dev`
+---
+
+## 🔄 End-to-End User Flow
+From policy ingestion to autonomous remediation, here is how a security auditor interacts with the system:
+
+```mermaid
+sequenceDiagram
+    participant Auditor
+    participant System as PolicyGuard AI
+    participant Attack as Red Team Engine
+    participant GitHub as Enterprise Repo
+
+    Auditor->>System: Upload PDF Policies (Unstructured.io)
+    System->>System: Build Knowledge Graph (GraphRAG)
+    Auditor->>System: Deploy Guardrail Proxy
+    Auditor->>Attack: Start Adversarial Stress Test
+    Attack->>System: Execute Jailbreak & PII Leak Attacks
+    System->>System: Map Findings to MITRE ATLAS
+    System->>Auditor: Display Vulnerability Report
+    Auditor->>System: Execute Self-Healing Patch
+    System->>System: LangGraph Multi-Agent Loop (Patch -> Eval)
+    System->>GitHub: Synthesize Draft Pull Request
+    GitHub-->>Auditor: Human-in-the-Loop Approval Required
+```
 
 ---
 
-## 📈 Enterprise Roadmap
-- [x] Multi-Agent Closed Loop (LangGraph)
-- [x] MITRE ATLAS Standardisation
-- [x] GraphRAG Conflict Detection
-- [ ] NIST AI RMF Audit Integration
-- [ ] Hardware-based TEE (Trusted Execution Environment) Support
+## 🌟 Comprehensive Feature List
+
+### 🧠 Intelligence Layer
+- **GraphRAG Cognition**: Detects cross-document policy conflicts and "Longitudinal Harm" using NetworkX graphs.
+- **Unstructured.io Parsing**: High-fidelity extraction of PDF, DOCX, and HTML documents including tables and headers.
+- **Constitutional Scanning**: Analyzes Product Requirement Docs (PRDs) for compliance risk before coding begins.
+
+### 🛡️ Defense Operations
+- **Zero-Trust Interceptor Proxy**: Real-time semantic inspection of every prompt and response.
+- **Red Team Engine**: 20+ automated adversarial tactics (Jailbreak, Mosaic, Roleplaying, Obfuscation).
+- **MITRE ATLAS™ Mapping**: Instant alignment of AI vulnerabilities to industry-standard cybersecurity taxonomies.
+- **PII & Secret Redaction**: Multi-layer masking of emails, keys, and sensitive entities via local NLP.
+
+### 🔄 Self-Healing & DevOps
+- **LangGraph Closed-Loop Eval**: Multi-agent orchestration (RedTeam -> Patch -> Eval) to verify guardrail efficacy.
+- **Autonomous PR Synthesis**: Generates GitHub Pull Requests with patched guardrail code for Human-in-the-Loop review.
+- **GitHub Action Policy Gate**: A CI/CD gate that blocks commits violating your organization's AI policies.
+- **Smart Quota Cascade**: Multi-API key rotation and model switching (Pro/Flash/Lite) for 99.9% uptime.
+
+### 📊 Analytics & Visibility
+- **Glassmorphic OS Dashboard**: Premium, real-time UI with live trace visualization.
+- **SLA Reliability Monitoring**: Tracks latency, uptime, and throughput for regulatory compliance.
+- **Sovereign Trust Score**: A dynamic 0-100% KPI reflecting your fleet's overall security posture.
+- **Exportable PDF Audits**: One-click generation of CISO-ready compliance reports.
+
+---
+
+## 👨‍⚖️ Judge's Walkthrough Flow
+To see the full power of PolicyGuard AI, follow the sidebar menu from top to bottom:
+
+1.  **Lifecycle Setup**: Go to `Policies` to upload your corporate rules. Use the `Integration Wizard` to connect your agents.
+2.  **Adversarial Stress**: Launch a `Red Team` simulation to find vulnerabilities mapped to the MITRE ATLAS framework.
+3.  **Runtime Shield**: Check the `Live Monitor` to see the Real-time Proxy intercepting and blocking violations.
+4.  **Self-Healing AI**: Use `Remediate` to auto-generate hot-patches and synthesize **GitHub Pull Requests**.
+5.  **Executive Overview**: View the final `Dashboard` for the high-level Trust Score and compliance posture.
 
 ---
 
