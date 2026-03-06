@@ -21,7 +21,6 @@ import { useRouter } from 'next/navigation';
 export default function EvaluatePage() {
     const [evaluationStatus, setEvaluationStatus] = useState<'idle' | 'running' | 'done'>('idle');
     const [activeTab, setActiveTab] = useState("compliance");
-    const { isAuditor } = useAuth();
     const toast = useToast();
     const router = useRouter();
 
@@ -95,10 +94,6 @@ export default function EvaluatePage() {
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     const handleRunEvaluation = async () => {
-        if (isAuditor) {
-            loadSamplePRD();
-            return;
-        }
         setEvaluationStatus('running');
         setComplianceReport(null);
 
@@ -406,10 +401,6 @@ export default function EvaluatePage() {
     };
 
     const handleExportPDF = () => {
-        if (isAuditor) {
-            toast.success("🛡️ Compliance Certificate Secured: Signed immutable PDF digest generated and hashed for this audit session.");
-            return;
-        }
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
         window.open(`${apiUrl}/api/v1/evaluate/export/latest`, '_blank');
     };

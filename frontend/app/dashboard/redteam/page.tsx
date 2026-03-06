@@ -34,7 +34,6 @@ interface RedTeamReport {
 }
 
 export default function RedTeamPage() {
-    const { isAuditor } = useAuth();
     const router = useRouter();
     const { addToast } = useToast();
     const consoleEndRef = useRef<HTMLDivElement>(null);
@@ -112,10 +111,6 @@ export default function RedTeamPage() {
     }, [redTeamLogs]);
 
     const handleRedTeamAttack = async () => {
-        if (isAuditor) {
-            loadSampleRedTeam();
-            return;
-        }
         if (!report) {
             addToast("No system context found. Run an evaluation first.", "error");
             return;
