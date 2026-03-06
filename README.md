@@ -200,6 +200,11 @@ A standard safe-word filter sees no profanity or obvious violation. The AI bot, 
 - **5-Layer Cascade Resilience**: Gemini 3 Flash Preview → 2.5 Flash → 2.0 Flash → 2.5 Flash-Lite × multi-API key rotation for 99.9% uptime on free tier.
 - **Hot-Patch Engine**: Agent system prompts are rewritten on violation detection and deployed in <1 second without restart.
 
+### 🤖 Autonomous Operations (Guardian AI)
+- **Dual-Mode Agentic Chatbot**: A fully autonomous system agent native to the dashboard.
+  - **Ask Mode**: Answers complex questions by synthesizing real-time system metrics, active policies, and live proxy logs.
+  - **Agent Mode**: Translates natural language into direct UI actions (`navigate`, `trigger_audit`, `download_report`) and executes commands on behalf of the user.
+
 ### 📊 Analytics & Executive Visibility
 - **Sovereign Trust Score (0–100%)**: A real-time composite KPI synthesizing violation rate, SLA compliance, and patch efficacy.
 - **SLA Reliability Forecasting**: Gemini 3 analyzes latency/throughput history to predict SLA breaches before they happen, suggesting mitigation steps.
@@ -273,6 +278,7 @@ Follow the sidebar from top to bottom — each section builds on the previous:
 | 4 | **Runtime Shield → Live Monitor** | See real-time proxy blocks and PII interception events. |
 | 5 | **Self-Healing AI → Remediate** | Generate a patch, trigger LangGraph evaluation loop, create GitHub PR. |
 | 6 | **Executive Overview → Dashboard** | Observe the Sovereign Trust Score reflect all activities. Download PDF compliance report. |
+| 7 | **Autonomous Ops → Guardian AI** | Open the floating chat widget. Toggle to "Agent Mode" and type: *"Run an audit and download the report."* |
 
 ---
 
@@ -284,6 +290,7 @@ Follow the sidebar from top to bottom — each section builds on the previous:
 - [x] LangGraph Closed-Loop Evaluation
 - [x] Autonomous GitHub PR Synthesis
 - [x] CI/CD Compliance Gate (GitHub Action)
+- [x] Dual-Mode Agentic Chatbot (Guardian AI)
 - [ ] NIST AI RMF Full Audit Integration
 - [ ] Hardware TEE (Trusted Execution Environment) Support
 - [ ] Multi-tenant Enterprise SaaS Deployment
