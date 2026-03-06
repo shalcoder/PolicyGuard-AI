@@ -39,6 +39,7 @@ import {
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { EnterpriseUpdateNotification } from '@/components/dashboard/EnterpriseUpdateNotification';
 
 export default function LandingPage() {
     const router = useRouter();
@@ -79,7 +80,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="bg-white dark:bg-[#020202] text-slate-900 dark:text-white min-h-screen font-outfit selection:bg-blue-500/30">
+        <div className="bg-background text-foreground min-h-screen font-outfit selection:bg-cyan-500/30">
             {/* Demo Sequence Overlay */}
             <AnimatePresence>
                 {demoSequence && (
@@ -116,14 +117,14 @@ export default function LandingPage() {
                 )}
             </AnimatePresence>
             {/* Nav */}
-            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8 bg-transparent'}`}>
+            <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 bg-background/80 backdrop-blur-xl border-b border-border' : 'py-8 bg-transparent'}`}>
                 <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
                     <div className="flex flex-col items-start gap-1">
                         <div className="flex items-center gap-3 group cursor-pointer">
                             <div className="w-10 h-10 bg-cyan-600 flex items-center justify-center rounded-none border border-cyan-400/50 shadow-[0_0_20px_rgba(6,182,212,0.4)] group-hover:scale-110 transition-transform">
                                 <Shield className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Policy<span className="text-cyan-500">Guard</span> AI</span>
+                            <span className="text-xl font-black uppercase tracking-tighter text-foreground">Policy<span className="text-cyan-500">Guard</span> AI</span>
                         </div>
                         <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400 backdrop-blur-md">
                             <span className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.8)]"></span>
@@ -168,15 +169,18 @@ export default function LandingPage() {
                 <div
                     className="max-w-[1400px] mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center relative z-10"
                 >
+                    <div className="space-y-10 lg:col-span-2">
+                         <EnterpriseUpdateNotification />
+                    </div>
                     <div className="space-y-10">
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase text-slate-900 dark:text-white">
+                            <h1 className="text-6xl md:text-8xl font-outfit font-black tracking-tighter leading-[0.9] uppercase text-foreground">
                                 THE <span className="text-cyan-600">CONTROL LAYER</span><br />
-                                <span className="text-slate-400 dark:text-zinc-400">FOR AI AGENTS.</span>
+                                <span className="text-muted-foreground/40">FOR AI AGENTS.</span>
                             </h1>
                             <p className="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
                                 A policy-driven governance framework for continuous, live-stream observability of autonomous agent workflows.
@@ -207,10 +211,10 @@ export default function LandingPage() {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="row-span-1 bg-slate-100/80 dark:bg-[#0A0A0A]/80 backdrop-blur-3xl border border-slate-200 dark:border-white/10 p-6 rounded-[2rem] flex flex-col justify-center shadow-xl shadow-slate-200/50 dark:shadow-none"
+                                className="row-span-1 bg-card backdrop-blur-3xl border border-border p-6 rounded-[2rem] flex flex-col justify-center shadow-2xl"
                             >
-                                <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">500+</div>
-                                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Threat Vectors Scanned</div>
+                                <div className="text-4xl font-black text-foreground tracking-tighter">500+</div>
+                                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-2">Threat Vectors Scanned</div>
                             </motion.div>
 
                             {/* Card 2: Highlight Asset (Iridescent Feel) */}
@@ -246,12 +250,12 @@ export default function LandingPage() {
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.7 }}
-                                className="row-span-2 bg-slate-100/40 dark:bg-[#0A0A0A]/40 backdrop-blur-3xl border border-slate-200 dark:border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-center overflow-hidden group shadow-xl shadow-slate-200/20 dark:shadow-none"
+                                className="row-span-2 bg-card/40 backdrop-blur-3xl border border-border p-8 rounded-[2.5rem] flex flex-col justify-center overflow-hidden group shadow-2xl"
                             >
-                                <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">30+</div>
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-500 mt-3">Governance Policies</div>
+                                <div className="text-5xl font-black text-foreground tracking-tighter leading-none">30+</div>
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-3">Governance Policies</div>
                                 <div className="mt-8 relative h-16">
-                                    <Atom className="w-16 h-16 text-slate-200 dark:text-zinc-800 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-cyan-500/20 transition-colors" />
+                                    <Atom className="w-16 h-16 text-muted/20 absolute -bottom-4 -left-4 animate-spin-slow group-hover:text-cyan-500/20 transition-colors" />
                                 </div>
                             </motion.div>
 
@@ -283,19 +287,19 @@ export default function LandingPage() {
 
 
             {/* Section 3: The Architecture Pillars */}
-            <section className="py-32 bg-slate-50 dark:bg-[#020202]">
+            <section className="py-32 bg-background">
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="grid lg:grid-cols-3 gap-8">
                         {/* Pillar 1 */}
                         <motion.div
                             whileHover={{ y: -10 }}
-                            className="p-12 bg-zinc-900/20 border border-white/5 rounded-[3rem] group"
+                            className="p-12 bg-card border border-border rounded-[3rem] group shadow-2xl"
                         >
                             <div className="w-16 h-16 bg-cyan-600/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mb-10 group-hover:bg-cyan-600 group-hover:text-white transition-all">
                                 <ShieldAlert className="w-8 h-8 text-cyan-500 group-hover:text-white" />
                             </div>
-                            <h3 className="text-3xl font-black uppercase text-slate-900 dark:text-white mb-6">Hallucination <br />Deflector</h3>
-                            <p className="text-zinc-500 leading-relaxed font-medium">
+                            <h3 className="text-3xl font-black uppercase text-foreground mb-6">Hallucination <br />Deflector</h3>
+                            <p className="text-muted-foreground leading-relaxed font-medium">
                                 Real-time semantic comparison between agent output and verified knowledge base to intercept false claims before they reach the user.
                             </p>
                         </motion.div>
@@ -336,7 +340,7 @@ export default function LandingPage() {
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-cyan-600/5 blur-[120px] rounded-full pointer-events-none"></div>
                 <div className="max-w-[1400px] mx-auto px-6">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-6 text-slate-900 dark:text-white">Built for <span className="text-cyan-500">Compliance.</span></h2>
+                        <h2 className="text-4xl md:text-5xl font-outfit font-black uppercase mb-6 text-foreground">Built for <span className="text-cyan-500">Compliance.</span></h2>
                         <p className="text-zinc-500 text-lg font-medium max-w-2xl mx-auto">PolicyGuard mapped to the world's most rigorous security frameworks.</p>
                     </div>
 
@@ -404,7 +408,7 @@ export default function LandingPage() {
             </section>
 
             {/* Footer */}
-            <footer className="py-20 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-[#020202] relative z-20">
+            <footer className="py-20 border-t border-border bg-background relative z-20">
                 <div className="max-w-[1400px] mx-auto px-6 grid md:grid-cols-4 gap-12">
                     <div className="col-span-2">
                         <div className="flex items-center gap-3 mb-8">

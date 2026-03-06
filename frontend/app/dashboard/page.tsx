@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { EnterpriseUpdateNotification } from '@/components/dashboard/EnterpriseUpdateNotification';
 
 interface DashboardStats {
     traces_analyzed: number;
@@ -542,6 +543,8 @@ export default function OverviewPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-24 max-w-[1600px] mx-auto">
+
+            <EnterpriseUpdateNotification />
 
             {/* NEW HEADER DESIGN */}
             <div className="flex flex-col gap-6 mb-8">
