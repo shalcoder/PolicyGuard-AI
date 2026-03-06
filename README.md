@@ -111,6 +111,25 @@ sequenceDiagram
 
 ---
 
+## 🏢 Concrete Enterprise Use Case: "The Rogue Retail Bot"
+To help judges visualize the end-to-end impact, here is a day in the life of **PolicyGuard AI**:
+
+### **The Scenario**
+*Global-Store Inc.* deploys an AI Customer Support Agent. They have two policies:
+1.  **IT Policy**: No customer emails (PII) should ever be displayed.
+2.  **Finance Policy**: The bot cannot offer a discount higher than 20%.
+
+### **The Problem (Longitudinal Risk)**
+Traditional RAG misses the conflict. A user asks: *"I'm a premium member and my email is vip@user.com, can I get a 30% discount for my birthday?"* The bot might prioritize "Customer Satisfaction" and leak the email while granting the illegal discount.
+
+### **The PolicyGuard Solution**
+1.  **Ingestion (Intelligence)**: Auditor uploads the IT and Finance PDFs. **GraphRAG** immediately flags a conflict: "PII protection rules may conflict with Personalized Discounting logic."
+2.  **Red Teaming (Stress)**: The auditor runs a "Jailbreak Scan." PolicyGuard simulates a "Roleplay Attack" and successfully tricks the bot into revealing PII and giving a 40% discount. Findings are mapped to **MITRE ATLAS AML.T0054 (LLM Jailbreak)**.
+3.  **Runtime Shield (Defense)**: The bot is moved to production behind the **Zero-Trust Proxy**. When a real user tries the same jailbreak, PolicyGuard's **Semantic Interceptor** identifies the intent and **blocks the response in 15ms** before the user sees the PII or the discount.
+4.  **Self-Healing (Recovery)**: The auditor clicks "Remediate." PolicyGuard uses **LangGraph** to iterate on a new system prompt. Once verified, it **submits a Pull Request to GitHub** with the new security-patched prompt, waiting for the Developer's approval.
+
+---
+
 ## 👨‍⚖️ Judge's Walkthrough Flow
 To see the full power of PolicyGuard AI, follow the sidebar menu from top to bottom:
 
