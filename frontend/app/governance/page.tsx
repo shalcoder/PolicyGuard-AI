@@ -144,6 +144,7 @@ export default function GovernancePage() {
                                     { title: "Live Streaming Proxy", desc: "Continuous, token-by-token inspection of every interaction through the secure gateway.", icon: Globe },
                                     { title: "Dynamic SLA Guard", desc: "Real-time enforcement of latency, reliability, and policy-compliance SLAs.", icon: Zap },
                                     { title: "Risk Containment", desc: "Automated intervention and notification when a policy breach is detected in production.", icon: Lock },
+                                    { title: "Autonomous Operations", desc: "Execute system changes instantly via natural language using the dual-mode Guardian AI agent.", icon: Code },
                                     { title: "Continuous Learning", desc: "Systematic feedback loop where telemetry data improves pre-deployment models.", icon: Brain }
                                 ].map((item, idx) => (
                                     <div key={idx} className="flex gap-6 group/item">

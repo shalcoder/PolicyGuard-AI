@@ -131,6 +131,15 @@ export default function FeaturesPage() {
                                 </div>
                                 <div className="text-[10px] font-black uppercase tracking-widest text-zinc-700">SLA-99.9 // ENFORCED</div>
                             </motion.div>
+
+                            <motion.div whileHover={{ y: -8 }} className="group bg-zinc-900/40 backdrop-blur-3xl border border-white/10 p-10 h-[320px] rounded-3xl flex flex-col justify-between shadow-2xl transition-all duration-500 hover:border-blue-500/50 md:col-span-2 lg:col-span-1">
+                                <div>
+                                    <Activity className="w-10 h-10 text-blue-500 mb-6" />
+                                    <h3 className="text-2xl font-black uppercase text-white mb-2">Guardian AI</h3>
+                                    <p className="text-zinc-500 text-sm leading-relaxed">Dual-Mode Agent (Ask/Action). Answer deep system queries or execute autonomous commands instantly from the UI.</p>
+                                </div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-700">AUTONOMOUS // COMMAND</div>
+                            </motion.div>
                         </div>
                     </div>
                 </div>

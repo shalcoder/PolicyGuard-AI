@@ -127,7 +127,7 @@ export default function LandingPage() {
                         </div>
                         <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400 backdrop-blur-md">
                             <span className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.8)]"></span>
-                            AI Governance Framework
+                            Now with Guardian AI Agent
                         </div>
                     </div>
 
@@ -182,8 +182,7 @@ export default function LandingPage() {
                                 <span className="text-muted-foreground/40">FOR AI FLEETS.</span>
                             </h1>
                             <p className="text-lg md:text-xl text-slate-600 dark:text-zinc-400 max-w-xl mt-8 leading-relaxed font-medium">
-                                A dual-mode intelligent governance framework for continuous, live-stream observability of autonomous workflows.
-                                Secure your system with proactive intervention and execute active commands via our built-in Agentic Command Center.
+                                A dual-mode intelligent governance framework. Secure your autonomous systems with proactive, live-stream observability, and command operations instantly via the <strong>Guardian AI</strong> agent.
                             </p>
                         </motion.div>
 
