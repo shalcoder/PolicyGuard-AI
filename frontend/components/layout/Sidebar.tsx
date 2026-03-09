@@ -8,17 +8,18 @@ import { useAuth } from '@/hooks/useAuth';
 // Grouped Navigation Configuration
 const navGroups = [
     {
-        label: "Executive Overview",
+        label: "", 
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: Home },
-            { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+            { name: 'Policies', href: '/dashboard/policies', icon: FileText },
+            { name: 'Integration Wizards', href: '/dashboard/proxy', icon: Shield },
         ]
     },
     {
-        label: "", 
+        label: "Self-Healing AI",
         items: [
-            { name: 'Policies', href: '/dashboard/policies', icon: FileText },
-            { name: 'Integration Wizards', href: '/dashboard/proxy', icon: Shield },
+            { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
+            { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
         ]
     },
     {
@@ -35,10 +36,9 @@ const navGroups = [
         ]
     },
     {
-        label: "Self-Healing AI",
+        label: "System",
         items: [
-            { name: 'Remediate', href: '/dashboard/remediate', icon: Wrench },
-            { name: 'Evaluate', href: '/dashboard/evaluate', icon: Activity },
+            { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         ]
     }
 ];
