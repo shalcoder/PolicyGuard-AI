@@ -131,34 +131,26 @@ class GeminiService:
                     error_str = str(e).upper()
                     last_error = e
                     
-                    # 1. Project-Wide / Global Quota (Blacklist Key for this request)
-                    if "PROJECT" in error_str or "USER" in error_str or "DAILY" in error_str:
-                        print(f"📊 Key {key_idx+1} GLOBAL QUOTA EXHAUSTED.")
+                    # 1. Auth error or Key Disabled (Blacklist Key)
+                    if any(x in error_str for x in ["401", "403", "UNAUTHORIZED", "API_KEY_INVALID"]):
+                        print(f"🔑 Key {key_idx+1} AUTH FAILED.")
                         exhausted_keys.add(key_idx)
                         continue
-                    
-                    # 2. Model-Specific Quota (Continue to next Key for same model)
-                    if "MODEL" in error_str and ("429" in error_str or "QUOTA" in error_str):
-                        print(f"⏱️  {model_name} is busy on Key {key_idx+1}. Trying next key...")
-                        continue
                         
-                    # 3. Model not supported at all (404)
+                    # 2. Model not supported at all (404)
                     if any(x in error_str for x in ["404", "NOT_FOUND"]):
                         print(f"❌ {model_name} not available on this key. Skipping model.")
                         break # Try next model
                     
-                    # 4. Auth error (Blacklist Key)
-                    if any(x in error_str for x in ["401", "403", "UNAUTHORIZED"]):
-                        print(f"🔑 Key {key_idx+1} AUTH FAILED.")
-                        exhausted_keys.add(key_idx)
+                    # 3. Rate Limit / Quota Exhausted on this model
+                    if any(x in error_str for x in ["429", "QUOTA", "RESOURCE_EXHAUSTED"]):
+                        print(f"⏱️  {model_name} is busy/exhausted on Key {key_idx+1}. Trying next key...")
                         continue
                         
                     print(f"⚠️  Error: {str(e)[:100]}")
                     continue
 
         raise Exception(f"Cascade exhausted. Last error: {last_error}")
-
-        raise Exception(f"API cascade exhausted after {total_attempts} attempts. Last error: {last_error}")
 
 
 
@@ -215,31 +207,44 @@ class GeminiService:
 
     async def _embed_with_retry(self, text: str, retries: int = 5):
         """Standardized retry logic for Embeddings."""
+        models_to_try = [
+            "models/text-embedding-004", 
+            "text-embedding-004", 
+            "models/gemini-embedding-001",
+            "gemini-embedding-001",
+            "models/embedding-001",
+            "text-embedding-001"
+        ]
         for attempt in range(retries):
-            try:
-                client = self.clients[self.current_key_index]
-                # Embeddings API is usually synchronous in the current SDK version we use
-                import functools
-                loop = asyncio.get_running_loop()
-                func = functools.partial(
-                    client.models.embed_content,
-                    model="text-embedding-004",
-                    contents=text
-                )
-                response = await loop.run_in_executor(None, func)
-                if hasattr(response, 'embeddings') and response.embeddings:
-                    return response.embeddings[0].values
-                return []
-            except Exception as e:
-                error_str = str(e)
-                if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and len(self.clients) > 1:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.clients)
-                    print(f"🔄 Embedding Rate Limit. Rotating to Key {self.current_key_index}...")
-                    continue
-                if attempt == retries - 1:
-                    print(f"Embedding Generation Failed: {e}")
+            for model_name in models_to_try:
+                try:
+                    client = self.clients[self.current_key_index]
+                    import functools
+                    loop = asyncio.get_running_loop()
+                    func = functools.partial(
+                        client.models.embed_content,
+                        model=model_name,
+                        contents=text
+                    )
+                    response = await loop.run_in_executor(None, func)
+                    if hasattr(response, 'embeddings') and response.embeddings:
+                        return response.embeddings[0].values
                     return []
-                await asyncio.sleep(1)
+                except Exception as e:
+                    error_str = str(e).upper()
+                    if "404" in error_str or "NOT_FOUND" in error_str:
+                        print(f"❌ Embed model {model_name} not found, trying next...")
+                        continue
+                        
+                    if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and len(self.clients) > 1:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.clients)
+                        print(f"🔄 Embedding Rate Limit on {model_name}. Rotating to Key {self.current_key_index}...")
+                        break # Break inner model loop to retry with new key
+                    
+                    if attempt == retries - 1:
+                        print(f"Embedding Generation Failed on {model_name}: {e}")
+                        
+            await asyncio.sleep(1)
         return []
 
     async def analyze_policy_conflict(self, policy_text: str, workflow_desc: str, audit_config) -> str:

@@ -54,9 +54,6 @@ export const EnterpriseUpdateNotification = () => {
                                 <Sparkles className="h-3 w-3" />
                                 Protocol Update V2.0 Live
                             </div>
-                            <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">
-                                <span className="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">Enterprise Upgrade V2.0</span>
-                            </h2>
                             <p className="max-w-xl text-xs font-bold uppercase tracking-[0.1em] text-cyan-500/80">
                                 7 Major Security Protocols Deployed:
                             </p>
